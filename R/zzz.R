@@ -1,0 +1,31 @@
+## Global options
+opt.qualcontrol <- orgdata:::is_globs("qualcontrol")
+
+.onLoad <- function(libname, pkgname) {
+  optqualcontrol <- orgdata:::is_globs("qualcontrol")
+  orgDT <- !(names(optqualcontrol) %in% names(options()))
+  if (any(orgDT)) options(optqualcontrol[orgDT])
+
+  corrglobs <- orgdata:::is_correct_globs(optqualcontrol)
+  if(!isTRUE(corrglobs)){
+    x <- utils::askYesNo("Options are not the same as in the config file, update options now?")
+    if(isTRUE(x)){
+      orgdata:::update_globs("qualcontrol")
+    }
+  }
+
+  invisible()
+}
+
+.onAttach <- function(libname, pkgname){
+  packageStartupMessage("qualcontrol version ",
+                        utils::packageDescription("qualcontrol")[["Version"]])
+
+  # latest <- orgdata:::is_latest_version("qualcontrol")
+  # if (latest){
+  #   x <- utils::askYesNo("Update qualcontrol now?")
+  #   if (isTRUE(x)){
+  #     orgdata::update_orgcube()
+  #   }
+  # }
+}
