@@ -21,11 +21,11 @@ opt.qualcontrol <- orgdata:::is_globs("qualcontrol")
   packageStartupMessage("qualcontrol version ",
                         utils::packageDescription("qualcontrol")[["Version"]])
 
-  # latest <- orgdata:::is_latest_version("qualcontrol")
-  # if (latest){
-  #   x <- utils::askYesNo("Update qualcontrol now?")
-  #   if (isTRUE(x)){
-  #     orgdata::update_orgcube()
-  #   }
-  # }
+  newver <- orgdata:::is_latest_version("qualcontrol")
+  if (newver){
+    x <- utils::askYesNo("Update qualcontrol now?")
+    if (isTRUE(x)){
+      orgdata::update_khpackage("qualcontrol")
+    }
+  }
 }
