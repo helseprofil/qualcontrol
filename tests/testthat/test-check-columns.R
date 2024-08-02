@@ -5,3 +5,4 @@ test_that("compare_colnames", {
 
   invisible(capture.output(expect_no_error(compare_colnames(new, old))))
 })
+

@@ -70,10 +70,12 @@ readfiles_checkargs <- function(cube.new,
 #' @keywords internal
 #' @noRd
 find_cube <- function(cubename,
-                      cubemodus){
+                      cubemodus = c("KH", "NH"),
+                      force_datert = FALSE){
 
   if(is.null(cubename)) return(NULL)
 
+  cubemodus <- match.arg(cubemodus)
   mode <- switch(cubemodus,
                  "KH" = getOption("qualcontrol.mode")$kh,
                  "NH" = getOption("qualcontrol.mode")$nh
@@ -83,8 +85,10 @@ find_cube <- function(cubename,
                     getOption("qualcontrol.files"),
                     mode)
 
+  if(!force_datert){
   qc_file <- list.files(file.path(path, "QC"), pattern = cubename, full.names = T)
   if(length(qc_file) == 1 && file.exists(qc_file)) return(qc_file)
+  }
 
   datert_file <- list.files(file.path(path, "DATERT/csv"), pattern = cubename, full.names = T)
   if(length(datert_file) == 1 && file.exists(datert_file)) return(datert_file)
