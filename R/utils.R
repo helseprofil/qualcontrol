@@ -1,6 +1,6 @@
 #' @title identify_coltypes
-#'
-#' uses internal object .validdims to identify dimension and value columns
+#' @description
+#' Uses internal object .validdims to identify dimension and value columns
 #'
 #' @param cube.new new file
 #' @param cube.old old file, or NULL
@@ -39,15 +39,15 @@ identify_coltypes <- function(cube.new = NULL,
 #' @keywords internal
 #' @noRd
 get_cubename <- function(data){
-  gsub("^QC_|_\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}\\.csv$", "", attributes(data)$Filename)
+  gsub("^QC_|_\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}|\\.csv$", "", attributes(data)$Filename)
 }
 
 #' @title generate_folders
-#'
+#' @description
 #' Create Folder structure according to profile year and cube name of new data file
 #'
-#' @param profileyear
-#' @param kubename
+#' @param profileyear profileyear
+#' @param kubename name of cube
 #' @export
 generate_qcfolders <- function(year,
                                cubename){
@@ -107,4 +107,163 @@ get_all_combinations <- function(data,
     d <- do.call(data.table::CJ, lapply(columns, function(x) unique(data[[x]])))
     d <- data.table::setnames(d, columns)
     return(d)
+}
+
+#' @keywords internal
+#' @description
+#' Selects first available from sumTELLER_uprikk > sumTELLER > TELLER
+#'
+#' @noRd
+select_teller_pri <- function(valuecolumns){
+
+  teller <- data.table::fcase("sumTELLER_uprikk" %in% valuecolumns, "sumTELLER_uprikk",
+                              "sumTELLER" %in% valuecolumns, "sumTELLER",
+                              "TELLER" %in% valuecolumns, "TELLER",
+                              default = NA_character_)
+  return(teller)
+}
+
+#' @keywords internal
+#' @description
+#' Selects first available from sumTELLER_uprikk > sumTELLER > TELLER
+#'
+#' @noRd
+select_nevner_pri <- function(valuecolumns){
+
+  nevner <- data.table::fcase("sumNEVNER_uprikk"  %in% valuecolumns, "sumNEVNER_uprikk",
+                              "sumNEVNER" %in% valuecolumns, "sumNEVNER",
+                              "NEVNER" %in% valuecolumns, "NEVNER",
+                              default = NA_character_)
+  return(nevner)
+}
+
+#' @title find_total
+#' @description
+#' Identifies if a total/aggregated level exist for a dimension. For ALDER,
+#' the min_max is used as total if existing, for other dimensions 0 is the total value.
+#' @param cube datafile
+#' @param dim dimension name
+#' @return the total category, or NA
+#' @export
+#' @examples
+#' # find_total(newcube, "ALDER")
+find_total <- function(cube, dim){
+
+  if(dim != "ALDER"){
+    total <- data.table::fcase(0 %in% unique(cube[[dim]]), 0,
+                               default = NA)
+  }
+
+  if(dim == "ALDER"){
+    ALDERlevels <- unique(cube$ALDER)
+    ALDERl <- collapse::fmin(as.numeric(sub("(\\d*)_(\\d*)", "\\1", ALDERlevels)))
+    ALDERh <- collapse::fmax(as.numeric(sub("(\\d*)_(\\d*)", "\\2", ALDERlevels)))
+    ALDERtot <- paste0(ALDERl, "_", ALDERh)
+    if(ALDERtot %in% ALDERlevels){
+      total <- ALDERtot
+    } else {
+      total <- NA
+    }
+  }
+
+  return(total)
+}
+
+#' @title aggregate_cube
+#' @description
+#' Aggregates value columns according to a given dimension variable.
+#' If a total exists, the rows corresponding to the total is kept. If
+#' no total exists, value columns will be aggregated according to their types.
+#' Counts (TELLER, sumTELLER) are aggregated to the sum, while other value columns
+#' are aggregated to their mean.
+#'
+#' @param cube cube file
+#' @param dim dimension to aggregate on
+aggregate_cube <- function(cube, dim){
+
+  if(dim %in% c("AAR")) stop("cannot aggregate on 'AAR'")
+  cube <- data.table::copy(cube)
+  colorder <- names(cube)
+  total <- find_total(cube, dim)
+
+  if(!is.na(total)){
+    return(cube[get(dim) == total])
+  }
+
+  if(is.na(total)){
+    colinfo <- identify_coltypes(cube)
+    vals <- colinfo$vals.new
+    vals <- grep("SPVFLAGG", vals, value = T, invert = T)
+    cube[, (vals) := lapply(.SD, as.numeric), .SDcols = vals]
+    sumvals <- grep("TELLER", vals, value = T)
+    avgvals <- grep("TELLER", vals, value = T, invert = T)
+    groupdims <- grep(dim, colinfo$dims.new, value = T, invert = T)
+    data.table::setkeyv(cube, groupdims)
+
+    cube[, (avgvals) := lapply(.SD, mean, na.rm = T), .SDcols = avgvals, by = groupdims]
+    cube[, (sumvals) := lapply(.SD, sum, na.rm = T), .SDcols = sumvals, by = groupdims]
+    for(i in avgvals){cube[is.nan(get(i)), (i) := NA_real_]}
+    cube[, (dim) := "Total"]
+    cube <- cube[, .SD[1], by = groupdims]
+    data.table::setcolorder(cube, colorder)
+    return(cube)
+  }
+}
+
+#'
+#' @title filter_cube
+#' @description
+#' Filters out new and expired levels in new and old file, respectively, for comparison.
+#'
+#' @param cube.new new file
+#' @param cube.old old file
+#' @param dimtable table generated with [qualcontrol::compare_dimensions()]
+#' @param filter "new" or "old", indicating whether the file to filter is the new or old file
+filter_cube <- function(cube.new,
+                        cube.old,
+                        dimtable,
+                        filter = c("new", "old")){
+  filter <- match.arg(filter)
+  filteron <- switch(filter,
+                     new = "New levels",
+                     old = "Expired levels")
+  filtercube <- switch(filter,
+                       new = data.table::copy(cube.new),
+                       old = data.table::copy(cube.old))
+  refcube <- switch(filter,
+                    new = data.table::copy(cube.old),
+                    old = data.table::copy(cube.new))
+  filterdims <- data.table::copy(dimtable)[get(filteron) != ""]$Dimension
+
+  if(length(filterdims) > 0){
+    for(dim in filterdims){
+      filtercube <- filtercube[get(dim) %in% unique(refcube[[dim]])]
+    }
+  }
+
+  return(filtercube)
+}
+
+#' @keywords internal
+#' @noRd
+convert_coltype <- function(data,
+                            columns,
+                            format = c("factor", "numeric", "integer", "character")){
+
+  format <- match.arg(format)
+  as.numeric.qc <- function(x){
+    if(is.factor(x) && !any(grepl("[^0-9]", levels(x)))){
+      as.numeric(as.character(x))
+    } else {
+     as.numeric(x)
+    }
+  }
+
+  fun <- switch(format,
+                factor = as.factor,
+                numeric = as.numeric.qc,
+                integer = as.integer,
+                character = as.character)
+
+  data[, (columns) := lapply(.SD, fun), .SDcols = columns]
 }

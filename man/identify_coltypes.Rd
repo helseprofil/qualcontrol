@@ -2,9 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{identify_coltypes}
 \alias{identify_coltypes}
-\title{identify_coltypes
-
-uses internal object .validdims to identify dimension and value columns}
+\title{identify_coltypes}
 \usage{
 identify_coltypes(cube.new = NULL, cube.old = NULL)
 }
@@ -17,7 +15,5 @@ identify_coltypes(cube.new = NULL, cube.old = NULL)
 a list containing information on dimension and value columns
 }
 \description{
-identify_coltypes
-
-uses internal object .validdims to identify dimension and value columns
+Uses internal object .validdims to identify dimension and value columns
 }

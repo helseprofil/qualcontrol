@@ -16,3 +16,8 @@ update_popinfo(popfile, overwrite = T)
 \description{
 Generates popinfo.rds file containing weights and GEOniv including small/large kommune and Helseregion
 }
+\examples{
+# update_popinfo("O:/Prosjekt/FHP/PRODUKSJON/PRODUKTER/KUBER/KOMMUNEHELSA/KH2025NESSTAR/BEFOLK_GK_2024-06-17-14-13.csv",
+overwrite = TRUE)
+
+}

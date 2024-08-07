@@ -2,14 +2,15 @@
 % Please edit documentation in R/utils.R
 \name{generate_qcfolders}
 \alias{generate_qcfolders}
-\title{generate_folders
-
-Create Folder structure according to profile year and cube name of new data file}
+\title{generate_folders}
 \usage{
 generate_qcfolders(year, cubename)
 }
-\description{
-generate_folders
+\arguments{
+\item{profileyear}{profileyear}
 
+\item{kubename}{name of cube}
+}
+\description{
 Create Folder structure according to profile year and cube name of new data file
 }

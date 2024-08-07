@@ -40,7 +40,6 @@ compare_colnames <- function(cube.new = NULL,
 #' @param cube.new New cube
 #' @param cube.old Old cube, or NULL
 #'
-#' @return
 #' @export
 compare_dimensions <- function(cube.new = NULL,
                                cube.old = NULL){

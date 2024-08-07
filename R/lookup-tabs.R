@@ -34,6 +34,9 @@ update_georecode <- function(year, overwrite = T){
 #' @param year referring to NESSTAR-folder
 #' @param overwrite should the file be overwritten?
 #' @examples
+#' # update_popinfo("O:/Prosjekt/FHP/PRODUKSJON/PRODUKTER/KUBER/KOMMUNEHELSA/KH2025NESSTAR/BEFOLK_GK_2024-06-17-14-13.csv",
+#' overwrite = TRUE)
+#'
 update_popinfo <- function(popfile, overwrite = T){
 
   tab <- data.table::fread(popfile)
@@ -52,9 +55,12 @@ update_popinfo <- function(popfile, overwrite = T){
 
   path <- file.path(system.file("data", package = "qualcontrol"), "popinfo.rds")
   if(!file.exists(path)) file.create(path)
-  if(overwrite) saveRDS(tab, path)
+  if(overwrite){
+    saveRDS(tab, path)
+    cat("popinfo updated, remember to push the new changes to GitHub")
+  }
 
-  cat("popinfo updated, remember to push the new changes to GitHub")
+  return(tab)
 }
 
 #' @keywords internal
@@ -62,7 +68,7 @@ update_popinfo <- function(popfile, overwrite = T){
 update_dimlist <- function(){
   con <- ConnectKHelsa()
   on.exit(RODBC::odbcClose(con), add = T)
-  date <- format(Sys.time(), "#%Y-%m-%d#")
+  date <- SQLdate(Sys.time())
   standarddimensions <- c("GEO", "AAR", "ALDER", "KJONN", "UTDANN", "INNVKAT", "LANDBAK")
   tabdimensions <- data.table::setDT(RODBC::sqlQuery(con, paste0("SELECT TAB1, TAB2, TAB3 FROM FILGRUPPER WHERE VERSJONFRA <=",date, "AND VERSJONTIL >", date)))
   tabdimensions <- data.table::melt(tabdimensions, measure.vars = c("TAB1", "TAB2", "TAB3"))[!is.na(value), unique(value)]

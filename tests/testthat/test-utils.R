@@ -12,7 +12,7 @@ test_that("identify_coltypes works", {
 })
 
 test_that("get_cubename works", {
-  expect_equal(get_cubename(cube1), "testcube1.csv")
+  expect_equal(get_cubename(cube1), "testcube1")
 })
 
 test_that("generate_qcfolders",code =  {
@@ -52,4 +52,28 @@ test_that("get_all_combinations works", {
   expect_type(get_all_combinations(cube1, c("KJONN", "ALDER")), "list")
   expect_error(get_all_combinations(cube1, c("KJONN", "NOTEXIST")))
   expect_error(get_all_combinations(nocube, c("KJONN", "ALDER")))
+})
+
+test_that("aggregate_dimension", {
+  expect_equal(find_total(cube1, "GEO"), 0)
+  expect_equal(find_total(cube1, "ALDER"), "0_120")
+  expect_error(aggregate_dimension(cube1, "AAR"), regexp = "cannot aggregate on 'AAR'")
+  expect_no_error(aggregate_dimension(cube1, "GEO"))
+})
+
+test_that("convert_coltype works as expected", {
+  df <- data.table::data.table(col1 = factor(c("0", "1", "2", "3")))
+  expected <- data.table::data.table(col1 = c(0, 1, 2, 3))
+  convert_coltype(df, "col1", "numeric")
+  expect_equal(df, expected)
+
+  df <- data.table::data.table(col1 = 1:3)
+  expected <- data.table::data.table(col1 = as.character(1:3))
+  convert_coltype(df, "col1", "character")
+  expect_equal(df, expected)
+
+  df <- data.table::data.table(col1 = 1:3)
+  expected <- data.table::data.table(col1 = as.factor(1:3))
+  convert_coltype(df, "col1", "factor")
+  expect_equal(df, expected)
 })
