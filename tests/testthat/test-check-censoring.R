@@ -19,4 +19,6 @@ test_that("compare_censoring", {
 test_that("compare_censoring_timeseries", {
 
   expect_error(compare_censoring_timeseries(NULL, NULL), regexp = "cube.new must be provided")
+  expect_no_error(compare_censoring_timeseries(cube1, NULL))
+  expect_no_error(compare_censoring_timeseries(cube1, cube2))
 })

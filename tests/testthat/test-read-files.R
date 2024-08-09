@@ -42,4 +42,10 @@ test_that("read_cube renames columns", {
   expect_output(is_valid_outcols(rename), "NB! New file contains TELLER, sumTELLER, sumNEVNER. Is this ok for ALLVIS?")
 })
 
+test_that("recode_geo works", {
+  invisible(capture.output(cube <- read_cube(system.file("testdata", "testcube1.csv", package = "qualcontrol"), type = "New")))
+  expect_false(all(cube$GEO %in% .validgeo))
+  invisible(capture.output(cube_recoded <- recode_geo(cube, recode = TRUE)))
+  expect_true(all(cube_recoded$GEO %in% .validgeo))
+})
 

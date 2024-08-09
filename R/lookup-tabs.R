@@ -76,15 +76,31 @@ update_dimlist <- function(){
   return(out)
 }
 
+#' @keywords internal
+#' @noRd
+update_validgeo <- function(year){
+  con <- ConnectGeokoder()
+  on.exit(RODBC::odbcClose(con), add = T)
+  out <- RODBC::sqlQuery(con, paste0("SELECT code FROM tblGeo WHERE validTO='", year, "' AND level IN ('fylke', 'kommune', 'bydel')"))
+  out <- c(0, out$code)
+  return(sort(out))
+}
+
 #' Update internal data
 #' Stores objects in R/sysdata.rda which is needed in the package
+#'
+#' @param year year for validgeo
+#'
 #' @return
-#' - dimlist
+#' - .validdims
+#' - .validgeo
 #' @export
-update_internal_data <- function(){
+update_internal_data <- function(year){
 
   .validdims <- update_dimlist()
+  .validgeo <- update_validgeo(year)
 
   usethis::use_data(.validdims,
+                    .validgeo,
                     internal = T,overwrite = T)
 }

@@ -54,11 +54,11 @@ test_that("get_all_combinations works", {
   expect_error(get_all_combinations(nocube, c("KJONN", "ALDER")))
 })
 
-test_that("aggregate_dimension", {
+test_that("aggregate_cube works", {
   expect_equal(find_total(cube1, "GEO"), 0)
   expect_equal(find_total(cube1, "ALDER"), "0_120")
-  expect_error(aggregate_dimension(cube1, "AAR"), regexp = "cannot aggregate on 'AAR'")
-  expect_no_error(aggregate_dimension(cube1, "GEO"))
+  expect_error(aggregate_cube(cube1, "AAR"), regexp = "cannot aggregate on 'AAR'")
+  expect_no_error(aggregate_cube(cube1, "GEO"))
 })
 
 test_that("convert_coltype works as expected", {
@@ -76,4 +76,23 @@ test_that("convert_coltype works as expected", {
   expected <- data.table::data.table(col1 = as.factor(1:3))
   convert_coltype(df, "col1", "factor")
   expect_equal(df, expected)
+})
+
+test_that("add_geoniv works", {
+  d1 <- data.table::data.table(GEO = c(0,3,1101,1111,110301))
+  d2 <- data.table::copy(d1)
+  d3 <- data.table:::copy(d1)[, .SD[c(1,3,5)]]
+  add_geoniv(d1, combine.kommune = F)
+  add_geoniv(d2, combine.kommune = T)
+  add_geoniv(d3)
+  expect_equal(levels(d1$GEOniv), c("L", "F", "K", "k", "B"))
+  expect_equal(levels(d2$GEOniv), c("L", "F", "K", "B"))
+  expect_equal(levels(d3$GEOniv), c("L", "K", "B"))
+})
+
+test_that("add_kommune works", {
+  d <- data.table::data.table(GEO = c(0,3,301,1103, 4601,5001, 1806, 1508, 110301, 30105, 460106, 500104))
+  add_geoniv(d, combine.kommune = T)
+  add_kommune(d)
+  expect_equal(d$KOMMUNE, c(NA, NA, "Oslo", "Stavanger", "Bergen", "Trondheim", NA, NA,"Stavanger", "Oslo", "Bergen", "Trondheim"))
 })

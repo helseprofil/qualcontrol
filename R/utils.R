@@ -13,7 +13,7 @@ identify_coltypes <- function(cube.new = NULL,
 
   if(is.null(cube.new)) stop("cube.new must be provided")
 
-  misc_cols <- c("origgeo", "GEOniv")
+  misc_cols <- c("origgeo", "GEOniv", "KOMMUNE")
   out <- list()
 
   out[["dims.new"]] <- names(cube.new)[names(cube.new) %in% .validdims]
@@ -118,6 +118,7 @@ select_teller_pri <- function(valuecolumns){
 
   teller <- data.table::fcase("sumTELLER_uprikk" %in% valuecolumns, "sumTELLER_uprikk",
                               "sumTELLER" %in% valuecolumns, "sumTELLER",
+                              "TELLER_uprikk" %in% valuecolumns, "TELLER_uprikk",
                               "TELLER" %in% valuecolumns, "TELLER",
                               default = NA_character_)
   return(teller)
@@ -132,6 +133,7 @@ select_nevner_pri <- function(valuecolumns){
 
   nevner <- data.table::fcase("sumNEVNER_uprikk"  %in% valuecolumns, "sumNEVNER_uprikk",
                               "sumNEVNER" %in% valuecolumns, "sumNEVNER",
+                              "NEVNER_uprikk" %in% valuecolumns, "NEVNER_uprikk",
                               "NEVNER" %in% valuecolumns, "NEVNER",
                               default = NA_character_)
   return(nevner)
@@ -266,4 +268,62 @@ convert_coltype <- function(data,
                 character = as.character)
 
   data[, (columns) := lapply(.SD, fun), .SDcols = columns]
+}
+
+#' @keywords internal
+#' @noRd
+#' @description
+#' Adds column GEOniv to identify geographical levels. Uses population info from "sysdata.rda"
+#' Adds the column by reference, no need to overwrite object.
+#' @examples
+#' # add_geoniv(data)
+add_geoniv <- function(data,
+                       combine.kommune = F){
+  popinfo <- readRDS(system.file("data", "popinfo.rds", package = "qualcontrol"))
+  data[popinfo, GEOniv := i.GEOniv, on = "GEO"]
+  if(combine.kommune) data[, GEOniv := forcats::fct_collapse(GEOniv, K = c("K", "k"))]
+  data[, GEOniv := forcats::fct_drop(GEOniv)]
+  return(data)
+}
+
+#' @keywords internal
+#' @noRd
+translate_geoniv <- function(data){
+  if("GEOniv" %notin% names(data)) stop("GEOniv column not present")
+  data <- data.table::copy(data)[, GEOniv := data.table::fcase(GEOniv == "L", "Land",
+                                                               GEOniv == "F", "Fylke",
+                                                               GEOniv == "K", "Kommune",
+                                                               GEOniv == "B", "Bydel")]
+  return(data)
+}
+
+#' @keywords internal
+#' @noRd
+#' @description
+#' Adds column KOMMUNE to identify Oslo, Stavanger, Bergen, and Trondheim for
+#' grouping. Adds the column by reference, no need to overwrite object.
+#' @examples
+#' # add_commune(data)
+add_kommune <- function(data){
+  data[, let(KOMMUNE = NA_character_)]
+  data[GEO %in% c(301, 1103, 4601, 5001) | GEOniv == "B",
+       let(KOMMUNE = data.table::fcase(grepl("^301", GEO), "Oslo",
+                                       grepl("^1103", GEO), "Stavanger",
+                                       grepl("^4601", GEO), "Bergen",
+                                       grepl("^5001", GEO), "Trondheim"))]
+  return(data)
+}
+
+#' @keywords internal
+#' @noRd
+#' @description
+#' Returns only complete strata, as defined by the columns in `by`. Generate
+#' a new column called `n_censored`, indicating the number of censored observations in
+#' each strata, and returns rows where `n_censored` = 0.
+get_complete_strata <- function(data, by){
+  if("GEO" %in% dimensions) dimensions <- grep("^GEO$", dimensions, invert = T, value = T)
+  d <- data.table::copy(data)
+  data[, let(n_censored = sum(SPVFLAGG != 0)), by = dimensions]
+  data <- data[n_censored == 0][, n_]
+  return(data)
 }

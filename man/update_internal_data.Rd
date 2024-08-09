@@ -5,11 +5,15 @@
 \title{Update internal data
 Stores objects in R/sysdata.rda which is needed in the package}
 \usage{
-update_internal_data()
+update_internal_data(year)
+}
+\arguments{
+\item{year}{year for validgeo}
 }
 \value{
 \itemize{
-\item dimlist
+\item .validdims
+\item .validgeo
 }
 }
 \description{

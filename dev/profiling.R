@@ -1,3 +1,5 @@
 library(profvis)
 
-profvis(compare_censoring_timeseries(newcube, oldcube))
+
+profvis(select_valcol_pri(names(newcube), "teller")
+        )

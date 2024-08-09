@@ -116,7 +116,7 @@ compare_censoring <- function(cube.new,
   output <- collapse::join(new, old, on = "SPVFLAGG", how = "left", verbose = 0)
 
   cols <- c("N (new)", "N (old)")
-  output[, (cols) := lapply(.SD, replace_na, 0), .SDcols = cols]
+  output[, (cols) := lapply(.SD, collapse::replace_na, 0), .SDcols = cols]
 
   output[, let(Absolute = `N (new)` - `N (old)`,
                Relative = round(`N (new)` / `N (old)`, 3))]
@@ -159,7 +159,7 @@ compare_censoring_timeseries <- function(cube.new,
     d <- d[, .(N_censored = sum(SPVFLAGG != 0, na.rm = T)), by = c("cube", groupdims)]
     d <- d[, .N, by = .(cube, N_censored)]
     d[, let(Proportion = paste(round(100*N/sum(N), 1), "%")), by = cube]
-    d <- dcast(d, N_censored~cube, value.var = c("N", "Proportion"))[order(N_censored)]
+    d <- data.table::dcast(d, N_censored~cube, value.var = c("N", "Proportion"))[order(N_censored)]
     data.table::setcolorder(d, c("N_censored",
                                  grep("New", names(d), value = T),
                                  grep("Old", names(d), value = T)))
@@ -168,74 +168,4 @@ compare_censoring_timeseries <- function(cube.new,
   }
 
   return(tab_output(d, nosearchcolumns = 2:ncol(d) - 1))
-}
-
-
-ComparePrikkTS <- function(data1 = dfnew,
-                           data2 = dfold){
-
-  if(is.null(data2)){
-
-    # Identify dimension and value columns
-    .IdentifyColumns(data1)
-
-    data <- data.table::copy(data1)
-
-    # Identify grouping dimensions
-    groupdims <- stringr::str_subset(.dims1, "^AAR$", negate = TRUE)
-
-    # Calculate n censored observations,
-    data[, FLAGG := 0][SPVFLAGG != 0, FLAGG := 1]
-    data <- data[, .(N_PRIKK = sum(FLAGG, na.rm = TRUE)), by = groupdims]
-
-    # Aggregate to N prikk per strata
-    out <- data[, .(`N STRATA` = .N), by = .(N_PRIKK)]
-
-    # Calculate proportions of time series with n prikk
-    out[, ANDEL := round(`N STRATA`/sum(`N STRATA`), 3)]
-
-  } else {
-    # Identify dimension and value columns
-    .IdentifyColumns(data1, data2)
-
-    # Combine data
-    data <- data.table::rbindlist(list(data.table::copy(data1)[GEO != 99, .SD, .SDcols = .commoncols][, KUBE := "New"],
-                                       data.table::copy(data2)[GEO != 99, .SD, .SDcols = .commoncols][, KUBE := "Old"]))
-
-    # Identify grouping dimensions
-    groupdims <- stringr::str_subset(c(.commondims, "KUBE"), "^AAR$", negate = TRUE)
-
-    # Calculate n censored observations,
-    data[, FLAGG := 0][SPVFLAGG != 0, FLAGG := 1]
-    data <- data[, .(N_PRIKK = sum(FLAGG, na.rm = TRUE)), by = groupdims]
-
-    # Aggregate to N prikk per strata
-    data <- data[, .(`N STRATA` = .N), by = .(KUBE, N_PRIKK)]
-
-    # Calculate proportions of time series with n prikk
-    data[, ANDEL := round(`N STRATA`/sum(`N STRATA`), 3), by = KUBE]
-
-    # Create output table
-    out <- data.table::dcast(data, N_PRIKK~KUBE, value.var = c("N STRATA", "ANDEL"))
-    data.table::setcolorder(out, c(
-      "N_PRIKK",
-      stringr::str_subset(names(out), "New"),
-      stringr::str_subset(names(out), "Old")
-    ))
-  }
-
-  # Format and print output table
-  out <- out[, "N_PRIKK" := as.factor(N_PRIKK)][order(N_PRIKK)]
-  data.table::setnames(out, names(out), stringr::str_replace(names(out), "_", " "))
-
-  DT::datatable(out,
-                filter = "top",
-                rownames = F,
-                options = list(
-                  columnDefs = list(list(targets = 2:ncol(out)-1,
-                                         searchable = FALSE)),
-                  # Show length menu, table, pagination, and information
-                  dom = 'ltpi',
-                  scrollX = TRUE)
-  )
 }
