@@ -1,11 +1,15 @@
 library(microbenchmark)
 
-GROUPdims = c("AAR", "ALDER", "BODD")
-CompareGEO = TRUE
+d <- data.table::copy(newcube)
 
-microbenchmark(oldt = select_teller_pri(names(newcube)),
-               oldn = select_nevner_pri(names(newcube)),
-               times = 1000
-               )
+
+microbenchmark(ref = {
+  d <- data.table::copy(newcube)
+  get_complete_strata(d, c("GEO", "ALDER", "BODD"))
+},
+  copy = {
+    d <- data.table::copy(newcube)
+    get_complete_strata2(d, c("GEO", "ALDER", "BODD"))
+    }, times = 1000)
 
 

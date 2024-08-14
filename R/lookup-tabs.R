@@ -99,8 +99,12 @@ update_internal_data <- function(year){
 
   .validdims <- update_dimlist()
   .validgeo <- update_validgeo(year)
+  .popinfo <- readRDS(system.file("data", "popinfo.rds", package = "qualcontrol"))
+  .georecode <- readRDS(system.file("data", "georecode.rds", package = "qualcontrol"))
 
   usethis::use_data(.validdims,
                     .validgeo,
+                    .popinfo,
+                    .georecode,
                     internal = T,overwrite = T)
 }

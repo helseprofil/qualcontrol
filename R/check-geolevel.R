@@ -20,7 +20,7 @@ compare_geolevels <- function(cube,
   d <- data.table::copy(cube)
   groupdims <- grep("^GEO$", identify_coltypes(d)$dims.new, invert = T, value = T)
   teller_val <- select_teller_pri(names(d))
-  if(is.na(teller_val)){
+  if(is.null(teller_val)){
     cat("No sumTELLER(_uprikk) or TELLER(_uprikk) available, output not generated")
     return(invisible(NULL))
   }
@@ -68,11 +68,12 @@ compare_geolevels <- function(cube,
 #' Estimate the proportion of unknown bydel, to check validity of the data.
 #'
 #' @param cube data file
+#' @param maxrows Should the output table ble cropped to show a maximum of 4000 observations?
 #'
 #' @return DT
 #' @export
-unknown_bydel <- function(cube){
-
+unknown_bydel <- function(cube,
+                          maxrows = TRUE){
   d <- data.table::copy(cube)
   add_geoniv(d)
   if(nrow(d[GEOniv == "B"]) == 0){
@@ -81,8 +82,9 @@ unknown_bydel <- function(cube){
   }
 
   colinfo <- identify_coltypes(d)
-  targets <- c(select_teller_pri(colinfo$vals.new),
-               select_nevner_pri(colinfo$vals.new))
+  tellerval <- select_teller_pri(colinfo$vals.new)
+  nevnerval <- select_nevner_pri(colinfo$vals.new)
+  targets <- c(tellerval, nevnerval)
   targets <- targets[!is.na(targets)]
   bydims <- grep("^GEO$", colinfo$dims.new, invert = T, value = T)
 
@@ -93,26 +95,46 @@ unknown_bydel <- function(cube){
 
   targets <- targets[!is.na(targets)]
 
-  # Filter data
+  # Filter and format data
   d <- d[GEO %in% c(301, 1103, 4601, 5001) | GEOniv == "B"]
   contains_bydel <- d[GEOniv == "B" & SPVFLAGG == 0, unique(AAR)]
   d <- d[AAR %in% contains_bydel]
   add_kommune(d)
-  d <- d[, mget(c("KOMMUNE", colinfo$dims.new, targets, "SPVFLAGG"))]
-
-  # Format data
+  d <- d[, mget(c("KOMMUNE", "GEOniv", colinfo$dims.new, targets, "SPVFLAGG"))]
   d <- data.table::melt(d, measure.vars = targets, variable.name = "TARGET")
-  d <- get_complete_strata(d, c("KOMMUNE", bydims, "TARGET"))
+  d <- get_complete_strata(d, c("KOMMUNE", "TARGET", bydims), "missing", "value")
 
   if(nrow(d) < 1){
     cat("No complete strata, not possible to estimate unspecified bydel. Was bydelstart set to the correct year?\n")
     return(invisible(NULL))
   }
 
+  # Estimate % unknown
+  d <- d[, .(sum = sum(value, na.rm = T)), by = c("KOMMUNE", "GEOniv", "TARGET", bydims)]
+  d <- data.table::dcast(d, ... ~ GEOniv, value.var = "sum")
+  d[, UNKNOWN := round(100*(1 - B/K), 2)]
+  d[B == 0 & K == 0, UNKNOWN := NA_real_]
+  d <- d[order(-UNKNOWN)]
+  data.table::setcolorder(d, c("KOMMUNE", bydims, "TARGET", "K", "B", "UNKNOWN"))
+  data.table::setnames(d, c("K", "B", "UNKNOWN"), c("Kommune", "Bydel", "UNKNOWN, %"))
 
-  return(d)
+  cat(paste0("Total number of strata with complete bydel (teller): ", nrow(d[TARGET == tellerval])))
+  cat(paste0("\nOslo: ", nrow(d[TARGET == tellerval & KOMMUNE == "Oslo"])))
+  cat(paste0("\nBergen: ", nrow(d[TARGET == tellerval & KOMMUNE == "Bergen"])))
+  cat(paste0("\nStavanger: ", nrow(d[TARGET == tellerval & KOMMUNE == "Stavanger"])))
+  cat(paste0("\nTrondheim: ", nrow(d[TARGET == tellerval & KOMMUNE == "Trondheim"])))
 
+  if(maxrows && nrow(d) > 4000){
+    combinations <- length(unique(d$KOMMUNE)) * length(unique(d$TARGET))
+    n_obs_per_strata <- floor(8000 / combinations)
+    cat(paste0("\nTop ", n_obs_per_strata, " observations shown per MALTALL per KOMMUNE: "))
+    d <- d[, .SD[1:n_obs_per_strata], by = c("KOMMUNE", "TARGET")]
+  }
 
+  tofactor <-which(!sapply(d, is.numeric))
+  d[, (tofactor) := lapply(.SD, as.factor), .SDcols = tofactor]
+
+  return(tab_output(d))
 }
 
 

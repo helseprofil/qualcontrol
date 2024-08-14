@@ -30,24 +30,24 @@ check_censoring <- function(data){
     return(invisible(NULL))
   }
 
-  val_teller <- select_teller_pri(colinfo$vals.new)
-  val_nevner <- select_nevner_pri(colinfo$vals.new)
+  tellerval <- select_teller_pri(colinfo$vals.new)
+  nevnerval <- select_nevner_pri(colinfo$vals.new)
 
   # Check censoring on TELLER
-  if(is.na(val_teller)){
+  if(is.null(tellerval)){
     cat("\nTELLER variable not available in cube, censoring on TELLER not controlled")
     notcensored_teller <- NULL
   } else {
-    cat(paste0("\nTELLER variable controlled: ", val_teller))
+    cat(paste0("\nTELLER variable controlled: ", tellerval))
     cat(paste0("\nCriteria: No values <= ", lim_teller))
-    notcensored_teller <- data[SPVFLAGG == 0 & get(val_teller) <= lim_teller]
+    notcensored_teller <- data[SPVFLAGG == 0 & get(tellerval) <= lim_teller]
   }
 
   if(!is.null(notcensored_teller)){
     if(nrow(notcensored_teller) == 0) cat("\nNo TELLER values <= limit")
     if(nrow(notcensored_teller) > 0){
       cat(paste0("\nN values <= limit: ", nrow(notcensored_teller)))
-      cat(paste0("\nView all rows with ", val_teller, " <= ", lim_teller, " with View(notcensored_teller)"))
+      cat(paste0("\nView all rows with ", tellerval, " <= ", lim_teller, " with View(notcensored_teller)"))
       notcensored_teller <<- notcensored_teller
       View(notcensored_teller)
     }
@@ -55,26 +55,25 @@ check_censoring <- function(data){
 
   # Check censoring on NEVNER
   cat("\n---")
-  if(is.na(val_nevner)){
+  if(is.null(nevnerval)){
     cat("\nNEVNER variable not available in cube, censoring on NEVNER not controlled")
     notcensored_nevner <- NULL
   } else {
-    cat(paste0("\nNEVNER variable controlled: ", val_nevner))
+    cat(paste0("\nNEVNER variable controlled: ", nevnerval))
     cat(paste0("\nCriteria: No values <= ", lim_nevner))
-    notcensored_nevner <- data[SPVFLAGG == 0 & get(val_nevner) <= lim_nevner]
+    notcensored_nevner <- data[SPVFLAGG == 0 & get(nevnerval) <= lim_nevner]
   }
 
   if(!is.null(notcensored_nevner)){
     if(nrow(notcensored_nevner) == 0) cat("\nNo NEVNER values <= limit")
     if(nrow(notcensored_nevner) > 0){
       cat(paste0("\nN values <= limit: ", nrow(notcensored_nevner)))
-      cat(paste0("\nView all rows with ", val_nevner, " <= ", lim_nevner, " with View(notcensored_nevner)"))
+      cat(paste0("\nView all rows with ", nevnerval, " <= ", lim_nevner, " with View(notcensored_nevner)"))
       notcensored_nevner <<- notcensored_nevner
       View(notcensored_nevner)
     }
   }
 }
-
 
 #' @@title compare_censoring
 #' @description

@@ -15,6 +15,7 @@ Imports:
     DBI (>= 1.2.0),
     DT,
     forcats,
+    ggh4x,
     ggplot2 (>= 3.5.0),
     ggtext (>= 0.1.2),
     norgeo,

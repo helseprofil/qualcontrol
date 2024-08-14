@@ -1,5 +1,4 @@
 library(profvis)
 
 
-profvis(select_valcol_pri(names(newcube), "teller")
-        )
+profvis(plot_timeseries_country(newcube))

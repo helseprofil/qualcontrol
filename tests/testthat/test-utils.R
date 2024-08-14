@@ -96,3 +96,13 @@ test_that("add_kommune works", {
   add_kommune(d)
   expect_equal(d$KOMMUNE, c(NA, NA, "Oslo", "Stavanger", "Bergen", "Trondheim", NA, NA,"Stavanger", "Oslo", "Bergen", "Trondheim"))
 })
+
+test_that("get_complete_strata works", {
+  expect_no_error(get_complete_strata(cube1, by = c("AAR", "KJONN", "ALDER"), type = "censored"))
+  expect_equal(sum(cube1$n_censored), 3)
+  expect_no_error(get_complete_strata(cube1, by = c("AAR", "KJONN", "ALDER"), type = "missing", valuecolumn = "TELLER"))
+  expect_equal(sum(cube1$n_censored), 0)
+  cube1[, let(n_censored = NULL)]
+  expect_error(get_complete_strata(cube1, by = c("AAR", "KJONN", "ALDER"), type = "missing", valuecolumn = NULL),
+               regexp = "When type = 'missing', a valid column name must be provided to the value argument")
+})

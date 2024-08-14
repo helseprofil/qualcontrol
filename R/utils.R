@@ -120,7 +120,7 @@ select_teller_pri <- function(valuecolumns){
                               "sumTELLER" %in% valuecolumns, "sumTELLER",
                               "TELLER_uprikk" %in% valuecolumns, "TELLER_uprikk",
                               "TELLER" %in% valuecolumns, "TELLER",
-                              default = NA_character_)
+                              default = NULL)
   return(teller)
 }
 
@@ -135,7 +135,7 @@ select_nevner_pri <- function(valuecolumns){
                               "sumNEVNER" %in% valuecolumns, "sumNEVNER",
                               "NEVNER_uprikk" %in% valuecolumns, "NEVNER_uprikk",
                               "NEVNER" %in% valuecolumns, "NEVNER",
-                              default = NA_character_)
+                              default = NULL)
   return(nevner)
 }
 
@@ -212,6 +212,23 @@ aggregate_cube <- function(cube, dim){
   }
 }
 
+#' @title aggregate_cube_multi
+#' @description
+#' Wrapper around [aggregate_cube()] to apply to multiple dimensions
+#' #'
+#' @param cube data file
+#' @param dimensions vector of dimensions to aggregate by
+#'
+#' @return data.table
+#' @export
+aggregate_cube_multi <- function(cube, dimensions){
+  d <- data.table::copy(cube)
+  for(dim in dimensions){
+    d <- aggregate_cube(d, dim)
+  }
+  return(d)
+}
+
 #'
 #' @title filter_cube
 #' @description
@@ -273,14 +290,14 @@ convert_coltype <- function(data,
 #' @keywords internal
 #' @noRd
 #' @description
-#' Adds column GEOniv to identify geographical levels. Uses population info from "sysdata.rda"
+#' Adds column GEOniv to identify geographical levels. Uses population info from "sysdata.rda",
+#' stored as the internal object .popinfo
 #' Adds the column by reference, no need to overwrite object.
 #' @examples
 #' # add_geoniv(data)
 add_geoniv <- function(data,
                        combine.kommune = F){
-  popinfo <- readRDS(system.file("data", "popinfo.rds", package = "qualcontrol"))
-  data[popinfo, GEOniv := i.GEOniv, on = "GEO"]
+  data[.popinfo, GEOniv := i.GEOniv, on = "GEO"]
   if(combine.kommune) data[, GEOniv := forcats::fct_collapse(GEOniv, K = c("K", "k"))]
   data[, GEOniv := forcats::fct_drop(GEOniv)]
   return(data)
@@ -315,15 +332,35 @@ add_kommune <- function(data){
 }
 
 #' @keywords internal
-#' @noRd
 #' @description
 #' Returns only complete strata, as defined by the columns in `by`. Generate
 #' a new column called `n_censored`, indicating the number of censored observations in
 #' each strata, and returns rows where `n_censored` = 0.
-get_complete_strata <- function(data, by){
-  if("GEO" %in% dimensions) dimensions <- grep("^GEO$", dimensions, invert = T, value = T)
-  d <- data.table::copy(data)
-  data[, let(n_censored = sum(SPVFLAGG != 0)), by = dimensions]
-  data <- data[n_censored == 0][, n_]
+#' `n_censored` is added by reference to the data file. To also filter the data, the data must be assigned, see examples.
+#' @param data data file
+#' @param by dimension columns to get complete strata by
+#' @param type Should complete strata be identified by SPVFLAGG ("censored") or by missing value column ("missing")
+#' @param valuecolumn must be provided when type = "missing", which value column should be used to identify complete strata?
+#'
+#' @examples
+#' # Add n_censored, no filtering
+#' # get_complete_strata(data, by = bycols, type = "censored")
+#' # Actually filter data
+#' # data <- get_complete_strata(data, by = bycols, type = "censored")
+get_complete_strata <- function(data,
+                                by,
+                                type = c("censored", "missing"),
+                                valuecolumn = NULL){
+  if("GEO" %in% by) by <- grep("^GEO$", by, invert = T, value = T)
+
+  if(type == "missing" && (is.null(valuecolumn) || valuecolumn %notin% names(data))){
+     stop("When type = 'missing', a valid column name must be provided to the value argument")
+  }
+
+  switch(type,
+         censored = data[, let(n_censored = sum(SPVFLAGG != 0)), by = by],
+         missing = data[, let(n_censored = sum(is.na(get(valuecolumn)))), by = by])
+  data <- data[n_censored == 0]
+  data[, let(n_censored = NULL)]
   return(data)
 }

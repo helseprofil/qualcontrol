@@ -150,14 +150,12 @@ is_valid_outcols <- function(data){
 recode_geo <- function(data, recode){
   if(!recode) return(data)
 
-  geotab <- readRDS(system.file("data", "georecode.rds", package = "qualcontrol"))
-
-  geoyear <- attributes(geotab)$year
+  geoyear <- attributes(.georecode)$year
   cubeversion <- attributes(data)$Cubeversion
-  recodings <- geotab[old %in% data$GEO]
+  recodings <- .georecode[old %in% data$GEO]
   if(nrow(recodings > 0)) cat("\nIn", cubeversion, "cube: Recoding", nrow(recodings), "geographical codes to", geoyear)
 
-  d <- collapse::join(data, geotab, on = c("GEO" = "old"), how = "left", verbose = 0)
+  d <- collapse::join(data, .georecode, on = c("GEO" = "old"), how = "left", verbose = 0)
   d[, let(origgeo = GEO)]
   d[!is.na(current), let(GEO = current)]
   d[, let(current = NULL)]

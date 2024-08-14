@@ -9,7 +9,7 @@ readfiles(cube.new = "TRANGBODDHET_2023-11-20-11-05",
           recode.old = T)
 
 
-data = data.table::copy(newcube)
+cube = data.table::copy(newcube)
 cube.new = data.table::copy(newcube)
 cube.old = data.table::copy(oldcube)
 
