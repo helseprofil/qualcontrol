@@ -4,12 +4,12 @@
 \alias{generate_qcfolders}
 \title{generate_folders}
 \usage{
-generate_qcfolders(year, cubename)
+generate_qcfolders(cubename, year = NULL)
 }
 \arguments{
-\item{profileyear}{profileyear}
+\item{cubename}{name of cube}
 
-\item{kubename}{name of cube}
+\item{year}{profileyear, defaults to options(qualcontrol.year)}
 }
 \description{
 Create Folder structure according to profile year and cube name of new data file

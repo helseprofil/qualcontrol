@@ -106,3 +106,12 @@ test_that("get_complete_strata works", {
   expect_error(get_complete_strata(cube1, by = c("AAR", "KJONN", "ALDER"), type = "missing", valuecolumn = NULL),
                regexp = "When type = 'missing', a valid column name must be provided to the value argument")
 })
+
+test_that("update_qcyear works", {
+
+  configyear <- yaml::yaml.load_file(paste("https://raw.githubusercontent.com/helseprofil/config/main/config-qualcontrol.yml"))$year
+  update_qcyear(year = 9999)
+  expect_equal(getOption("qualcontrol.year"), 9999)
+  update_qcyear()
+  expect_equal(getOption("qualcontrol.year"), configyear)
+})

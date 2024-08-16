@@ -35,23 +35,29 @@ identify_coltypes <- function(cube.new = NULL,
   return(out)
 }
 
+#' @keywords internal
+#' @noRd
+get_cubename <- function(cube){
+  gsub("^QC_|_\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}|\\.csv$", "", attributes(cube)$Filename)
+}
 
 #' @keywords internal
 #' @noRd
-get_cubename <- function(data){
-  gsub("^QC_|_\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}|\\.csv$", "", attributes(data)$Filename)
+get_cubedatetag <- function(cube){
+  gsub(".*(\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}).*", "\\1", attributes(cube)$Filename)
 }
 
 #' @title generate_folders
 #' @description
 #' Create Folder structure according to profile year and cube name of new data file
 #'
-#' @param profileyear profileyear
-#' @param kubename name of cube
+#' @param cubename name of cube
+#' @param year profileyear, defaults to options(qualcontrol.year)
 #' @export
-generate_qcfolders <- function(year,
-                               cubename){
+generate_qcfolders <- function(cubename,
+                               year = NULL){
 
+  if(is.null(year)) year <- getOption("qualcontrol.year")
   path <- file.path(getOption("qualcontrol.root"),
                     getOption("qualcontrol.output"),
                     year)
@@ -61,11 +67,12 @@ generate_qcfolders <- function(year,
   cubedir <- file.path(path, cubename)
   filedumpdir <- file.path(cubedir, "FILDUMPER")
   plotdir <- file.path(cubedir, "PLOTT")
-  bpdir <- file.path(plotdir, "BP")
-  bpcdir <- file.path(plotdir, "BPc")
-  tsdir <- file.path(plotdir, "TS")
-  tscdir <- file.path(plotdir, "TSc")
-  tldir <- file.path(plotdir, "TL")
+  bpdir <- file.path(plotdir, "Boxplot")
+  bpcdir <- file.path(plotdir, "Boxplot_change")
+  tsdir <- file.path(plotdir, "TimeSeries")
+  tscdir <- file.path(plotdir, "TimeSeries_change")
+  tsbdir <- file.path(plotdir, "TimeSeries_bydel")
+  tsldir <- file.path(plotdir, "TimeSeries_country")
 
   folders <- c(cubedir,
                filedumpdir,
@@ -74,7 +81,8 @@ generate_qcfolders <- function(year,
                bpcdir,
                tsdir,
                tscdir,
-               tldir)
+               tsbdir,
+               tsldir)
 
   for(i in folders){
     if(!dir.exists(i)) dir.create(i)
@@ -331,6 +339,7 @@ add_kommune <- function(data){
   return(data)
 }
 
+#' @title get_complete_strata
 #' @keywords internal
 #' @description
 #' Returns only complete strata, as defined by the columns in `by`. Generate
@@ -363,4 +372,18 @@ get_complete_strata <- function(data,
   data <- data[n_censored == 0]
   data[, let(n_censored = NULL)]
   return(data)
+}
+
+#' @title update_qcyear
+#' @param year corresponding to which output folder you want the output to go into.
+#' Default value is given in the config_qualcontrol.yml file.
+#' @export
+#' @examples
+#' # To use 2025 as the base folder for output:
+#' # update_qcyear(year = 2025)
+#' # To use the year as defined in the config file:
+#' # update_qcyear(year = NULL)
+update_qcyear <- function(year = NULL){
+  if(is.null(year)) year <- yaml::yaml.load_file(paste("https://raw.githubusercontent.com/helseprofil/config/main/config-qualcontrol.yml"))$year
+  options(qualcontrol.year = year)
 }

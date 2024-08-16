@@ -3,9 +3,9 @@
 theme_qc <- function(){
   ggplot2::theme_bw() +
   ggplot2::theme(legend.position = "top",
-                 panel.grid.minor = element_blank(),
-                 text = element_text(color = "black", size = 14),
-                 plot.margin = margin(t = 1, b = 1, r = 1, unit = "cm"))
+                 panel.grid.minor = ggplot2::element_blank(),
+                 text = ggplot2::element_text(color = "black", size = 20),
+                 plot.margin = ggplot2::margin(t = 1, b = 1, r = 1, l = 1, unit = "cm"))
 }
 
 #' @title tab_output
