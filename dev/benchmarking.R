@@ -1,24 +1,14 @@
 library(microbenchmark)
 
-d <- data.table::copy(newcube)
 
 
-microbenchmark(ref = {
-  d <- data.table::copy(newcube)
-  d <- d[, c(..colinfo[["dims.new"]], ..plotvals)]
-},
+microbenchmark(
+  old = {
+    compare_dimensions(cube.new, cube.old)
+    },
   new = {
-    d <- data.table::copy(newcube)
-    d <- d[, mget(c(colinfo$dims.new, plotvals))]
+    compare_dimensions2(cube.new, cube.old)
     },
-  new2 = {
-    d <- data.table::copy(newcube)
-    d <- d[, mget(c(colinfo[["dims.new"]], plotvals))]
-    },
-new3 = {
-  d <- data.table::copy(newcube)
-  alldims <- colinfo$dims.new
-  d <- d[, c(..alldims, ..plotvals)]
-}, times = 500)
+  times = 5000)
 
 

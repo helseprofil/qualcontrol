@@ -48,22 +48,25 @@ compare_dimensions <- function(cube.new = NULL,
   colinfo <- identify_coltypes(cube.new, cube.old)
 
   out <- list(Dimension = colinfo$dims.new)
+  dimlength <- length(out$Dimension)
 
-  n_lev <-  integer()
-  for(i in out$Dimension) {
-    n_lev <- c(n_lev, length(unique(cube.new[[i]])))
+  n_lev <- integer(dimlength)
+  for(i in 1:dimlength) {
+    dim <- out$Dimension[i]
+    n_lev[i] <- length(unique(cube.new[[dim]]))
   }
   out[["N levels"]] <- n_lev
 
   if(!is.null(cube.old)){
-    new_lev <- character()
-    exp_lev <- character()
+    new_lev <- character(dimlength)
+    exp_lev <- character(dimlength)
 
-    for(i in out$Dimension){
-      new <- unique(cube.new[[i]][cube.new[[i]] %notin% cube.old[[i]]])
-      exp <- unique(cube.old[[i]][cube.old[[i]] %notin% cube.new[[i]]])
-      new_lev <- c(new_lev, ifelse(length(new) == 0, "", paste0(new, collapse = ", ")))
-      exp_lev <- c(exp_lev, ifelse(length(exp) == 0, "", paste0(exp, collapse = ", ")))
+    for(i in 1:dimlength){
+      dim <- out$Dimension[i]
+      new <- unique(cube.new[[dim]][cube.new[[dim]] %notin% cube.old[[dim]]])
+      exp <- unique(cube.old[[dim]][cube.old[[dim]] %notin% cube.new[[dim]]])
+      new_lev[i] <- ifelse(length(new) == 0, "", paste0(new, collapse = ", "))
+      exp_lev[i] <- ifelse(length(exp) == 0, "", paste0(exp, collapse = ", "))
     }
 
     out[["New levels"]] <- new_lev

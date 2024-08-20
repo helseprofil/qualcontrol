@@ -9,15 +9,17 @@ readfiles(cube.new = "TRANGBODDHET_2023-11-20-11-05",
           modus.old = "KH",
           recode.old = T)
 
+# HKR
+readfiles(cube.new = "HKR_2024-02-01-12-42",
+          modus.new = "KH",
+          cube.old = "HKR_2022-12-14-12-18",
+          modus.old = "KH",
+          recode.old = T)
+
 
 cube = data.table::copy(newcube)
 cube.new = data.table::copy(newcube)
 cube.old = data.table::copy(oldcube)
 
-
-
 # TO-DO
-# - Consider saving plots directly in the plots folder, instead of in reports.
-#   - Will make the reports smaller.
-#   - Will make sizing of the plotting area easier
 # - Make function to save report
