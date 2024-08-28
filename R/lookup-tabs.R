@@ -44,14 +44,15 @@ update_popinfo <- function(popfile, overwrite = T){
   data.table::setnames(tab, "TELLER", "WEIGHTS")
   tab[, GEOniv := data.table::fcase(GEO == 0, "L",
                                     GEO <= 99, "F",
-                                    GEO < 10000 & WEIGHTS >= 10000, "K",
-                                    GEO < 10000 & WEIGHTS < 10000, "k",
-                                    GEO >= 10000, "B")]
+                                    GEO < 10000, "K",
+                                    GEO < 1000000, "B",
+                                    GEO > 1000000, "V")]
   hreg <- data.table::data.table(GEO = 81:84,
                                  WEIGHTS = 0,
                                  GEOniv = "H")
   tab <- data.table::rbindlist(list(tab, hreg))
-  tab[, GEOniv := factor(GEOniv, levels = c("H", "L", "F", "K", "k", "B"))]
+  tab[, GEOniv := factor(GEOniv, levels = c("L", "H", "F", "K", "B", "V"))]
+  data.table::setattr(tab, "popfile", basename(popfile))
 
   path <- file.path(system.file("data", package = "qualcontrol"), "popinfo.rds")
   if(!file.exists(path)) file.create(path)
@@ -81,7 +82,7 @@ update_dimlist <- function(){
 update_validgeo <- function(year){
   con <- ConnectGeokoder()
   on.exit(RODBC::odbcClose(con), add = T)
-  out <- RODBC::sqlQuery(con, paste0("SELECT code FROM tblGeo WHERE validTO='", year, "' AND level IN ('fylke', 'kommune', 'bydel')"))
+  out <- RODBC::sqlQuery(con, paste0("SELECT * FROM tblGeo WHERE validTO='", year, "' AND level IN ('fylke', 'kommune', 'bydel', 'levekaar')"))
   out <- c(0, out$code)
   return(sort(out))
 }
@@ -107,4 +108,5 @@ update_internal_data <- function(year){
                     .popinfo,
                     .georecode,
                     internal = T,overwrite = T)
+  cat("Internal data updated, remember to push the new changes to GitHub")
 }

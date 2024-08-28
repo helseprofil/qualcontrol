@@ -2,13 +2,16 @@ library(microbenchmark)
 
 
 
+
 microbenchmark(
   old = {
-    compare_dimensions(cube.new, cube.old)
+    .FlagNew(cube.new, cube.old, colinfo$commondims, colinfo$newdims,colinfo$dims.new, colinfo$vals.new, F)
+    .FlagOld(cube.new, cube.old, colinfo$commondims, colinfo$expdims,colinfo$dims.new, colinfo$vals.new, F)
     },
+
   new = {
-    compare_dimensions2(cube.new, cube.old)
+    make_comparecube(cube.new, cube.old)
     },
-  times = 5000)
+  times = 100)
 
 

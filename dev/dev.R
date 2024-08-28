@@ -21,5 +21,8 @@ cube = data.table::copy(newcube)
 cube.new = data.table::copy(newcube)
 cube.old = data.table::copy(oldcube)
 
+colinfo <- identify_coltypes(cube.new, cube.old)
+
 # TO-DO
 # - Make function to save report
+

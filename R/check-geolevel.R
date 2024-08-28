@@ -20,13 +20,12 @@ compare_geolevels <- function(cube,
   d <- data.table::copy(cube)
   groupdims <- grep("^GEO$", identify_coltypes(d)$dims.new, invert = T, value = T)
   teller_val <- select_teller_pri(names(d))
-  if(is.null(teller_val)){
+  if(is.na(teller_val)){
     cat("No sumTELLER(_uprikk) or TELLER(_uprikk) available, output not generated")
     return(invisible(NULL))
   }
 
   # Filter correct data
-  add_geoniv(d, combine.kommune = T)
   d <- switch(comparison,
               FL = d[GEOniv %in% c("L", "F")],
               FK = d[GEOniv %in% c("F", "K")],
@@ -73,9 +72,9 @@ compare_geolevels <- function(cube,
 #' @return DT
 #' @export
 unknown_bydel <- function(cube,
-                          maxrows = TRUE){
+                          crop = TRUE,
+                          maxrows = 4000){
   d <- data.table::copy(cube)
-  add_geoniv(d)
   if(nrow(d[GEOniv == "B"]) == 0){
     cat("No data on bydel, no check performed")
     return(invisible(NULL))
@@ -92,8 +91,6 @@ unknown_bydel <- function(cube,
     cat("No TELLER or NEVNER columns found in data, not possible to estimate unspecified bydel.\n")
     return(invisible(NULL))
   }
-
-  targets <- targets[!is.na(targets)]
 
   # Filter and format data
   d <- d[GEO %in% c(301, 1103, 4601, 5001) | GEOniv == "B"]
@@ -124,9 +121,9 @@ unknown_bydel <- function(cube,
   cat(paste0("\nStavanger: ", nrow(d[TARGET == tellerval & KOMMUNE == "Stavanger"])))
   cat(paste0("\nTrondheim: ", nrow(d[TARGET == tellerval & KOMMUNE == "Trondheim"])))
 
-  if(maxrows && nrow(d) > 4000){
+  if(crop && nrow(d) > maxrows){
     combinations <- length(unique(d$KOMMUNE)) * length(unique(d$TARGET))
-    n_obs_per_strata <- floor(8000 / combinations)
+    n_obs_per_strata <- floor(maxrows / combinations)
     cat(paste0("\nTop ", n_obs_per_strata, " observations shown per MALTALL per KOMMUNE: "))
     d <- d[, .SD[1:n_obs_per_strata], by = c("KOMMUNE", "TARGET")]
   }

@@ -34,7 +34,7 @@ check_censoring <- function(data){
   nevnerval <- select_nevner_pri(colinfo$vals.new)
 
   # Check censoring on TELLER
-  if(is.null(tellerval)){
+  if(is.na(tellerval)){
     cat("\nTELLER variable not available in cube, censoring on TELLER not controlled")
     notcensored_teller <- NULL
   } else {
@@ -55,7 +55,7 @@ check_censoring <- function(data){
 
   # Check censoring on NEVNER
   cat("\n---")
-  if(is.null(nevnerval)){
+  if(is.na(nevnerval)){
     cat("\nNEVNER variable not available in cube, censoring on NEVNER not controlled")
     notcensored_nevner <- NULL
   } else {

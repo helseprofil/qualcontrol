@@ -13,7 +13,7 @@ identify_coltypes <- function(cube.new = NULL,
 
   if(is.null(cube.new)) stop("cube.new must be provided")
 
-  misc_cols <- c("origgeo", "GEOniv", "KOMMUNE")
+  misc_cols <- c("origgeo", "GEOniv", "KOMMUNE", "WEIGHTS")
   out <- list()
 
   out[["dims.new"]] <- names(cube.new)[names(cube.new) %in% .validdims]
@@ -120,7 +120,6 @@ get_all_combinations <- function(data,
 #' @keywords internal
 #' @description
 #' Selects first available from sumTELLER_uprikk > sumTELLER > TELLER
-#'
 #' @noRd
 select_teller_pri <- function(valuecolumns){
 
@@ -128,14 +127,13 @@ select_teller_pri <- function(valuecolumns){
                               "sumTELLER" %in% valuecolumns, "sumTELLER",
                               "TELLER_uprikk" %in% valuecolumns, "TELLER_uprikk",
                               "TELLER" %in% valuecolumns, "TELLER",
-                              default = NULL)
+                              default = NA_character_)
   return(teller)
 }
 
 #' @keywords internal
 #' @description
 #' Selects first available from sumTELLER_uprikk > sumTELLER > TELLER
-#'
 #' @noRd
 select_nevner_pri <- function(valuecolumns){
 
@@ -143,7 +141,7 @@ select_nevner_pri <- function(valuecolumns){
                               "sumNEVNER" %in% valuecolumns, "sumNEVNER",
                               "NEVNER_uprikk" %in% valuecolumns, "NEVNER_uprikk",
                               "NEVNER" %in% valuecolumns, "NEVNER",
-                              default = NULL)
+                              default = NA_character_)
   return(nevner)
 }
 
@@ -295,19 +293,19 @@ convert_coltype <- function(data,
   data[, (columns) := lapply(.SD, fun), .SDcols = columns]
 }
 
+
+
+#' @title split_kommuneniv
+#' @description
+#' Splits GEOniv = K into K (WEIGHTS > 10000) and k (WEIGHTS < 10000). Used for plotting purposes.
 #' @keywords internal
 #' @noRd
-#' @description
-#' Adds column GEOniv to identify geographical levels. Uses population info from "sysdata.rda",
-#' stored as the internal object .popinfo
-#' Adds the column by reference, no need to overwrite object.
-#' @examples
-#' # add_geoniv(data)
-add_geoniv <- function(data,
-                       combine.kommune = F){
-  data[.popinfo, GEOniv := i.GEOniv, on = "GEO"]
-  if(combine.kommune) data[, GEOniv := forcats::fct_collapse(GEOniv, K = c("K", "k"))]
-  data[, GEOniv := forcats::fct_drop(GEOniv)]
+split_kommuneniv <- function(data){
+  if(all(c("GEOniv", "WEIGHTS") %in% names(data))){
+    data[, let(GEOniv = forcats::fct_expand(GEOniv, "k", after = which(levels(GEOniv) == "K")))]
+    data[GEOniv == "K" & WEIGHTS < 10000, let(GEOniv = "k")]
+    levels <- c("L", "H", "F")
+  }
   return(data)
 }
 
@@ -318,7 +316,9 @@ translate_geoniv <- function(data){
   data <- data.table::copy(data)[, GEOniv := data.table::fcase(GEOniv == "L", "Land",
                                                                GEOniv == "F", "Fylke",
                                                                GEOniv == "K", "Kommune",
-                                                               GEOniv == "B", "Bydel")]
+                                                               GEOniv == "k", "Kommune",
+                                                               GEOniv == "B", "Bydel",
+                                                               GEOniv == "V", "Levekaar")]
   return(data)
 }
 

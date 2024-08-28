@@ -20,22 +20,28 @@ readfiles <- function(cube.new = NULL,
                       modus.old = c("KH", "NH"),
                       recode.old = FALSE){
 
+  newcube <- oldcube <- NULL
+
   modus.new <- match.arg(modus.new)
   modus.old <- match.arg(modus.old)
-
   readfiles_checkargs(cube.new, cube.old, modus.new, modus.old, recode.new, recode.old)
 
+  cube.new <- add_csv(cube.new)
   path.new <- find_cube(cube.new, modus.new)
   newcube <- read_cube(path.new, type = "New")
-  newcube <<- recode_geo(newcube, recode.new)
+  newcube <- recode_geo(newcube, recode.new)
+  add_geoparams(newcube)
 
-  if(is.null(cube.old)){
-    oldcube <<- NULL
-  } else {
+  if(!is.null(cube.old)){
+    cube.old <- add_csv(cube.old)
     path.old <- find_cube(cube.old, modus.old)
     oldcube <- read_cube(path.old, type = "Old")
-    oldcube <<- recode_geo(oldcube, recode.old)
+    oldcube <- recode_geo(oldcube, recode.old)
+    add_geoparams(oldcube)
   }
+
+  newcube <<- newcube
+  oldcube <<- oldcube
 }
 
 #' @keywords internal
@@ -137,9 +143,9 @@ list_renamecols <- function(org, new, type){
 
 #' @keywords internal
 #' @noRd
-is_valid_outcols <- function(data){
+is_valid_outcols <- function(dt){
 
-  outcols <- names(data)[names(data) %in% c("TELLER", "NEVNER", "sumTELLER", "sumNEVNER")]
+  outcols <- names(dt)[names(dt) %in% c("TELLER", "NEVNER", "sumTELLER", "sumNEVNER")]
   if(length(outcols) > 0){
     cat("\n\nNB! New file contains ", paste(outcols, collapse = ", "), ". Is this ok for ALLVIS?", sep = "")
   }
@@ -147,18 +153,43 @@ is_valid_outcols <- function(data){
 
 #' @keywords internal
 #' @noRd
-recode_geo <- function(data, recode){
-  if(!recode) return(data)
+recode_geo <- function(dt, recode){
+  if(!recode) return(dt)
 
   geoyear <- attributes(.georecode)$year
-  cubeversion <- attributes(data)$Cubeversion
-  recodings <- .georecode[old %in% data$GEO]
-  if(nrow(recodings > 0)) cat("\nIn", cubeversion, "cube: Recoding", nrow(recodings), "geographical codes to", geoyear)
+  cubeversion <- attributes(dt)$Cubeversion
+  recodings <- .georecode[old %in% dt$GEO][order(old)]
+  if(nrow(recodings > 0)) cat(paste0("\nIn ", cubeversion, " cube: Recoding ", nrow(recodings), " geographical codes to ", geoyear, "-codes"))
 
-  d <- collapse::join(data, .georecode, on = c("GEO" = "old"), how = "left", verbose = 0)
+  d <- collapse::join(dt, .georecode, on = c("GEO" = "old"), how = "left", verbose = 0)
   d[, let(origgeo = GEO)]
   d[!is.na(current), let(GEO = current)]
   d[, let(current = NULL)]
 
+  data.table::setattr(d, "GEOrecode", list(orgcodes = recodings$old,
+                                           newcodes = recodings$current))
+
   return(d)
+}
+
+#' @keywords internal
+#' @noRd
+#' @description
+#' Adds columns GEOniv to identify geographical levels and WEIGHTS to represent population size.
+#' Uses population info from "sysdata.rda", stored as the internal object .popinfo
+#' Adds the columns by reference, no need to overwrite object.
+#' @examples
+#' # add_geoparams(dt)
+add_geoparams <- function(dt){
+  dt[.popinfo, let(GEOniv = i.GEOniv, WEIGHTS = i.WEIGHTS), on = "GEO"]
+  dt[, GEOniv := forcats::fct_drop(GEOniv)]
+  # dt[is.na(WEIGHTS), let(WEIGHTS = 0)]
+  return(dt)
+}
+
+#' @keywords internal
+#' @noRd
+add_csv <- function(cubename){
+  if(grepl(".*\\.csv$", cubename)) return(cubename)
+  return(paste0(cubename, ".csv"))
 }
