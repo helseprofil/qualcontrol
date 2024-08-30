@@ -9,9 +9,9 @@
 #' @param overwrite should the current table be replaced by the new?
 #' @examples
 #' # qualcontrol:::update_georecode(2024, overwrite = T)
-update_georecode <- function(year, overwrite = T){
+update_georecode <- function(year, overwrite = TRUE){
   con <- ConnectGeokoder()
-  on.exit(RODBC::odbcClose(con), add = T)
+  on.exit(RODBC::odbcClose(con), add = TRUE)
   tab <- data.table::rbindlist(list(data.table::setDT(RODBC::sqlQuery(con, paste0("SELECT oldCode, currentCode FROM kommune", year))),
                                     data.table::setDT(RODBC::sqlQuery(con, paste0("SELECT oldCode, currentCode FROM fylke", year)))))
   data.table::setnames(tab, c("old", "current"))
@@ -20,9 +20,10 @@ update_georecode <- function(year, overwrite = T){
 
   path <- file.path(system.file("data", package = "qualcontrol"), "georecode.rds")
   if(!file.exists(path)) file.create(path)
-  if(overwrite) saveRDS(tab, path)
-
-  cat("georecode updated, remember to push the new changes to GitHub")
+  if(overwrite){
+    saveRDS(tab, path)
+    cat("georecode updated, remember to push the new changes to GitHub")
+  }
 }
 
 
@@ -37,7 +38,7 @@ update_georecode <- function(year, overwrite = T){
 #' # update_popinfo("O:/Prosjekt/FHP/PRODUKSJON/PRODUKTER/KUBER/KOMMUNEHELSA/KH2025NESSTAR/BEFOLK_GK_2024-06-17-14-13.csv",
 #' overwrite = TRUE)
 #'
-update_popinfo <- function(popfile, overwrite = T){
+update_popinfo <- function(popfile, overwrite = TRUE){
 
   tab <- data.table::fread(popfile)
   tab <- tab[KJONN == 0 & ALDER == "0_120" & AAR == max(AAR), .(GEO, TELLER)]
@@ -68,7 +69,7 @@ update_popinfo <- function(popfile, overwrite = T){
 #' @noRd
 update_dimlist <- function(){
   con <- ConnectKHelsa()
-  on.exit(RODBC::odbcClose(con), add = T)
+  on.exit(RODBC::odbcClose(con), add = TRUE)
   date <- SQLdate(Sys.time())
   standarddimensions <- c("GEO", "AAR", "ALDER", "KJONN", "UTDANN", "INNVKAT", "LANDBAK")
   tabdimensions <- data.table::setDT(RODBC::sqlQuery(con, paste0("SELECT TAB1, TAB2, TAB3 FROM FILGRUPPER WHERE VERSJONFRA <=",date, "AND VERSJONTIL >", date)))
@@ -81,7 +82,7 @@ update_dimlist <- function(){
 #' @noRd
 update_validgeo <- function(year){
   con <- ConnectGeokoder()
-  on.exit(RODBC::odbcClose(con), add = T)
+  on.exit(RODBC::odbcClose(con), add = TRUE)
   out <- RODBC::sqlQuery(con, paste0("SELECT * FROM tblGeo WHERE validTO='", year, "' AND level IN ('fylke', 'kommune', 'bydel', 'levekaar')"))
   out <- c(0, out$code)
   return(sort(out))
@@ -90,23 +91,34 @@ update_validgeo <- function(year){
 #' Update internal data
 #' Stores objects in R/sysdata.rda which is needed in the package
 #'
-#' @param year year for validgeo
+#' @param geoyear year for valid GEO-codes
+#' @param overwrite overwrite data?
 #'
 #' @return
+#' . .standarddims
 #' - .validdims
 #' - .validgeo
+#' - .popinfo
+#' - .georecode
 #' @export
-update_internal_data <- function(year){
+update_internal_data <- function(geoyear, overwrite = TRUE){
 
+  .standardvalues <- getOption("qualcontrol.standardvalues")
+  .standarddimensions <- getOption("qualcontrol.standarddimensions")
   .validdims <- update_dimlist()
-  .validgeo <- update_validgeo(year)
+  .validgeo <- update_validgeo(geoyear)
   .popinfo <- readRDS(system.file("data", "popinfo.rds", package = "qualcontrol"))
   .georecode <- readRDS(system.file("data", "georecode.rds", package = "qualcontrol"))
 
-  usethis::use_data(.validdims,
+  if(overwrite){
+  usethis::use_data(.standardvalues,
+                    .standarddimensions,
+                    .validdims,
                     .validgeo,
                     .popinfo,
                     .georecode,
-                    internal = T,overwrite = T)
+                    internal = TRUE,
+                    overwrite = TRUE)
   cat("Internal data updated, remember to push the new changes to GitHub")
+  }
 }

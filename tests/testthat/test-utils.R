@@ -1,6 +1,10 @@
 invisible(capture.output(cube1 <- read_cube(system.file("testdata", "testcube1.csv", package = "qualcontrol"))))
 invisible(capture.output(cube2 <- read_cube(system.file("testdata", "testcube2.csv", package = "qualcontrol"))))
-invisible(capture.output(readfiles(cube.new = "LUFT_2_5_PWC_2024-02-28-20-41")))
+invisible(capture.output(readfiles(cube.new = "TRANGBODDHET_2023-11-20-11-05",
+                                   modus.new = "KH",
+                                   cube.old = "TRANGBODDHET_2023-01-03-14-38",
+                                   modus.old = "KH",
+                                   recode.old = T)))
 
 test_that("identify_coltypes works", {
 
@@ -13,12 +17,12 @@ test_that("identify_coltypes works", {
 })
 
 test_that("get_cubename and cubedatetag works", {
-  expect_equal(get_cubename(newcube), "LUFT_2_5_PWC")
-  expect_equal(get_cubedatetag(newcube), "2024-02-28-20-41")
+  expect_equal(get_cubename(newcube), "TRANGBODDHET")
+  expect_equal(get_cubedatetag(newcube), "2023-11-20-11-05")
 })
 
 test_that("generate_qcfolders works", {
-  skip_if(getOption("qualcontrol.skipslowtest"), "Skipping generate_qcfolders-test")
+  # skip_if(getOption("qualcontrol.skipslowtest"), "Skipping generate_qcfolders-test")
   orgyear <- getOption("qualcontrol.year")
 
   generate_qcfolders(cube = "TESTKUBENAVN", year = "TESTFOLDER")
@@ -91,6 +95,23 @@ test_that("get_all_combinations works", {
   expect_error(get_all_combinations(nocube, c("KJONN", "ALDER")))
 })
 
+test_that("select_tellernevner works", {
+  tellercolumns <- c("sumTELLER_uprikk", "sumTELLER", "TELLER_uprikk", "TELLER", "NOMATCH")
+  nevnercolumns <- c("sumNEVNER_uprikk", "sumNEVNER", "NEVNER_uprikk", "NEVNER", "NOMATCH")
+
+  expect_equal(select_teller_pri(tellercolumns), "sumTELLER_uprikk")
+  expect_equal(select_teller_pri(tellercolumns[-1]), "sumTELLER")
+  expect_equal(select_teller_pri(tellercolumns[-c(1:2)]), "TELLER_uprikk")
+  expect_equal(select_teller_pri(tellercolumns[-c(1:3)]), "TELLER")
+  expect_true(is.na(select_teller_pri(tellercolumns[-c(1:4)])))
+
+  expect_equal(select_nevner_pri(nevnercolumns), "sumNEVNER_uprikk")
+  expect_equal(select_nevner_pri(nevnercolumns[-1]), "sumNEVNER")
+  expect_equal(select_nevner_pri(nevnercolumns[-c(1:2)]), "NEVNER_uprikk")
+  expect_equal(select_nevner_pri(nevnercolumns[-c(1:3)]), "NEVNER")
+  expect_true(is.na(select_nevner_pri(nevnercolumns[-c(1:4)])))
+})
+
 test_that("finn_total and aggregate_cube works", {
   expect_equal(find_total(cube1, "GEO"), 0)
   expect_true(is.na(find_total(cube1[GEO != 0], "GEO")))
@@ -105,15 +126,22 @@ test_that("finn_total and aggregate_cube works", {
   expect_no_error(aggregate_cube_multi(cube1, c("GEO", "ALDER", "UTDANN", "INNVAND")))
 })
 
-# test_that("filter_cube works", {
-#
-# })
+test_that("filter_cube works", {
+  diminfo <- compare_dimensions(newcube, oldcube)
+  expect_no_error(filter_cube(newcube, oldcube, diminfo, "new"))
+  expect_no_error(filter_cube(newcube, oldcube, diminfo, "old"))
+  expect_no_error(filter_cube(newcube, newcube, diminfo, "old"))
+
+})
 
 test_that("convert_coltype works as expected", {
   df <- data.table::data.table(col1 = factor(c("0", "1", "2", "3")))
+  df2 <- data.table::data.table(col1 = c("0", "1", "2", "3"))
   expected <- data.table::data.table(col1 = c(0, 1, 2, 3))
   convert_coltype(df, "col1", "numeric")
+  convert_coltype(df2, "col1", "numeric")
   expect_equal(df, expected)
+  expect_equal(df2, expected)
 
   df <- data.table::data.table(col1 = 1:3)
   expected <- data.table::data.table(col1 = as.character(1:3))
@@ -126,16 +154,32 @@ test_that("convert_coltype works as expected", {
   expect_equal(df, expected)
 })
 
-test_that("add_kommune works", {
-  d <- data.table::data.table(GEO = c(0,3,301,1103, 4601,5001, 1806, 1508, 110301, 30105, 460106, 500104))
-  add_geoparams(d)
+test_that("split_kommuneniv, translate_geoniv and add_kommune works", {
+  d <- split_kommuneniv(add_geoparams(data.table::data.table(GEO = c(0,3,0301,1103,4601,5001,1111,110301))))
+  d2 <- split_kommuneniv(add_geoparams(data.table::data.table(GEO = c(110301, 1111, 5001, 4601, 1103, 0301, 3, 0))))
+  expect_equal(levels(d$GEOniv), c("L", "F", "K", "k", "B"))
+  expect_equal(levels(d2$GEOniv), levels(d$GEOniv))
+
   add_kommune(d)
-  expect_equal(d$KOMMUNE, c(NA, NA, "Oslo", "Stavanger", "Bergen", "Trondheim", NA, NA,"Stavanger", "Oslo", "Bergen", "Trondheim"))
+  add_kommune(d2)
+
+  expect_equal(d$KOMMUNE, c(NA, NA, "Oslo", "Stavanger", "Bergen", "Trondheim", NA, "Stavanger"))
+  expect_equal(d2$KOMMUNE, c("Stavanger", NA, "Trondheim", "Bergen", "Stavanger", "Oslo", NA, NA))
+
+  d <- translate_geoniv(d)
+  expect_equal(d$GEOniv, c("Land", "Fylke", "Kommune", "Kommune", "Kommune", "Kommune", "Kommune", "Bydel"))
+  d3 <- data.table::copy(d2)[, let(GEOniv = NULL)]
+  expect_error(translate_geoniv(d3), regexp = "GEOniv column not present")
+
 })
 
 test_that("get_complete_strata works", {
+  expect_no_error(get_complete_strata(cube1, by = c("GEO", "AAR", "KJONN", "ALDER"), type = "censored"))
+  expect_equal(sum(cube1$n_censored), 3)
+  cube1[, let(n_censored = NULL)]
   expect_no_error(get_complete_strata(cube1, by = c("AAR", "KJONN", "ALDER"), type = "censored"))
   expect_equal(sum(cube1$n_censored), 3)
+  cube1[, let(n_censored = NULL)]
   expect_no_error(get_complete_strata(cube1, by = c("AAR", "KJONN", "ALDER"), type = "missing", valuecolumn = "TELLER"))
   expect_equal(sum(cube1$n_censored), 0)
   cube1[, let(n_censored = NULL)]
@@ -144,10 +188,23 @@ test_that("get_complete_strata works", {
 })
 
 test_that("update_qcyear works", {
-
   configyear <- yaml::yaml.load_file(paste("https://raw.githubusercontent.com/helseprofil/config/main/config-qualcontrol.yml"))$year
   update_qcyear(year = 9999)
   expect_equal(getOption("qualcontrol.year"), 9999)
   update_qcyear()
   expect_equal(getOption("qualcontrol.year"), configyear)
+})
+
+test_that("get_plotsavefolder works", {
+  root <- file.path(getOption("qualcontrol.root"),getOption("qualcontrol.output"), getOption("qualcontrol.year"))
+
+  expect_equal(get_plotsavefolder("KUBENAME", "Boxplot"), file.path(root, "KUBENAME", "PLOTT", "Boxplot"))
+  expect_equal(get_plotsavefolder("KUBENAME", "TimeSeries_change"), file.path(root, "KUBENAME", "PLOTT", "TimeSeries_change"))
+  expect_equal(get_plotsavefolder("KUBENAME", "TimeSeries_bydel"), file.path(root, "KUBENAME", "PLOTT", "TimeSeries_bydel"))
+  expect_equal(get_plotsavefolder("KUBENAME", "TimeSeries_country"), file.path(root, "KUBENAME", "PLOTT", "TimeSeries_country"))
+})
+
+test_that("create_empty_standard_dt works", {
+  expect_no_error(x <- create_empty_standard_dt())
+  expect_equal(names(x), c(.standarddimensions, .standardvalues))
 })

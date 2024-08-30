@@ -70,21 +70,16 @@ test_that("recode_geo works", {
 })
 
 test_that("add_geoparams works", {
-  d1 <- data.table::data.table(GEO = c(0,3,1101,1111,110301))
+  d1 <- data.table::data.table(GEO = c(0,3,1101,1111,110301, 99))
   d2 <- data.table:::copy(d1)[, .SD[c(1,3,5)]]
   add_geoparams(d1)
   add_geoparams(d2)
-  d3 <- split_kommuneniv(data.table::copy(d1))
 
   expect_equal(levels(d1$GEOniv), c("L", "F", "K", "B"))
+  expect_equal(d1[GEO == 99]$WEIGHTS, 0)
+  expect_equal(sum(d1$WEIGHTS == 0), 1)
   expect_equal(levels(d2$GEOniv), c("L", "K", "B"))
-  expect_equal(levels(d3$GEOniv), c("L", "F", "K", "k", "B"))
-
-  d4 <- data.table::data.table(GEO = c(110301, 1111, 1101, 3, 0))
-  add_geoparams(d4)
-  expect_equal(levels(d1$GEOniv), levels(d4$GEOniv))
-  split_kommuneniv(d4)
-  expect_equal(levels(d3$GEOniv), levels(d4$GEOniv))
+  expect_equal(sum(d2$WEIGHTS == 0), 0)
 })
 
 test_that("add_csv works", {

@@ -12,9 +12,8 @@
 make_comparecube <- function(cube.new = NULL,
                              cube.old = NULL,
                              outliers = TRUE,
-                             dumps = NULL){
+                             dumps = getOption("qualcontrol.dumps")){
 
-  if(is.null(dumps)) dumps <- getOption("qualcontrol.dumps")
   newcube_flag <- oldcube_flag <- outlierval <- NULL
   colinfo <- identify_coltypes(cube.new, cube.old)
   if(outliers) outlierval <- select_outlier_pri(cube.new, cube.old, colinfo)
@@ -31,8 +30,29 @@ make_comparecube <- function(cube.new = NULL,
   oldcube_flag <<- oldcube_flag
 }
 
+#' @keywords internal
+#' @description
+#' Selects first available from MEIS > RATE > SMR > MALTALL.
+#' - If cube.old = NULL, the outlier is selected from colinfo$vals.new
+#' - If cube.old is provided, outlier is selected from colinfo$commoncols,
+#' to ensure the same value column is used for both files.
+select_outlier_pri <- function(cube.new,
+                               cube.old = NULL,
+                               colinfo){
+  if(is.null(cube.new)) stop("'cube.new' must be provided")
+  onlynew <- ifelse(is.null(cube.old), "yes", "no")
 
+  valuecolumns <- switch(onlynew,
+                         yes = colinfo$vals.new,
+                         no = colinfo$commonvals)
 
+  outlier <- data.table::fcase("MEIS" %in% valuecolumns, "MEIS",
+                               "RATE" %in% valuecolumns, "RATE",
+                               "SMR" %in% valuecolumns, "SMR",
+                               "MALTALL" %in% valuecolumns, "MALTALL",
+                               default = NA)
+  return(outlier)
+}
 
 #' @title flag_rows
 #' @description
@@ -84,27 +104,6 @@ flag_rows <- function(cube.new,
   }
 
   return(dt)
-}
-
-#' @keywords internal
-#' @description
-#' Selects first available from MEIS > RATE > SMR > MALTALL.
-#' - If cube.old = NULL, the outlier is selected from colinfo$vals.new
-#' - If cube.old is provided, outlier is selected from colinfo$commoncols,
-#' to ensure the same value column is used for both files.
-select_outlier_pri <- function(cube.new,
-                               cube.old = NULL,
-                               colinfo){
-  if(is.null(cube.new)) stop("'cube.new' must be provided")
-  valuecolumns <- ifelse(is.null(cube.old),
-                         colinfo$vals.new,
-                         colinfo$commonvals)
-  outlier <- data.table::fcase("MEIS" %in% valuecolumns, "MEIS",
-                               "RATE" %in% valuecolumns, "RATE",
-                               "SMR" %in% valuecolumns, "SMR",
-                               "MALTALL" %in% valuecolumns, "MALTALL",
-                               default = NA)
-  return(outlier)
 }
 
 #' @title flag_outliers
@@ -183,6 +182,7 @@ add_outlier <- function(dt,
 
   by <- sub("^GEO$", "GEOniv", by)
   g <- collapse::GRP(dt, by)
+
   w <- dt$WEIGHTS
 
   cutoffs <- collapse::fmutate(

@@ -311,15 +311,15 @@ split_kommuneniv <- function(data){
 
 #' @keywords internal
 #' @noRd
-translate_geoniv <- function(data){
-  if("GEOniv" %notin% names(data)) stop("GEOniv column not present")
-  data <- data.table::copy(data)[, GEOniv := data.table::fcase(GEOniv == "L", "Land",
-                                                               GEOniv == "F", "Fylke",
-                                                               GEOniv == "K", "Kommune",
-                                                               GEOniv == "k", "Kommune",
-                                                               GEOniv == "B", "Bydel",
-                                                               GEOniv == "V", "Levekaar")]
-  return(data)
+translate_geoniv <- function(dt){
+  if("GEOniv" %notin% names(dt)) stop("GEOniv column not present")
+  dt <- data.table::copy(dt)[, GEOniv := data.table::fcase(GEOniv == "L", "Land",
+                                                           GEOniv == "F", "Fylke",
+                                                           GEOniv == "K", "Kommune",
+                                                           GEOniv == "k", "Kommune",
+                                                           GEOniv == "B", "Bydel",
+                                                           GEOniv == "V", "Levekaar")]
+  return(dt)
 }
 
 #' @keywords internal
@@ -386,4 +386,25 @@ get_complete_strata <- function(data,
 update_qcyear <- function(year = NULL){
   if(is.null(year)) year <- yaml::yaml.load_file(paste("https://raw.githubusercontent.com/helseprofil/config/main/config-qualcontrol.yml"))$year
   options(qualcontrol.year = year)
+}
+
+#' @keywords internal
+#' @noRd
+get_plotsavefolder <- function(cubename,
+                               plotfolder = c("Boxplot", "Boxplot_change", "TimeSeries", "TimeSeries_change", "TimeSeries_bydel", "TimeSeries_country")){
+  plotfolder <- match.arg(plotfolder)
+  path <- file.path(getOption("qualcontrol.root"),
+                    getOption("qualcontrol.output"),
+                    getOption("qualcontrol.year"),
+                    cubename,
+                    "PLOTT",
+                    plotfolder)
+  return(path)
+}
+
+create_empty_standard_dt <- function(){
+  vals <- c(.standarddimensions, .standardvalues)
+  x <- as.list(setNames(rep(NA_character_, length(vals)), vals))
+  data.table::setDT(x)
+  return(x)
 }

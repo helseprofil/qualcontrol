@@ -5,7 +5,7 @@
 #' @param cube data file
 #' @return list
 #' @export
-plot_timeseries_country <- function(cube){
+plot_timeseries_country <- function(cube, save = TRUE){
   d <- data.table::copy(cube[GEO == 0])
   colinfo <- identify_coltypes(d)
   cubename <- get_cubename(d)
@@ -28,10 +28,8 @@ plot_timeseries_country <- function(cube){
                                  variable.name = "PARAMETER",
                                  value.name = "yvalue")
     plot <- plot_timeseries_country_plotfun(plotdata, dim)
-    plot_timeseries_country_savefun(plot, dim, cubename, cubedate, plotheight)
+    plot_timeseries_country_savefun(plot, dim, cubename, cubedate, plotheight, save = save)
   }
-  # return(list(plots = plots,
-  #             plotheight = 2+2*ceiling(length(plotvals))))
 }
 
 #' @title plot_timeseries_country_plotfun
@@ -39,7 +37,7 @@ plot_timeseries_country <- function(cube){
 #' Plotting function for [plot_timeseries_country()]
 #' @keywords internal
 #' @noRd
-plot_timeseries_country_plotfun <- function(plotdata,dim){
+plot_timeseries_country_plotfun <- function(plotdata, dim){
   nrow_legend <- ceiling(length(unique(plotdata[[dim]]))/3)
   plot <- ggplot2::ggplot(plotdata, ggplot2::aes(AARx,
                                                  yvalue,
@@ -49,8 +47,8 @@ plot_timeseries_country_plotfun <- function(plotdata,dim){
     ggplot2::geom_line() +
     ggplot2::facet_wrap(~as.character(PARAMETER), ncol = 2, scales = "free_y") +
     ggplot2::labs(x = "Year", y = NULL, title = dim) +
-    ggplot2::scale_x_continuous(breaks = seq(min(d$AARx),max(d$AARx),by = 1),
-                                labels = sort(unique(d$AAR)),
+    ggplot2::scale_x_continuous(breaks = seq(min(plotdata$AARx),max(plotdata$AARx),by = 1),
+                                labels = sort(unique(plotdata$AAR)),
                                 expand = ggplot2::expansion(add = 0.2)) +
     theme_qc() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, size = 8),
@@ -70,25 +68,16 @@ plot_timeseries_country_plotfun <- function(plotdata,dim){
   return(plot)
 }
 
-plot_timeseries_country_savefun <- function(plot, dim, cubename, cubedate, plotheight){
+plot_timeseries_country_savefun <- function(plot, dim, cubename, cubedate, plotheight, save = TRUE){
 
   savepath <- get_plotsavefolder(cubename, "TimeSeries_country")
   savename <- paste0(cubename, "_", cubedate, "_TS_by_", dim, ".png")
 
-  ggplot2::ggsave(file.path(savepath, savename),
-                  plot,
-                  width = ggplot2::unit(12, "cm"),
-                  height = ggplot2::unit(plotheight, "cm"))
-
+  if(save){
+    ggplot2::ggsave(file.path(savepath, savename),
+                    plot,
+                    width = ggplot2::unit(12, "cm"),
+                    height = ggplot2::unit(plotheight, "cm"))
+  }
 }
 
-get_plotsavefolder <- function(cubename, plotfolder = c("Boxplot", "Boxplot_change", "TimeSeries", "TimeSeries_change", "TimeSeries_bydel", "TimeSeries_country")){
-  plotfolder <- match.arg(plotfolder)
-  path <- file.path(getOption("qualcontrol.root"),
-                    getOption("qualcontrol.output"),
-                    getOption("qualcontrol.year"),
-                    cubename,
-                    "PLOTT",
-                    plotfolder)
-  return(path)
-}

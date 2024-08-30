@@ -183,7 +183,7 @@ recode_geo <- function(dt, recode){
 add_geoparams <- function(dt){
   dt[.popinfo, let(GEOniv = i.GEOniv, WEIGHTS = i.WEIGHTS), on = "GEO"]
   dt[, GEOniv := forcats::fct_drop(GEOniv)]
-  # dt[is.na(WEIGHTS), let(WEIGHTS = 0)]
+  dt[is.na(WEIGHTS), let(WEIGHTS = 0)]
   return(dt)
 }
 

@@ -13,3 +13,17 @@ test_that("lookup tabs exist", {
   expect_true(file.exists(system.file("data", "popinfo.rds", package = "qualcontrol")))
   expect_true(file.exists(system.file("data", "georecode.rds", package = "qualcontrol")))
 })
+
+
+test_that("update_georecode works", {
+  invisible(capture.output(expect_no_error(update_georecode(2024, overwrite = F))))
+})
+
+test_that("update_popinfo works", {
+  invisible(capture.output(expect_no_error(update_popinfo("O:/Prosjekt/FHP/PRODUKSJON/PRODUKTER/KUBER/KOMMUNEHELSA/DATERT/csv/BEFOLK_GK_2024-06-17-14-13.csv",
+                                                          overwrite = F))))
+})
+
+test_that("update_internal_data works", {
+  expect_no_error(update_internal_data(2024, overwrite = FALSE))
+})
