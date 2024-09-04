@@ -402,9 +402,35 @@ get_plotsavefolder <- function(cubename,
   return(path)
 }
 
+#' @title create_empty_standard_dt
+#' @keywords internal
+#' @noRd
+#' @description
+#' Initiates an empty data.table with the standard dimension and value columns, mainly for testing purposes.
 create_empty_standard_dt <- function(){
   vals <- c(.standarddimensions, .standardvalues)
   x <- as.list(setNames(rep(NA_character_, length(vals)), vals))
   data.table::setDT(x)
   return(x)
 }
+
+#' @title qc_round
+#' @keywords internal
+#' @noRd
+qc_round <- function(dt){
+  if(is.null(dt)) return(invisible(NULL))
+
+  dt <- data.table::copy(dt)
+  values <- names(dt)[names(dt) %notin% .validdims]
+  round0 <- values[grepl("SPVFLAGG.*|RATE\\.n.*", values)]
+  round1 <- values[grepl("TELLER|NEVNER", values) & !grepl("_reldiff", values)]
+  round2 <- values[grepl("RATE$|SMR$|MEIS$|MIN$|MAX$|LOW$|HIGH$|.*wq\\d{2}$", values, perl = T) | grepl("_reldiff", values)]
+
+  for(val in round0){ dt[, (val) := round(get(val), 0)] }
+  for(val in round1){ dt[, (val) := round(get(val), 1)] }
+  for(val in round2){ dt[, (val) := round(get(val), 2)] }
+
+  return(dt)
+}
+
+

@@ -4,14 +4,15 @@ library(microbenchmark)
 
 
 microbenchmark(
-  old = {
-    .FlagNew(cube.new, cube.old, colinfo$commondims, colinfo$newdims,colinfo$dims.new, colinfo$vals.new, F)
-    .FlagOld(cube.new, cube.old, colinfo$commondims, colinfo$expdims,colinfo$dims.new, colinfo$vals.new, F)
+  preallocate = {
+    comparecube <- combine_cubes(newcube_flag, oldcube_flag, colinfo)
+    add_diffcolumns(comparecube, commonvals)
     },
 
-  new = {
-    make_comparecube(cube.new, cube.old)
+  expand = {
+    comparecube <- combine_cubes(newcube_flag, oldcube_flag, colinfo)
+    add_diffcolumns2(comparecube, commonvals)
     },
-  times = 100)
+  times = 50)
 
 

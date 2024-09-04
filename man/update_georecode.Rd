@@ -4,7 +4,7 @@
 \alias{update_georecode}
 \title{update_georecode}
 \usage{
-update_georecode(year, overwrite = T)
+update_georecode(year, overwrite = TRUE)
 }
 \arguments{
 \item{year}{the year for valid geo codes}

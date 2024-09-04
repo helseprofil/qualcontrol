@@ -4,7 +4,7 @@
 \alias{update_popinfo}
 \title{update_popinfo}
 \usage{
-update_popinfo(popfile, overwrite = T)
+update_popinfo(popfile, overwrite = TRUE)
 }
 \arguments{
 \item{popfile}{complete file name of BEFOLK_GK file}

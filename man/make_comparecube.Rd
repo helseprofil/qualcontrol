@@ -8,11 +8,23 @@ make_comparecube(
   cube.new = NULL,
   cube.old = NULL,
   outliers = TRUE,
-  dumps = NULL
+  dumps = getOption("qualcontrol.dumps"),
+  overwrite = FALSE
 )
 }
 \arguments{
-\item{dumps}{}
+\item{cube.new}{new file}
+
+\item{cube.old}{old file}
+
+\item{outliers}{should outliers be flagged using \code{\link[=flag_outliers]{flag_outliers()}}?}
+
+\item{dumps}{which files to save, defaults to getOption("qualcontrol.dumps"). For no dumps, set to NULL.}
+
+\item{overwrite}{should existing files (exact filename) be overwritten?}
+}
+\value{
+flagged cube objects, comparecube, and saved csv-files if requested.
 }
 \description{
 make_comparecube

@@ -4,7 +4,7 @@
 \alias{unknown_bydel}
 \title{unknown_bydel}
 \usage{
-unknown_bydel(cube, maxrows = TRUE)
+unknown_bydel(cube, crop = TRUE, maxrows = 4000)
 }
 \arguments{
 \item{cube}{data file}

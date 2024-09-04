@@ -5,15 +5,20 @@
 \title{Update internal data
 Stores objects in R/sysdata.rda which is needed in the package}
 \usage{
-update_internal_data(year)
+update_internal_data(geoyear, overwrite = TRUE)
 }
 \arguments{
-\item{year}{year for validgeo}
+\item{geoyear}{year for valid GEO-codes}
+
+\item{overwrite}{overwrite data?}
 }
 \value{
+. .standarddims
 \itemize{
 \item .validdims
 \item .validgeo
+\item .popinfo
+\item .georecode
 }
 }
 \description{

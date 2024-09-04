@@ -1,20 +1,20 @@
 #' @title make_comparecube
 #'
-#' @param cube.new
-#' @param cube.old
-#' @param outliers
-#' @param dumps
+#' @param cube.new new file
+#' @param cube.old old file
+#' @param outliers should outliers be flagged using [qualcontrol::flag_outliers()]?
+#' @param dumps which files to save, defaults to getOption("qualcontrol.dumps"). For no dumps, set to NULL.
+#' @param overwrite should existing files (exact filename) be overwritten?
 #'
-#' @return
+#' @returns flagged cube objects, comparecube, and saved csv-files if requested.
 #' @export
-#'
-#' @examples
 make_comparecube <- function(cube.new = NULL,
                              cube.old = NULL,
                              outliers = TRUE,
-                             dumps = getOption("qualcontrol.dumps")){
+                             dumps = getOption("qualcontrol.dumps"),
+                             overwrite = FALSE){
 
-  newcube_flag <- oldcube_flag <- outlierval <- NULL
+  newcube_flag <- oldcube_flag <- comparecube <- outlierval <- NULL
   colinfo <- identify_coltypes(cube.new, cube.old)
   if(outliers) outlierval <- select_outlier_pri(cube.new, cube.old, colinfo)
 
@@ -23,14 +23,31 @@ make_comparecube <- function(cube.new = NULL,
 
   if(!is.null(cube.old)){
     oldcube_flag <- flag_rows(cube.new, cube.old, colinfo, "exprow")
-    if(outliers) oldcube_flag <- flag_outliers(oldcube_flag, outlierval)
+    if(outliers){
+      oldcube_flag <- flag_outliers(oldcube_flag, outlierval)
+      add_prev_outlier(newcube_flag, oldcube_flag, colinfo)
+    }
+    comparecube <- combine_cubes(newcube_flag, oldcube_flag, colinfo)
   }
 
   newcube_flag <<- newcube_flag
   oldcube_flag <<- oldcube_flag
+  comparecube <<- comparecube
+
+  if(!is.null(dumps)){
+    for(dump in dumps){
+      save_dump(dump,
+                newcube_flag = newcube_flag,
+                oldcube_flag = oldcube_flag,
+                comparecube = comparecube,
+                overwrite = overwrite)
+    }
+  }
 }
 
+#' @title select_outlier_pri
 #' @keywords internal
+#' @noRd
 #' @description
 #' Selects first available from MEIS > RATE > SMR > MALTALL.
 #' - If cube.old = NULL, the outlier is selected from colinfo$vals.new
@@ -107,19 +124,15 @@ flag_rows <- function(cube.new,
 }
 
 #' @title flag_outliers
+#' @keywords internal
+#' @noRd
 #' @description
 #' Adds information related to outliers, defined as values outside the interval:
 #' 'weighted 25.percentile - 1.5IQR, weighted 75.percentile + 1.5IQR'
-#'
 #' Also adds change value (if > 1 unique year) and change outliers.
-#'
 #' @param cube data file
 #' @param outlierval Which value is used to detect outliers? Selected with [qualcontrol::select_outlier_pri()]
-#'
-#' @return dt
-#' @export
-#'
-#' @examples
+#' @return cube with outlier information
 flag_outliers <- function(cube,
                           outlierval){
   dt <- data.table::copy(cube)
@@ -135,6 +148,8 @@ flag_outliers <- function(cube,
 }
 
 #' @title add_changeval
+#' @keywords internal
+#' @noRd
 #' @description
 #' Adds a change varible for a selected value columns. Change is defined as value/last value, with
 #' last observation carried forward to get the change from last non-missing value within the strata.
@@ -143,7 +158,6 @@ flag_outliers <- function(cube,
 #' order within each strata.
 #'
 #' If < 2 unique years in the data file, nothing is done.
-#' @keywords internal
 #' @param dt data file ordered by
 #' @param val value column to calculate change from
 #' @param by dimensions to group the change value by
@@ -162,11 +176,12 @@ add_changeval <- function(dt,
 }
 
 #' @title add_outlier
+#' @keywords internal
+#' @noRd
 #' @description
 #' Add weighted quantiles and outlier information.
 #'
 #' If change data is requested and there are < 2 unique years in the data file, nothing is done.
-#' @keywords internal
 #' @param dt data file
 #' @param val the value used for outlier detection
 #' @param by All dimensions except AAR
@@ -215,4 +230,172 @@ add_outlier <- function(dt,
   dt[get(val) > get(lowcutoff) & get(val) < get(highcutoff), (outliercol) := 0]
 
   return(dt)
+}
+
+#' @title add_prev_outlier
+#' @keywords internal
+#' @noRd
+#' @description
+#' Adds information regarding new/old outliers to newcube_flag.
+#' @param newcube_flag newcube_flag
+#' @param oldcube_flag oldcube_flag
+#' @param colinfo list generated with [qualcontrol::identify_coltypes(cube.new, cube.old)]
+#' @return newcube_flag with previous outlier column
+add_prev_outlier <- function(newcube_flag,
+                             oldcube_flag,
+                             colinfo){
+
+  newcube_flag[oldcube_flag, let(PREV_OUTLIER = i.OUTLIER,
+                                 change_PREV_OUTLIER = i.change_OUTLIER),
+               on = colinfo[["commondims"]]]
+
+  newcube_flag[, let(NEW_OUTLIER = 0L,
+                     change_NEW_OUTLIER = 0L)]
+
+  newcube_flag[OUTLIER == 1 & (is.na(PREV_OUTLIER | PREV_OUTLIER == 0)), let(NEW_OUTLIER = 1L)]
+  newcube_flag[change_OUTLIER == 1 & (is.na(change_PREV_OUTLIER | change_PREV_OUTLIER == 0)), let(change_NEW_OUTLIER = 1L)]
+
+  data.table::setcolorder(newcube_flag, c(grep("change_", names(newcube_flag), invert = T, value = T),
+                                          grep("change_", names(newcube_flag), value = T)))
+}
+
+#' @title combine_cubes
+#' @keywords internal
+#' @noRd
+#' @param newcube_flag newcube_flag generated by [qualcontrol::flag_rows()] and [qualcontrol::flag_outliers]
+#' @param oldcube_flag oldcube_flag generated by [qualcontrol::flag_rows()] and [qualcontrol::flag_outliers]
+#' @param colinfo list generated with [qualcontrol::identify_coltypes(cube.new, cube.old)]
+#'
+#' @return comparecube
+combine_cubes <- function(newcube_flag,
+                          oldcube_flag,
+                          colinfo){
+
+  d_new <- data.table::copy(newcube_flag)
+  d_old <- data.table::copy(oldcube_flag)[exprow == 0]
+  commonvals <- colinfo$commonvals
+  valuecolumns <- c("TELLER", "NEVNER", "sumTELLER", "sumNEVNER", "RATE.n")
+
+  for(col in valuecolumns){
+    if(col %in% names(d_old) & !(col %in% names(d_new)) & paste0(col, "_uprikk") %in% names(d_new)){
+      d_new[, (col) := get(paste0(col, "_uprikk"))]
+      d_new[SPVFLAGG != 0, (col) := NA_real_]
+      commonvals <- c(commonvals, col)
+    }
+  }
+
+  d_new <- d_new[, c(..colinfo[["commondims"]], ..commonvals, "newrow")]
+  data.table::setnames(d_new, commonvals, paste0(commonvals, "_new"))
+
+  d_old <- d_old[, c(..colinfo[["commondims"]], ..commonvals)]
+  data.table::setnames(d_old, commonvals, paste0(commonvals, "_old"))
+
+  compare <- collapse::join(d_new, d_old, on = colinfo[["commondims"]], how = "left", verbose = 0, overid = 0)
+
+  colorder <- c(colinfo[["commondims"]], "newrow")
+  for(val in commonvals){
+    colorder <- c(colorder, paste0(val, c("_new", "_old")))
+  }
+
+  data.table::setcolorder(compare, colorder)
+  add_diffcolumns(compare, commonvals)
+  return(compare)
+}
+
+#' @title add_diffcolumns
+#' @keywords internal
+#' @noRd
+#' @description
+#' adds columns with relative and absolute differences between new and old cube by reference,
+#' no need to overwrite object.
+#' @param comparecube combined new and old cube with _new and _old valuecolumns, created by [qualcontrol::combine_cubes]
+#' @param valuecolumns vector containing value columns to calculate diff columns
+#' @return comparecube with diff columns
+add_diffcolumns <- function(comparecube,
+                            valuecolumns){
+
+  for(val in valuecolumns){
+    new <- paste0(val, "_new")
+    old <- paste0(val, "_old")
+    diff <- paste0(val, "_diff")
+    reldiff <- paste0(val, "_reldiff")
+    comparecube[, (diff) := get(new) - get(old)]
+    comparecube[, (reldiff) := get(new) / get(old)]
+    # For rows with missing new or old values, set _diff and _reldiff to NA
+    comparecube[is.na(get(new)) + is.na(get(old)) == 1, (diff) := NA_real_]
+    comparecube[is.na(get(new)) + is.na(get(old)) == 1, (reldiff) := NA_real_]
+    # For rows with missing old AND new, set _diff = 0, and _reldiff = 1
+    comparecube[is.na(get(new)) & is.na(get(old)), (diff) := 0]
+    comparecube[is.na(get(new)) & is.na(get(old)), (reldiff) := 1]
+  }
+
+  for(val in c("SPVFLAGG", "RATE.n")){
+    if(val %in% valuecolumns){
+      delete <- paste0(val, "_reldiff")
+      comparecube[, (delete) := NULL]
+    }
+  }
+}
+
+#' @title save_dump
+#' @keywords internal
+#' @noRd
+#' @description
+#' Helper function to save file dumps created by [qualcontrol::make_comparecube()]
+save_dump <- function(dump,
+                      newcube_flag,
+                      oldcube_flag,
+                      comparecube,
+                      overwrite = FALSE){
+
+  file <- switch(dump,
+                 "newcube_flag" = qc_round(newcube_flag),
+                 "oldcube_flag" = qc_round(oldcube_flag),
+                 "comparecube" = qc_round(comparecube))
+
+  if(is.null(file)){
+    cat("Dump: ", dump, " requested, but does not exist. No file saved.")
+    return(invisible(NULL))
+  }
+
+  saveroot <- file.path(getOption("qualcontrol.root"),
+                        getOption("qualcontrol.output"),
+                        getOption("qualcontrol.year"),
+                        get_cubename(newcube_flag),
+                        "FILDUMPER")
+
+  filename <- switch(dump,
+                     "newcube_flag" = paste0("newflag_", get_cubename(newcube_flag), "_", get_cubedatetag(newcube_flag), ".csv"),
+                     "oldcube_flag" = paste0("oldflag_", get_cubename(oldcube_flag), "_", get_cubedatetag(oldcube_flag), ".csv"),
+                     "comparecube" = set_filename_comparecube(newcube_flag, oldcube_flag))
+
+  savepath <- file.path(saveroot, filename)
+
+  if(file.exists(savepath) && !overwrite){
+    cat(paste0("\nFILEDUMP ", filename, " already exists"))
+    return(invisible(NULL))
+  }
+
+  data.table::fwrite(file, savepath, sep = ";")
+  cat(paste0("\nFILEDUMP saved ", filename, "\n"))
+}
+
+#' @title set_filename_comparecube
+#' @keywords internal
+#' @noRd
+#' @description
+#' Helper function to save file dumps created by [qualcontrol::make_comparecube()]
+set_filename_comparecube <- function(newcube_flag, oldcube_flag){
+
+newname <- get_cubename(newcube_flag)
+newdatetag <- get_cubedatetag(newcube_flag)
+oldname <- get_cubename(oldcube_flag)
+olddatetag <- get_cubedatetag(oldcube_flag)
+
+fullname <- ifelse(newname == oldname,
+                   paste0(newname, "_", newdatetag, "_vs_", olddatetag),
+                   paste0(newname, "_", newdatetag, "_vs_", oldname, "_", olddatetag))
+
+filename <- paste0("compare_", fullname, ".csv")
+return(filename)
 }
