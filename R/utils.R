@@ -240,6 +240,9 @@ aggregate_cube_multi <- function(cube, dimensions){
 #' @description
 #' Filters out new and expired levels in new and old file, respectively, for comparison.
 #'
+#' If filter = "new", rows with new levels are removed from cube.new.
+#' If filter = "old", rows with expired levels are removed from cube.old
+#'
 #' @param cube.new new file
 #' @param cube.old old file
 #' @param dimtable table generated with [qualcontrol::compare_dimensions()]
@@ -399,6 +402,7 @@ get_plotsavefolder <- function(cubename,
                     cubename,
                     "PLOTT",
                     plotfolder)
+  if(!dir.exists(path)) generate_qcfolders(cubename, year = getOption("qualcontrol.year"))
   return(path)
 }
 
@@ -424,7 +428,7 @@ qc_round <- function(dt){
   values <- names(dt)[names(dt) %notin% .validdims]
   round0 <- values[grepl("SPVFLAGG.*|RATE\\.n.*", values)]
   round1 <- values[grepl("TELLER|NEVNER", values) & !grepl("_reldiff", values)]
-  round2 <- values[grepl("RATE$|SMR$|MEIS$|MIN$|MAX$|LOW$|HIGH$|.*wq\\d{2}$", values, perl = T) | grepl("_reldiff", values)]
+  round2 <- values[grepl("RATE|SMR|MEIS|MIN$|MAX$|LOW$|HIGH$|.*wq\\d{2}$", values, perl = T) | grepl("_reldiff", values)]
 
   for(val in round0){ dt[, (val) := round(get(val), 0)] }
   for(val in round1){ dt[, (val) := round(get(val), 1)] }

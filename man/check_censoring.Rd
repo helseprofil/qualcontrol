@@ -4,10 +4,10 @@
 \alias{check_censoring}
 \title{check_censoring}
 \usage{
-check_censoring(data)
+check_censoring(dt)
 }
 \arguments{
-\item{data}{cube file}
+\item{dt}{cube file}
 }
 \description{
 Fetches censoring limits from ACCESS, and check if all values <= the censoring

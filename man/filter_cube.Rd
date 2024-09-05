@@ -17,4 +17,7 @@ filter_cube(cube.new, cube.old, dimtable, filter = c("new", "old"))
 }
 \description{
 Filters out new and expired levels in new and old file, respectively, for comparison.
+
+If filter = "new", rows with new levels are removed from cube.new.
+If filter = "old", rows with expired levels are removed from cube.old
 }

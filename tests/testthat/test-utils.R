@@ -208,3 +208,40 @@ test_that("create_empty_standard_dt works", {
   expect_no_error(x <- create_empty_standard_dt())
   expect_equal(names(x), c(.standarddimensions, .standardvalues))
 })
+
+test_that("qc_round works", {
+  expect_null(qc_round(NULL))
+  d <- create_empty_standard_dt()
+  addcols <- c("MIN", "change_MAX", "LOW", "HIGH", "wq25",
+               "RATE.n", "SPVFLAGG", "SPVFLAGG_diff", "TELLER_diff", "TELLER_reldiff",
+               "MEIS_new", "MEIS_old", "MEIS_diff", "MEIS_reldiff", "NO_ROUNDING")
+  d[, (addcols) := NA_real_]
+  target <- data.table::copy(d)
+  d[, names(.SD) := as.numeric(1.234), .SDcols = names(d)[names(d) %notin% .validdims]]
+  expect_no_error(d <- qc_round(d))
+
+  target[, let(TELLER = 1.2,
+               sumTELLER = 1.2,
+               NEVNER = 1.2,
+               sumNEVNER = 1.2,
+               MEIS = 1.23,
+               RATE = 1.23,
+               SMR = 1.23,
+               MIN = 1.23,
+               change_MAX = 1.23,
+               LOW = 1.23,
+               HIGH = 1.23,
+               wq25 = 1.23,
+               RATE.n = 1,
+               SPVFLAGG = 1,
+               SPVFLAGG_diff = 1,
+               TELLER_diff = 1.2,
+               TELLER_reldiff = 1.23,
+               MEIS_new = 1.23,
+               MEIS_old = 1.23,
+               MEIS_diff = 1.23,
+               MEIS_reldiff = 1.23,
+               NO_ROUNDING = 1.234)]
+
+  expect_equal(d, target)
+})

@@ -6,9 +6,15 @@ invisible(capture.output(readfiles(cube.new = "TRANGBODDHET_2023-11-20-11-05",
 
 test_that("make_comparecube works", {
 
+  orgyear <- getOption("qualcontrol.year")
+  options(qualcontrol.year = "TEST")
   expect_no_error(make_comparecube(newcube, oldcube, outliers = F, dumps = NULL))
   expect_no_error(make_comparecube(newcube, oldcube, outliers = T, dumps = NULL))
 
+  single_aar = "2021_2021"
+  expect_no_error(make_comparecube(newcube[AAR == single_aar], oldcube[AAR == single_aar], outliers = F, overwrite = T))
+  expect_no_error(make_comparecube(newcube[AAR == single_aar], oldcube[AAR == single_aar], outliers = T, overwrite = T))
+  options(qualcontrol.year = orgyear)
 })
 
 test_that("select_outlier_pri works", {
@@ -45,14 +51,3 @@ test_that("flag_rows works", {
   expect_error(flag_rows(NULL, oldcube, colinfo = colinfo, "exprow"), regexp = "cube.new and cube.old cannot be NULL when flag = 'exprow'")
   expect_error(flag_rows(newcube, NULL, colinfo = colinfo, "exprow"), regexp = "cube.new and cube.old cannot be NULL when flag = 'exprow'")
 })
-
-# test_that("flag_outliers works", {
-#
-#   add_changeval()
-#
-#   add_outlier()
-#
-#   flag_outlier()
-#
-# })
-

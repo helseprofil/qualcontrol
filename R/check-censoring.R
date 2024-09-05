@@ -5,13 +5,13 @@
 #' If any observation below or equal to the limit is detected,
 #' all rows containing unacceptable values are returned for inspection.
 #'
-#' @param data cube file
+#' @param dt cube file
 #'
 #' @export
-check_censoring <- function(data){
+check_censoring <- function(dt){
 
-  cubename <- get_cubename(data)
-  colinfo <- identify_coltypes(data)
+  cubename <- get_cubename(dt)
+  colinfo <- identify_coltypes(dt)
 
   # Find censoring limits from ACCESS
   con <- ConnectKHelsa()
@@ -40,7 +40,7 @@ check_censoring <- function(data){
   } else {
     cat(paste0("\nTELLER variable controlled: ", tellerval))
     cat(paste0("\nCriteria: No values <= ", lim_teller))
-    notcensored_teller <- data[SPVFLAGG == 0 & get(tellerval) <= lim_teller]
+    notcensored_teller <- dt[SPVFLAGG == 0 & get(tellerval) <= lim_teller]
   }
 
   if(!is.null(notcensored_teller)){
@@ -61,7 +61,7 @@ check_censoring <- function(data){
   } else {
     cat(paste0("\nNEVNER variable controlled: ", nevnerval))
     cat(paste0("\nCriteria: No values <= ", lim_nevner))
-    notcensored_nevner <- data[SPVFLAGG == 0 & get(nevnerval) <= lim_nevner]
+    notcensored_nevner <- dt[SPVFLAGG == 0 & get(nevnerval) <= lim_nevner]
   }
 
   if(!is.null(notcensored_nevner)){
@@ -81,7 +81,8 @@ check_censoring <- function(data){
 #'
 #' @param cube.new new KUBE file
 #' @param cube.old old KUBE file or NULL
-#' @param filter.cubes Should the cubes be filtered for better comparison?
+#' @param filter.cubes Should the cubes be filtered for better comparison? New and expired levels are removed,
+#' and new/expired dimensions are aggregated. Default = TRUE
 #'
 #' @return a table containing the number of censored rows in the new and old KUBE, and the absolute and relative difference, grouped by type of SPVFLAGG and an additional dimension (optional)
 #' @export
@@ -106,8 +107,8 @@ compare_censoring <- function(cube.new,
     cube.new <- filter_cube(cube.new, cube.old, diminfo, "new")
     cube.old <- filter_cube(cube.new, cube.old, diminfo, "old")
 
-    for(dim in colinfo$expdims){cube.old <- aggregate_cube(cube.old, dim)}
-    for(dim in colinfo$newdims){cube.new <- aggregate_cube(cube.new, dim)}
+    cube.old <- aggregate_cube_multi(cube.old, colinfo$expdims)
+    cube.new <- aggregate_cube_multi(cube.new, colinfo$newdims)
   }
 
   new <- cube.new[, .("N (new)" = .N), keyby = "SPVFLAGG"]

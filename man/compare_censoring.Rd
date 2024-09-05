@@ -11,7 +11,8 @@ compare_censoring(cube.new, cube.old = NULL, filter.cubes = TRUE)
 
 \item{cube.old}{old KUBE file or NULL}
 
-\item{filter.cubes}{Should the cubes be filtered for better comparison?}
+\item{filter.cubes}{Should the cubes be filtered for better comparison? New and expired levels are removed,
+and new/expired dimensions are aggregated. Default = TRUE}
 }
 \value{
 a table containing the number of censored rows in the new and old KUBE, and the absolute and relative difference, grouped by type of SPVFLAGG and an additional dimension (optional)

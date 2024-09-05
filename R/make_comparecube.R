@@ -35,6 +35,7 @@ make_comparecube <- function(cube.new = NULL,
   comparecube <<- comparecube
 
   if(!is.null(dumps)){
+    generate_qcfolders(get_cubename(cube.new), year = getOption("qualcontrol.year"))
     for(dump in dumps){
       save_dump(dump,
                 newcube_flag = newcube_flag,
@@ -193,6 +194,7 @@ add_outlier <- function(dt,
                         change = FALSE){
 
   if(isTRUE(change) && length(unique(dt$AAR)) < 2) return(dt)
+
   if(isTRUE(change)) val <- paste0("change_", val)
 
   by <- sub("^GEO$", "GEOniv", by)
@@ -245,18 +247,19 @@ add_prev_outlier <- function(newcube_flag,
                              oldcube_flag,
                              colinfo){
 
-  newcube_flag[oldcube_flag, let(PREV_OUTLIER = i.OUTLIER,
-                                 change_PREV_OUTLIER = i.change_OUTLIER),
-               on = colinfo[["commondims"]]]
-
-  newcube_flag[, let(NEW_OUTLIER = 0L,
-                     change_NEW_OUTLIER = 0L)]
-
+  newcube_flag[oldcube_flag, let(PREV_OUTLIER = i.OUTLIER), on = colinfo[["commondims"]]]
+  newcube_flag[, let(NEW_OUTLIER = 0L)]
   newcube_flag[OUTLIER == 1 & (is.na(PREV_OUTLIER | PREV_OUTLIER == 0)), let(NEW_OUTLIER = 1L)]
-  newcube_flag[change_OUTLIER == 1 & (is.na(change_PREV_OUTLIER | change_PREV_OUTLIER == 0)), let(change_NEW_OUTLIER = 1L)]
+
+  if("change_OUTLIER" %in% names(newcube_flag) && "change_OUTLIER" %in% names(oldcube_flag)){
+    newcube_flag[oldcube_flag, let(change_PREV_OUTLIER = i.change_OUTLIER), on = colinfo[["commondims"]]]
+    newcube_flag[, let(change_NEW_OUTLIER = 0L)]
+    newcube_flag[change_OUTLIER == 1 & (is.na(change_PREV_OUTLIER | change_PREV_OUTLIER == 0)), let(change_NEW_OUTLIER = 1L)]
+  }
 
   data.table::setcolorder(newcube_flag, c(grep("change_", names(newcube_flag), invert = T, value = T),
                                           grep("change_", names(newcube_flag), value = T)))
+
 }
 
 #' @title combine_cubes
