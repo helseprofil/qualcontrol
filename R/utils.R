@@ -316,12 +316,15 @@ split_kommuneniv <- function(data){
 #' @noRd
 translate_geoniv <- function(dt){
   if("GEOniv" %notin% names(dt)) stop("GEOniv column not present")
-  dt <- data.table::copy(dt)[, GEOniv := data.table::fcase(GEOniv == "L", "Land",
-                                                           GEOniv == "F", "Fylke",
-                                                           GEOniv == "K", "Kommune",
-                                                           GEOniv == "k", "Kommune",
-                                                           GEOniv == "B", "Bydel",
-                                                           GEOniv == "V", "Levekaar")]
+  dt <- data.table::copy(dt)[, let(GEOniv = factor(data.table::fcase(GEOniv == "L", "Land",
+                                                                     GEOniv == "F", "Fylke",
+                                                                     GEOniv == "K", "Kommune",
+                                                                     GEOniv == "k", "Kommune",
+                                                                     GEOniv == "B", "Bydel",
+                                                                     GEOniv == "V", "Levekaar"),
+                                                   levels = c("Land", "Fylke", "Kommune", "Bydel", "Levekaar")))]
+  dt[, let(GEOniv = forcats::fct_drop(GEOniv))]
+
   return(dt)
 }
 

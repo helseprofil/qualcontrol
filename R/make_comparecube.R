@@ -287,7 +287,7 @@ combine_cubes <- function(newcube_flag,
     }
   }
 
-  d_new <- d_new[, c(..colinfo[["commondims"]], ..commonvals, "newrow")]
+  d_new <- d_new[, c(..colinfo[["commondims"]], ..commonvals, "newrow", "GEOniv")]
   data.table::setnames(d_new, commonvals, paste0(commonvals, "_new"))
 
   d_old <- d_old[, c(..colinfo[["commondims"]], ..commonvals)]
@@ -295,7 +295,7 @@ combine_cubes <- function(newcube_flag,
 
   compare <- collapse::join(d_new, d_old, on = colinfo[["commondims"]], how = "left", verbose = 0, overid = 0)
 
-  colorder <- c(colinfo[["commondims"]], "newrow")
+  colorder <- c("GEOniv", "newrow", colinfo[["commondims"]])
   for(val in commonvals){
     colorder <- c(colorder, paste0(val, c("_new", "_old")))
   }
