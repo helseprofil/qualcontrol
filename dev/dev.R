@@ -12,16 +12,19 @@ readfiles(cube.new = "TRANGBODDHET_2023-11-20-11-05",
 # HKR
 readfiles(cube.new = "HKR_2024-02-01-12-42",
           modus.new = "KH",
-          cube.old = "HKR_2022-12-14-12-18",
+          cube.old = "HKR_2023-09-20-14-52",
           modus.old = "KH",
           recode.old = T)
 
+make_comparecube(newcube, oldcube, dumps = NULL)
+# dt <- data.table::copy(comparecube)
 
-cube = data.table::copy(newcube)
-cube.new = data.table::copy(newcube)
-cube.old = data.table::copy(oldcube)
 
-colinfo <- identify_coltypes(cube.new, cube.old)
+# cube = data.table::copy(newcube)
+# cube.new = data.table::copy(newcube)
+# cube.old = data.table::copy(oldcube)
+#
+# colinfo <- identify_coltypes(cube.new, cube.old)
 
 # TO-DO
 # - Make function to save report
