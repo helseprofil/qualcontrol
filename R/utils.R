@@ -73,6 +73,7 @@ generate_qcfolders <- function(cubename,
   tscdir <- file.path(plotdir, "TimeSeries_change")
   tsbdir <- file.path(plotdir, "TimeSeries_bydel")
   tsldir <- file.path(plotdir, "TimeSeries_country")
+  tsdiffdir <- file.path(plotdir, "Diff_timetrends")
 
   folders <- c(cubedir,
                filedumpdir,
@@ -82,7 +83,8 @@ generate_qcfolders <- function(cubename,
                tsdir,
                tscdir,
                tsbdir,
-               tsldir)
+               tsldir,
+               tsdiffdir)
 
   for(i in folders){
     if(!dir.exists(i)) dir.create(i)
@@ -397,7 +399,7 @@ update_qcyear <- function(year = NULL){
 #' @keywords internal
 #' @noRd
 get_plotsavefolder <- function(cubename,
-                               plotfolder = c("Boxplot", "Boxplot_change", "TimeSeries", "TimeSeries_change", "TimeSeries_bydel", "TimeSeries_country")){
+                               plotfolder = c("Boxplot", "Boxplot_change", "TimeSeries", "TimeSeries_change", "TimeSeries_bydel", "TimeSeries_country", "Diff_timetrends")){
   plotfolder <- match.arg(plotfolder)
   path <- file.path(getOption("qualcontrol.root"),
                     getOption("qualcontrol.output"),

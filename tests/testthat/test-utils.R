@@ -49,7 +49,9 @@ test_that("generate_qcfolders works", {
         dir.exists(file.path(cubepath, "PLOTT", "TimeSeries_bydel")),
         dir.exists(file.path(cubepath, "PLOTT", "TimeSeries_bydel", "arkiv")),
         dir.exists(file.path(cubepath, "PLOTT", "TimeSeries_country")),
-        dir.exists(file.path(cubepath, "PLOTT", "TimeSeries_country", "arkiv")))
+        dir.exists(file.path(cubepath, "PLOTT", "TimeSeries_country", "arkiv")),
+        dir.exists(file.path(cubepath, "PLOTT", "Diff_timetrends")),
+        dir.exists(file.path(cubepath, "PLOTT", "Diff_timetrends", "arkiv")))
   )
   expect_false(dir.exists(file.path(cubepath, "NOTEXIST")))
 
@@ -78,7 +80,9 @@ test_that("generate_qcfolders works", {
         dir.exists(file.path(cubepath2, "PLOTT", "TimeSeries_bydel")),
         dir.exists(file.path(cubepath2, "PLOTT", "TimeSeries_bydel", "arkiv")),
         dir.exists(file.path(cubepath2, "PLOTT", "TimeSeries_country")),
-        dir.exists(file.path(cubepath2, "PLOTT", "TimeSeries_country", "arkiv")))
+        dir.exists(file.path(cubepath2, "PLOTT", "TimeSeries_country", "arkiv")),
+        dir.exists(file.path(cubepath2, "PLOTT", "Diff_timetrends")),
+        dir.exists(file.path(cubepath2, "PLOTT", "Diff_timetrends", "arkiv")))
   )
   expect_false(dir.exists(file.path(cubepath2, "NOTEXIST")))
 
@@ -167,7 +171,7 @@ test_that("split_kommuneniv, translate_geoniv and add_kommune works", {
   expect_equal(d2$KOMMUNE, c("Stavanger", NA, "Trondheim", "Bergen", "Stavanger", "Oslo", NA, NA))
 
   d <- translate_geoniv(d)
-  expect_equal(d$GEOniv, c("Land", "Fylke", "Kommune", "Kommune", "Kommune", "Kommune", "Kommune", "Bydel"))
+  expect_equal(as.character(d$GEOniv), c("Land", "Fylke", "Kommune", "Kommune", "Kommune", "Kommune", "Kommune", "Bydel"))
   d3 <- data.table::copy(d2)[, let(GEOniv = NULL)]
   expect_error(translate_geoniv(d3), regexp = "GEOniv column not present")
 

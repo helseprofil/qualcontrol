@@ -1,16 +1,13 @@
 # library(microbenchmark)
 #
-#
-#
-#
 # microbenchmark(
-#   comparediffrows = {
-#     CompareDiffRows(comparecube)
+#   Old = {
+#     PlotTimeDiff(comparecube)
 #     },
 #
-#   comparecube_summary = {
-#     comparecube_summary(comparecube)
+#   New = {
+#     plot_diff_timetrends(comparecube, save = F)
 #     },
-#   times = 50)
+#   times = 25)
 #
 #

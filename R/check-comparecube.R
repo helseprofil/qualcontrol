@@ -12,7 +12,6 @@
 comparecube_summary <- function(dt = comparecube){
 
   if(is.null(dt)) return(invisible(NULL))
-
   dt <- data.table::copy(dt[newrow == 0]) |> qc_round() |> translate_geoniv()
   diffvals <- gsub("_diff", "", grep("_diff$", names(dt), value = T))
   tabvals <- c("Identical", "Different", "New_prikk", "Expired_prikk",
@@ -32,7 +31,6 @@ comparecube_summary <- function(dt = comparecube){
   }
 
   nosearch <- grep("^GEOniv$|^Value$", names(out), invert = T, value = T)
-
   return(tab_output(out,
                     nosearchcolumns = nosearch))
 }
@@ -80,4 +78,106 @@ summarise_diffvals <- function(out,
                                                    Max_reldiff = round(max(diffdata[[reldiff]], na.rm = T), 3))]
     }
   }
+}
+
+#' @title plot_diff_timeseries
+#' @description
+#' Plots differences between new and old cube file across time.
+#' Used to see if there are any patterns in the diffs over time. For indicators with strong trends,
+#' the differences are expected to become smaller with time as the data is standardized to the last year/period
+#' @param dt comparecube
+#' @param save Should plots be saved in the Diff_timetrends folder? Default = TRUE. If FALSE, the plot is just printed in the console.
+#' @return plot
+#' @export
+plot_diff_timetrends <- function(dt = comparecube,
+                                 save = TRUE){
+  if(is.null(dt)) return(invisible(NULL))
+
+  diffval <- select_diffval_pri(names(dt))
+  if(is.na(diffval)) return(invisible(NULL))
+  reldiffval <- sub("_diff", "_reldiff", diffval)
+  labelval <- sub("_diff", "", diffval)
+  cubename <- get_cubename(dt)
+  cubedate <- get_cubedatetag(dt)
+
+  dt <- data.table::copy(dt[newrow == 0 & SPVFLAGG_new == 0 & SPVFLAGG_old == 0]) |>
+    translate_geoniv()
+
+  dt[, let(Absolute = get(diffval),
+           Relative = get(reldiffval))]
+  dt <- data.table::melt(dt, measure.vars = c("Absolute", "Relative"))[, .(GEOniv, AAR, variable, value)]
+  allyears <- get_all_combinations(dt, c("GEOniv", "AAR", "variable"))
+  dt <- dt[!(variable == "Absolute" & value == 0 | variable == "Relative" & value == 1)]
+
+  plotdata <- collapse::join(allyears, dt, on = c("GEOniv", "AAR", "variable"), how = "left", multiple = T, verbose = 0)
+  xsize <- ifelse(length(unique(plotdata$AAR)) > 12, 10, 20)
+
+  for(geoniv in unique(dt$GEOniv)){
+    subset <- plotdata[GEOniv == geoniv]
+    plot <- plot_diff_timetrends_plotfun(subset, geoniv, labelval, xsize)
+    plot_diff_timetrends_savefun(plot, cubename, cubedate, geoniv, save = save)
+  }
+}
+
+#' @title select_diffval_pri
+#' @keywords internal
+#' @description
+#' Selects first available from MEIS_diff > RATE_diff > SMR_diff
+#' @noRd
+select_diffval_pri <- function(valuecolumns){
+
+  diffval <- data.table::fcase("MEIS_diff"  %in% valuecolumns, "MEIS_diff",
+                               "RATE_diff" %in% valuecolumns, "RATE_diff",
+                               "SMR_diff" %in% valuecolumns, "SMR_diff",
+                               default = NA_character_)
+  return(diffval)
+}
+
+#' @title plot_diff_timetrends_plotfun
+#' @description
+#' Plotting function for [plot_diff_timetrends()]
+#' @keywords internal
+#' @noRd
+plot_diff_timetrends_plotfun <- function(plotdata,
+                                         geoniv,
+                                         label,
+                                         xsize){
+
+  plot <- ggplot2::ggplot(plotdata,
+                          mapping = ggplot2::aes(x = AAR)) +
+    ggplot2::geom_boxplot(ggplot2::aes(x = AAR,
+                                       y = value),
+                          na.rm = T) +
+    ggplot2::facet_wrap(ggplot2::vars(variable),
+                        scales = "free_y") +
+    ggplot2::labs(title = geoniv,
+                  x = "",
+                  y = label) +
+    theme_qc() +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = xsize))
+
+  return(plot)
+}
+
+#' @title plot_diff_timetrends_savefun
+#' @description
+#' Save function for [plot_diff_timetrends()]
+#' @keywords internal
+#' @noRd
+plot_diff_timetrends_savefun <- function(plot,
+                                         cubename,
+                                         cubedate,
+                                         geoniv,
+                                         save = TRUE){
+
+  savepath <- get_plotsavefolder(cubename, "Diff_timetrends")
+  savename <- paste0(cubename, "_", cubedate, "_difftrend_", geoniv, ".png")
+
+  if(save){
+    ggplot2::ggsave(file.path(savepath, savename),
+                    plot,
+                    width = ggplot2::unit(12, "cm"),
+                    height = ggplot2::unit(7, "cm"))
+  }
+  print(plot)
 }

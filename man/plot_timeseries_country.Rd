@@ -8,9 +8,12 @@ plot_timeseries_country(cube, save = TRUE)
 }
 \arguments{
 \item{cube}{data file}
+
+\item{save}{Should the plot be saved in the TimeSeries_country folder? Default = TRUE.
+If FALSE, the plot is just printed in the console.}
 }
 \value{
-list
+plot
 }
 \description{
 Plots country-level time series across all dimensions except GEO and AAR.

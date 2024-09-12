@@ -12,8 +12,8 @@ test_that("make_comparecube works", {
   expect_no_error(make_comparecube(newcube, oldcube, outliers = T, dumps = NULL))
 
   single_aar = "2021_2021"
-  expect_no_error(make_comparecube(newcube[AAR == single_aar], oldcube[AAR == single_aar], outliers = F, overwrite = T))
-  expect_no_error(make_comparecube(newcube[AAR == single_aar], oldcube[AAR == single_aar], outliers = T, overwrite = T))
+  invisible(capture.output(expect_no_error(make_comparecube(newcube[AAR == single_aar], oldcube[AAR == single_aar], outliers = F, overwrite = T))))
+  invisible(capture.output(expect_no_error(make_comparecube(newcube[AAR == single_aar], oldcube[AAR == single_aar], outliers = T, overwrite = T))))
   options(qualcontrol.year = orgyear)
 })
 

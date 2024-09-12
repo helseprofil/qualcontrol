@@ -3,7 +3,9 @@
 #' Plots country-level time series across all dimensions except GEO and AAR.
 #' Useful to detect classification errors or other time series anomalies.
 #' @param cube data file
-#' @return list
+#' @param save Should the plot be saved in the TimeSeries_country folder? Default = TRUE.
+#' If FALSE, the plot is just printed in the console.
+#' @return plot
 #' @export
 plot_timeseries_country <- function(cube, save = TRUE){
   d <- data.table::copy(cube[GEO == 0])
@@ -37,7 +39,8 @@ plot_timeseries_country <- function(cube, save = TRUE){
 #' Plotting function for [plot_timeseries_country()]
 #' @keywords internal
 #' @noRd
-plot_timeseries_country_plotfun <- function(plotdata, dim){
+plot_timeseries_country_plotfun <- function(plotdata,
+                                            dim){
   nrow_legend <- ceiling(length(unique(plotdata[[dim]]))/3)
   plot <- ggplot2::ggplot(plotdata, ggplot2::aes(AARx,
                                                  yvalue,
@@ -47,7 +50,7 @@ plot_timeseries_country_plotfun <- function(plotdata, dim){
     ggplot2::geom_line() +
     ggplot2::facet_wrap(~as.character(PARAMETER), ncol = 2, scales = "free_y") +
     ggplot2::labs(x = "Year", y = NULL, title = dim) +
-    ggplot2::scale_x_continuous(breaks = seq(min(plotdata$AARx),max(plotdata$AARx),by = 1),
+    ggplot2::scale_x_continuous(breaks = seq(min(plotdata$AARx),max(plotdata$AARx), by = 1),
                                 labels = sort(unique(plotdata$AAR)),
                                 expand = ggplot2::expansion(add = 0.2)) +
     theme_qc() +
@@ -68,7 +71,17 @@ plot_timeseries_country_plotfun <- function(plotdata, dim){
   return(plot)
 }
 
-plot_timeseries_country_savefun <- function(plot, dim, cubename, cubedate, plotheight, save = TRUE){
+#' @title plot_timeseries_country_savefun
+#' @description
+#' Save function for [plot_timeseries_country()]
+#' @keywords internal
+#' @noRd
+plot_timeseries_country_savefun <- function(plot,
+                                            dim,
+                                            cubename,
+                                            cubedate,
+                                            plotheight,
+                                            save = TRUE){
 
   savepath <- get_plotsavefolder(cubename, "TimeSeries_country")
   savename <- paste0(cubename, "_", cubedate, "_TS_by_", dim, ".png")
@@ -79,5 +92,6 @@ plot_timeseries_country_savefun <- function(plot, dim, cubename, cubedate, ploth
                     width = ggplot2::unit(12, "cm"),
                     height = ggplot2::unit(plotheight, "cm"))
   }
+  print(plot)
 }
 

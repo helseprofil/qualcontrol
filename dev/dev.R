@@ -9,6 +9,8 @@ readfiles(cube.new = "TRANGBODDHET_2023-11-20-11-05",
           modus.old = "KH",
           recode.old = T)
 
+make_comparecube(newcube, oldcube, dumps = NULL)
+
 # HKR
 readfiles(cube.new = "HKR_2024-02-01-12-42",
           modus.new = "KH",
@@ -16,7 +18,6 @@ readfiles(cube.new = "HKR_2024-02-01-12-42",
           modus.old = "KH",
           recode.old = T)
 
-make_comparecube(newcube, oldcube, dumps = NULL)
 # dt <- data.table::copy(comparecube)
 
 
