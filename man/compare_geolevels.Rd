@@ -5,12 +5,12 @@
 \title{compare_geolevels}
 \usage{
 compare_geolevels(
-  cube,
+  dt = newcube,
   comparison = c("FL", "LF", "KF", "FK", "BK", "KB", "OO")
 )
 }
 \arguments{
-\item{cube}{data file}
+\item{dt}{data file, defaults to newcube}
 
 \item{comparison}{which geographical levels are compared. Accepts combinations "FL" (Fylke-Land),
 "KF" (Kommune-Fylke"), "BK" (Bydel-Kommune), and "OO" (Oslo kommune-fylke).}

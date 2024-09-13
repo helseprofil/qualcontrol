@@ -5,17 +5,17 @@
 \title{make_comparecube}
 \usage{
 make_comparecube(
-  cube.new = NULL,
-  cube.old = NULL,
+  cube.new = newcube,
+  cube.old = oldcube,
   outliers = TRUE,
   dumps = getOption("qualcontrol.dumps"),
   overwrite = FALSE
 )
 }
 \arguments{
-\item{cube.new}{new file}
+\item{cube.new}{new file, default = newcube}
 
-\item{cube.old}{old file}
+\item{cube.old}{old file, default = oldcube. Can be NULL.}
 
 \item{outliers}{should outliers be flagged using \code{\link[=flag_outliers]{flag_outliers()}}?}
 

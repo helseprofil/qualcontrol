@@ -4,13 +4,13 @@
 \alias{plot_timeseries_country}
 \title{plot_timeseries_country}
 \usage{
-plot_timeseries_country(cube, save = TRUE)
+plot_timeseries_country(dt = newcube, save = TRUE)
 }
 \arguments{
-\item{cube}{data file}
-
 \item{save}{Should the plot be saved in the TimeSeries_country folder? Default = TRUE.
 If FALSE, the plot is just printed in the console.}
+
+\item{cube}{data file}
 }
 \value{
 plot

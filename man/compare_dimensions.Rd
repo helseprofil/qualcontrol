@@ -4,7 +4,7 @@
 \alias{compare_dimensions}
 \title{compare_dimensions}
 \usage{
-compare_dimensions(cube.new = NULL, cube.old = NULL)
+compare_dimensions(cube.new = newcube, cube.old = oldcube)
 }
 \arguments{
 \item{cube.new}{New cube}

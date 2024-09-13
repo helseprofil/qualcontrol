@@ -4,7 +4,12 @@
 \alias{compare_censoring}
 \title{@title compare_censoring}
 \usage{
-compare_censoring(cube.new, cube.old = NULL, filter.cubes = TRUE)
+compare_censoring(
+  cube.new = newcube,
+  cube.old = oldcube,
+  by = NULL,
+  filter.cubes = TRUE
+)
 }
 \arguments{
 \item{cube.new}{new KUBE file}

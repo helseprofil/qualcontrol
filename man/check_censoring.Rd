@@ -4,10 +4,10 @@
 \alias{check_censoring}
 \title{check_censoring}
 \usage{
-check_censoring(dt)
+check_censoring(dt = newcube)
 }
 \arguments{
-\item{dt}{cube file}
+\item{dt}{cube file, defaults to newcube}
 }
 \description{
 Fetches censoring limits from ACCESS, and check if all values <= the censoring

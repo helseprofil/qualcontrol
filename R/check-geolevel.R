@@ -2,7 +2,7 @@
 #' @description
 #' Checks if a geographical level sums up to the next granularity.
 #'
-#' @param cube data file
+#' @param dt data file, defaults to newcube
 #' @param comparison which geographical levels are compared. Accepts combinations "FL" (Fylke-Land),
 #' "KF" (Kommune-Fylke"), "BK" (Bydel-Kommune), and "OO" (Oslo kommune-fylke).
 #' @return DT
@@ -12,12 +12,12 @@
 #' # compare_geolevels(data, "KF")
 #' # compare_geolevels(data, "BK")
 #' # compare_geolevels(data, "OO")
-compare_geolevels <- function(cube,
+compare_geolevels <- function(dt = newcube,
                               comparison = c("FL", "LF", "KF", "FK", "BK", "KB", "OO")){
 
   comparison <- match.arg(comparison)
   comparison <- paste0(sort(strsplit(comparison, "")[[1]]), collapse = "")
-  d <- data.table::copy(cube)
+  d <- data.table::copy(dt)
   groupdims <- grep("^GEO$", identify_coltypes(d)$dims.new, invert = T, value = T)
   teller_val <- select_teller_pri(names(d))
   if(is.na(teller_val)){
@@ -66,15 +66,16 @@ compare_geolevels <- function(cube,
 #' @description
 #' Estimate the proportion of unknown bydel, to check validity of the data.
 #'
-#' @param cube data file
-#' @param maxrows Should the output table ble cropped to show a maximum of 4000 observations?
+#' @param dt data file, defaults to newcube
+#' @param crop Should the output table ble cropped to show a maximum of `maxrows`observations?
+#' @param maxrows Max observations to show if `crop` = TRUE. Default = 4000. Will be divided equally between strata
 #'
 #' @return DT
 #' @export
-unknown_bydel <- function(cube,
+unknown_bydel <- function(dt = newcube,
                           crop = TRUE,
                           maxrows = 4000){
-  d <- data.table::copy(cube)
+  d <- data.table::copy(dt)
   if(nrow(d[GEOniv == "B"]) == 0){
     cat("No data on bydel, no check performed")
     return(invisible(NULL))
@@ -134,4 +135,19 @@ unknown_bydel <- function(cube,
   return(tab_output(d))
 }
 
-
+#' @keywords internal
+#' @noRd
+#' @description
+#' Adds column KOMMUNE to identify Oslo, Stavanger, Bergen, and Trondheim for
+#' grouping. Adds the column by reference, no need to overwrite object.
+#' @examples
+#' # add_commune(data)
+add_kommune <- function(data){
+  data[, let(KOMMUNE = NA_character_)]
+  data[GEO %in% c(301, 1103, 4601, 5001) | GEOniv == "B" | GEOniv == "Bydel",
+       let(KOMMUNE = data.table::fcase(grepl("^301", GEO), "Oslo",
+                                       grepl("^1103", GEO), "Stavanger",
+                                       grepl("^4601", GEO), "Bergen",
+                                       grepl("^5001", GEO), "Trondheim"))]
+  return(data)
+}

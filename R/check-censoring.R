@@ -5,10 +5,10 @@
 #' If any observation below or equal to the limit is detected,
 #' all rows containing unacceptable values are returned for inspection.
 #'
-#' @param dt cube file
+#' @param dt cube file, defaults to newcube
 #'
 #' @export
-check_censoring <- function(dt){
+check_censoring <- function(dt = newcube){
 
   cubename <- get_cubename(dt)
   colinfo <- identify_coltypes(dt)
@@ -86,24 +86,25 @@ check_censoring <- function(dt){
 #'
 #' @return a table containing the number of censored rows in the new and old KUBE, and the absolute and relative difference, grouped by type of SPVFLAGG and an additional dimension (optional)
 #' @export
-compare_censoring <- function(cube.new,
-                              cube.old = NULL,
+compare_censoring <- function(cube.new = newcube,
+                              cube.old = oldcube,
+                              by = NULL,
                               filter.cubes = TRUE){
 
   if(is.null(cube.new)) stop("cube.new must be provided")
 
   # If only new file available (new indicator), return table of new file
   if (is.null(cube.old)) {
-    output <- cube.new[, .("N (new)" = .N), keyby = "SPVFLAGG"]
+    output <- cube.new[, .("N (new)" = .N), keyby = c("SPVFLAGG", by)]
     convert_coltype(output, "SPVFLAGG", "factor")
     return(tab_output(output,
                       nosearchcolumns = grep("SPVFLAGG", names(output), invert = T, value = T)))
   }
 
-  colinfo <- identify_coltypes(cube.new, cube.old)
-  diminfo <- compare_dimensions(cube.new, cube.old)
-
   if(filter.cubes){
+    colinfo <- identify_coltypes(cube.new, cube.old)
+    diminfo <- compare_dimensions(cube.new, cube.old)
+
     cube.new <- filter_cube(cube.new, cube.old, diminfo, "new")
     cube.old <- filter_cube(cube.new, cube.old, diminfo, "old")
 
@@ -111,9 +112,9 @@ compare_censoring <- function(cube.new,
     cube.new <- aggregate_cube_multi(cube.new, colinfo$newdims)
   }
 
-  new <- cube.new[, .("N (new)" = .N), keyby = "SPVFLAGG"]
-  old <- cube.old[, .("N (old)" = .N), keyby = "SPVFLAGG"]
-  output <- collapse::join(new, old, on = "SPVFLAGG", how = "left", verbose = 0)
+  new <- cube.new[, .("N (new)" = .N), keyby = c("SPVFLAGG", by)]
+  old <- cube.old[, .("N (old)" = .N), keyby = c("SPVFLAGG", by)]
+  output <- collapse::join(new, old, on = c("SPVFLAGG", by), how = "left", verbose = 0)
 
   cols <- c("N (new)", "N (old)")
   output[, (cols) := lapply(.SD, collapse::replace_na, 0), .SDcols = cols]
@@ -121,9 +122,11 @@ compare_censoring <- function(cube.new,
   output[, let(Absolute = `N (new)` - `N (old)`,
                Relative = round(`N (new)` / `N (old)`, 3))]
 
-  convert_coltype(output, "SPVFLAGG", "factor")
+  nosearch <- names(output)[names(output) %notin% c("SPVFLAGG", by)]
+  convert_coltype(output, c("SPVFLAGG", by), "factor")
+
   return(tab_output(output,
-                    nosearchcolumns = grep("SPVFLAGG", names(output), invert = T, value = T)))
+                    nosearchcolumns = nosearch))
 
 }
 
@@ -136,8 +139,8 @@ compare_censoring <- function(cube.new,
 #' @param cube.old old file
 #'
 #' @export
-compare_censoring_timeseries <- function(cube.new,
-                                         cube.old = NULL){
+compare_censoring_timeseries <- function(cube.new = newcube,
+                                         cube.old = oldcube){
 
   if(is.null(cube.new)) stop("cube.new must be provided")
 

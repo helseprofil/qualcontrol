@@ -4,7 +4,7 @@
 \alias{compare_colnames}
 \title{CompareCols}
 \usage{
-compare_colnames(cube.new = NULL, cube.old = NULL)
+compare_colnames(cube.new = newcube, cube.old = oldcube)
 }
 \arguments{
 \item{data1}{New cube}

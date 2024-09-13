@@ -4,7 +4,7 @@
 \alias{compare_censoring_timeseries}
 \title{compare_censoring_timeseries}
 \usage{
-compare_censoring_timeseries(cube.new, cube.old = NULL)
+compare_censoring_timeseries(cube.new = newcube, cube.old = oldcube)
 }
 \arguments{
 \item{cube.new}{new file}

@@ -7,8 +7,9 @@
 #' If FALSE, the plot is just printed in the console.
 #' @return plot
 #' @export
-plot_timeseries_country <- function(cube, save = TRUE){
-  d <- data.table::copy(cube[GEO == 0])
+plot_timeseries_country <- function(dt = newcube,
+                                    save = TRUE){
+  d <- data.table::copy(dt[GEO == 0])
   colinfo <- identify_coltypes(d)
   cubename <- get_cubename(d)
   cubedate <- get_cubedatetag(d)

@@ -124,6 +124,7 @@ plot_diff_timetrends <- function(dt = comparecube,
 #' @description
 #' Selects first available from MEIS_diff > RATE_diff > SMR_diff
 #' @noRd
+#' @export
 select_diffval_pri <- function(valuecolumns){
 
   diffval <- data.table::fcase("MEIS_diff"  %in% valuecolumns, "MEIS_diff",

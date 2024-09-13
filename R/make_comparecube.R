@@ -1,15 +1,15 @@
 #' @title make_comparecube
 #'
-#' @param cube.new new file
-#' @param cube.old old file
+#' @param cube.new new file, default = newcube
+#' @param cube.old old file, default = oldcube. Can be NULL.
 #' @param outliers should outliers be flagged using [qualcontrol::flag_outliers()]?
 #' @param dumps which files to save, defaults to getOption("qualcontrol.dumps"). For no dumps, set to NULL.
 #' @param overwrite should existing files (exact filename) be overwritten?
 #'
 #' @returns flagged cube objects, comparecube, and saved csv-files if requested.
 #' @export
-make_comparecube <- function(cube.new = NULL,
-                             cube.old = NULL,
+make_comparecube <- function(cube.new = newcube,
+                             cube.old = oldcube,
                              outliers = TRUE,
                              dumps = getOption("qualcontrol.dumps"),
                              overwrite = FALSE){
@@ -54,6 +54,7 @@ make_comparecube <- function(cube.new = NULL,
 #' - If cube.old = NULL, the outlier is selected from colinfo$vals.new
 #' - If cube.old is provided, outlier is selected from colinfo$commoncols,
 #' to ensure the same value column is used for both files.
+#' @export
 select_outlier_pri <- function(cube.new,
                                cube.old = NULL,
                                colinfo){
@@ -289,6 +290,14 @@ combine_cubes <- function(newcube_flag,
 
   d_new <- d_new[, c(..colinfo[["commondims"]], ..commonvals, "newrow", "GEOniv")]
   data.table::setnames(d_new, commonvals, paste0(commonvals, "_new"))
+
+###  # Handle new (add total to d_old) and expired (aggregate d_old) dimensions
+###  if(length(colinfo$expdims) > 0) aggregate_cube_multi(d_old, colinfo$expdims)
+###  if(length(colinfo$newdims) > 0) {
+###    for(dim in colinfo$newdims){
+###      d_old[, (dim) := find_total(d_new, dim)]
+###    }
+###  }
 
   d_old <- d_old[, c(..colinfo[["commondims"]], ..commonvals)]
   data.table::setnames(d_old, commonvals, paste0(commonvals, "_old"))

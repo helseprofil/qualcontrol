@@ -4,12 +4,14 @@
 \alias{unknown_bydel}
 \title{unknown_bydel}
 \usage{
-unknown_bydel(cube, crop = TRUE, maxrows = 4000)
+unknown_bydel(dt = newcube, crop = TRUE, maxrows = 4000)
 }
 \arguments{
-\item{cube}{data file}
+\item{dt}{data file, defaults to newcube}
 
-\item{maxrows}{Should the output table ble cropped to show a maximum of 4000 observations?}
+\item{crop}{Should the output table ble cropped to show a maximum of \code{maxrows}observations?}
+
+\item{maxrows}{Max observations to show if \code{crop} = TRUE. Default = 4000. Will be divided equally between strata}
 }
 \value{
 DT

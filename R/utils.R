@@ -123,6 +123,7 @@ get_all_combinations <- function(data,
 #' @description
 #' Selects first available from sumTELLER_uprikk > sumTELLER > TELLER
 #' @noRd
+#' @export
 select_teller_pri <- function(valuecolumns){
 
   teller <- data.table::fcase("sumTELLER_uprikk" %in% valuecolumns, "sumTELLER_uprikk",
@@ -137,6 +138,7 @@ select_teller_pri <- function(valuecolumns){
 #' @description
 #' Selects first available from sumTELLER_uprikk > sumTELLER > TELLER
 #' @noRd
+#' @export
 select_nevner_pri <- function(valuecolumns){
 
   nevner <- data.table::fcase("sumNEVNER_uprikk"  %in% valuecolumns, "sumNEVNER_uprikk",
@@ -328,23 +330,6 @@ translate_geoniv <- function(dt){
   dt[, let(GEOniv = forcats::fct_drop(GEOniv))]
 
   return(dt)
-}
-
-#' @keywords internal
-#' @noRd
-#' @description
-#' Adds column KOMMUNE to identify Oslo, Stavanger, Bergen, and Trondheim for
-#' grouping. Adds the column by reference, no need to overwrite object.
-#' @examples
-#' # add_commune(data)
-add_kommune <- function(data){
-  data[, let(KOMMUNE = NA_character_)]
-  data[GEO %in% c(301, 1103, 4601, 5001) | GEOniv == "B",
-       let(KOMMUNE = data.table::fcase(grepl("^301", GEO), "Oslo",
-                                       grepl("^1103", GEO), "Stavanger",
-                                       grepl("^4601", GEO), "Bergen",
-                                       grepl("^5001", GEO), "Trondheim"))]
-  return(data)
 }
 
 #' @title get_complete_strata
