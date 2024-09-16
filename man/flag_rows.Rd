@@ -25,3 +25,4 @@ Flags the new data file for new rows (not in the old file), and the old data fil
 # flag_rows(cube.new, cube.old, colinfo, "newrow")
 # flag_rows(cube.new, cube.old, colinfo, "exprow")
 }
+\keyword{internal}

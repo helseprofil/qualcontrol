@@ -74,6 +74,7 @@ select_outlier_pri <- function(cube.new,
 }
 
 #' @title flag_rows
+#' @keywords internal
 #' @description
 #' Flags the new data file for new rows (not in the old file), and the old data file for expired rows (not in the new file).
 #' @param cube.new new data file
@@ -82,7 +83,6 @@ select_outlier_pri <- function(cube.new,
 #' @param flag one of "newrow" or "exprow", corresponding to which type of column should be flagged.
 #'
 #' @return flagged data file
-#' @export
 #' @examples
 #' # flag_rows(cube.new, cube.old, colinfo, "newrow")
 #' # flag_rows(cube.new, cube.old, colinfo, "exprow")

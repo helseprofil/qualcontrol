@@ -18,3 +18,4 @@ no total exists, value columns will be aggregated according to their types.
 Counts (TELLER, sumTELLER) are aggregated to the sum, while other value columns
 are aggregated to their mean.
 }
+\keyword{internal}

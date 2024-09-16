@@ -48,12 +48,12 @@ get_cubedatetag <- function(cube){
 }
 
 #' @title generate_folders
+#' @keywords internal
 #' @description
 #' Create Folder structure according to profile year and cube name of new data file
 #'
 #' @param cubename name of cube
 #' @param year profileyear, defaults to options(qualcontrol.year)
-#' @export
 generate_qcfolders <- function(cubename,
                                year = NULL){
 
@@ -93,6 +93,7 @@ generate_qcfolders <- function(cubename,
 }
 
 #' @title get_all_combinations
+#' @keywords internal
 #' @description
 #' Find all combinations of unique levels of selected columns in a dataset.
 #' Can be used for rectangularization, as it returns a data.table with all possible
@@ -102,8 +103,6 @@ generate_qcfolders <- function(cubename,
 #' @param columns character vector of the columns to identify combinations
 #'
 #' @return data.table containing all possible combinations of selected variables
-#' @export
-#'
 #' @examples
 #' # get_all_combinations(newcube, c("KJONN", "ALDER", "UTDANN"))
 get_all_combinations <- function(data,
@@ -150,13 +149,13 @@ select_nevner_pri <- function(valuecolumns){
 }
 
 #' @title find_total
+#' @keywords internal
 #' @description
 #' Identifies if a total/aggregated level exist for a dimension. For ALDER,
 #' the min_max is used as total if existing, for other dimensions 0 is the total value.
 #' @param cube datafile
 #' @param dim dimension name
 #' @return the total category, or NA
-#' @export
 #' @examples
 #' # find_total(newcube, "ALDER")
 find_total <- function(cube, dim){
@@ -182,6 +181,7 @@ find_total <- function(cube, dim){
 }
 
 #' @title aggregate_cube
+#' @keywords internal
 #' @description
 #' Aggregates value columns according to a given dimension variable.
 #' If a total exists, the rows corresponding to the total is kept. If
@@ -223,6 +223,7 @@ aggregate_cube <- function(cube, dim){
 }
 
 #' @title aggregate_cube_multi
+#' @keywords internal
 #' @description
 #' Wrapper around [aggregate_cube()] to apply to multiple dimensions
 #' #'
@@ -230,7 +231,6 @@ aggregate_cube <- function(cube, dim){
 #' @param dimensions vector of dimensions to aggregate by
 #'
 #' @return data.table
-#' @export
 aggregate_cube_multi <- function(cube, dimensions){
   d <- data.table::copy(cube)
   for(dim in dimensions){

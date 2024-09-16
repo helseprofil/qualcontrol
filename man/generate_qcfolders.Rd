@@ -14,3 +14,4 @@ generate_qcfolders(cubename, year = NULL)
 \description{
 Create Folder structure according to profile year and cube name of new data file
 }
+\keyword{internal}

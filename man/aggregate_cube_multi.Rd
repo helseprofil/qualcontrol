@@ -18,3 +18,4 @@ data.table
 Wrapper around \code{\link[=aggregate_cube]{aggregate_cube()}} to apply to multiple dimensions
 #'
 }
+\keyword{internal}

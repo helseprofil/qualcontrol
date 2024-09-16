@@ -21,3 +21,4 @@ the min_max is used as total if existing, for other dimensions 0 is the total va
 \examples{
 # find_total(newcube, "ALDER")
 }
+\keyword{internal}

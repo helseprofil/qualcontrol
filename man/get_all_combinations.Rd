@@ -22,3 +22,4 @@ combinations.
 \examples{
 # get_all_combinations(newcube, c("KJONN", "ALDER", "UTDANN"))
 }
+\keyword{internal}

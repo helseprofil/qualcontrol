@@ -2,8 +2,7 @@
 % Please edit documentation in R/lookup-tabs.R
 \name{update_internal_data}
 \alias{update_internal_data}
-\title{Update internal data
-Stores objects in R/sysdata.rda which is needed in the package}
+\title{Update internal data}
 \usage{
 update_internal_data(geoyear, overwrite = TRUE)
 }
@@ -22,6 +21,6 @@ update_internal_data(geoyear, overwrite = TRUE)
 }
 }
 \description{
-Update internal data
 Stores objects in R/sysdata.rda which is needed in the package
 }
+\keyword{internal}

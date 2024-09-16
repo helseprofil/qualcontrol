@@ -88,7 +88,9 @@ update_validgeo <- function(year){
   return(sort(out))
 }
 
-#' Update internal data
+#' @title Update internal data
+#' @keywords internal
+#' @description
 #' Stores objects in R/sysdata.rda which is needed in the package
 #'
 #' @param geoyear year for valid GEO-codes
@@ -100,7 +102,6 @@ update_validgeo <- function(year){
 #' - .validgeo
 #' - .popinfo
 #' - .georecode
-#' @export
 update_internal_data <- function(geoyear, overwrite = TRUE){
 
   .standardvalues <- getOption("qualcontrol.standardvalues")
