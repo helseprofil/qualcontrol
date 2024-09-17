@@ -4,10 +4,10 @@
 \alias{get_all_combinations}
 \title{get_all_combinations}
 \usage{
-get_all_combinations(data, columns)
+get_all_combinations(dt, columns)
 }
 \arguments{
-\item{data}{a data.table}
+\item{dt}{a data.table}
 
 \item{columns}{character vector of the columns to identify combinations}
 }

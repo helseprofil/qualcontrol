@@ -213,21 +213,21 @@ generate_qcfolders <- function(cubename,
 #' Can be used for rectangularization, as it returns a data.table with all possible
 #' combinations.
 #'
-#' @param data a data.table
+#' @param dt a data.table
 #' @param columns character vector of the columns to identify combinations
 #'
 #' @return data.table containing all possible combinations of selected variables
 #' @examples
 #' # get_all_combinations(newcube, c("KJONN", "ALDER", "UTDANN"))
-get_all_combinations <- function(data,
+get_all_combinations <- function(dt,
                                  columns){
 
-  if(any(columns %notin% names(data))){
-    missing <- paste0(columns[columns %notin% names(data)], collapse = ", ")
+  if(any(columns %notin% names(dt))){
+    missing <- paste0(columns[columns %notin% names(dt)], collapse = ", ")
     stop("Column(s) (", missing, ") not found in data")
   }
 
-  d <- do.call(data.table::CJ, lapply(columns, function(x) unique(data[[x]])))
+  d <- do.call(data.table::CJ, lapply(columns, function(x) unique(dt[[x]])))
   d <- data.table::setnames(d, columns)
   return(d)
 }
@@ -281,17 +281,8 @@ get_cubedatetag <- function(cube){
 
 #' @keywords internal
 #' @noRd
-get_plotsavefolder <- function(cubename,
-                               plotfolder = c("Boxplot", "Boxplot_change", "TimeSeries", "TimeSeries_change", "TimeSeries_bydel", "TimeSeries_country", "Diff_timetrends")){
-  plotfolder <- match.arg(plotfolder)
-  path <- file.path(getOption("qualcontrol.root"),
-                    getOption("qualcontrol.output"),
-                    getOption("qualcontrol.year"),
-                    cubename,
-                    "PLOTT",
-                    plotfolder)
-  if(!dir.exists(path)) generate_qcfolders(cubename, year = getOption("qualcontrol.year"))
-  return(path)
+get_cubefilename <- function(cube){
+  paste(get_cubename(cube), get_cubedatetag(cube), sep = "_")
 }
 
 #' @title identify_coltypes

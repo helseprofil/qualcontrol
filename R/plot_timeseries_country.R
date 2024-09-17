@@ -90,8 +90,9 @@ plot_timeseries_country_savefun <- function(plot,
   if(save){
     ggplot2::ggsave(file.path(savepath, savename),
                     plot,
-                    width = ggplot2::unit(12, "cm"),
-                    height = ggplot2::unit(plotheight, "cm"))
+                    width = 12,
+                    height = plotheight,
+                    units = "cm")
   }
   print(plot)
 }

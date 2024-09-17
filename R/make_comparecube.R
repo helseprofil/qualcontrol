@@ -19,13 +19,18 @@ make_comparecube <- function(cube.new = newcube,
   if(outliers) outlierval <- select_outlier_pri(cube.new, cube.old, colinfo)
 
   newcube_flag <- flag_rows(cube.new, cube.old, colinfo, "newrow")
-  if(outliers) newcube_flag <- flag_outliers(newcube_flag, outlierval)
+  if(outliers){
+    newcube_flag <- flag_outliers(newcube_flag, outlierval)
+    data.table::setattr(newcube_flag, "outlier", outlierval)
+  }
 
   if(!is.null(cube.old)){
     oldcube_flag <- flag_rows(cube.new, cube.old, colinfo, "exprow")
     if(outliers){
       oldcube_flag <- flag_outliers(oldcube_flag, outlierval)
       add_prev_outlier(newcube_flag, oldcube_flag, colinfo)
+      data.table::setattr(oldcube_flag, "outlier", outlierval)
+      data.table::setattr(newcube_flag, "comparison", get_cubefilename(cube.old))
     }
     comparecube <- combine_cubes(newcube_flag, oldcube_flag, colinfo)
   }
@@ -410,4 +415,23 @@ fullname <- ifelse(newname == oldname,
 
 filename <- paste0("compare_", fullname, ".csv")
 return(filename)
+}
+
+#' @title qc_round
+#' @keywords internal
+#' @noRd
+qc_round <- function(dt){
+  if(is.null(dt)) return(invisible(NULL))
+
+  dt <- data.table::copy(dt)
+  values <- names(dt)[names(dt) %notin% .validdims]
+  round0 <- values[grepl("SPVFLAGG.*|RATE\\.n.*", values)]
+  round1 <- values[grepl("TELLER|NEVNER", values) & !grepl("_reldiff", values)]
+  round2 <- values[grepl("RATE|SMR|MEIS|MIN$|MAX$|LOW$|HIGH$|.*wq\\d{2}$", values, perl = T) | grepl("_reldiff", values)]
+
+  for(val in round0){ dt[, (val) := round(get(val), 0)] }
+  for(val in round1){ dt[, (val) := round(get(val), 1)] }
+  for(val in round2){ dt[, (val) := round(get(val), 2)] }
+
+  return(dt)
 }

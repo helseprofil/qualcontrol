@@ -27,6 +27,4 @@ readfiles(cube.new = "HKR_2024-02-01-12-42",
 #
 # colinfo <- identify_coltypes(cube.new, cube.old)
 
-# TO-DO
-# - Make function to save report
 
