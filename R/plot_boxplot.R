@@ -1,3 +1,18 @@
+#' @title plot_boxplot
+#' @description
+#' Generate boxplots indicating outliers (values outside q25-1.5IQR, q75+1.5IQR).
+#'
+#'
+#'
+#' @param dt flagged data file, default to newcube_flag
+#' @param onlynew should only new outliers be plotted? Default = TRUE
+#' @param change Should year-to-year changes be plotted? Default = FALSE
+#' @param save Should plots be saved to the default folder? Default = T
+#'
+#' @return
+#' @export
+#'
+#' @examples
 plot_boxplot <- function(dt = newcube_flag,
                          onlynew = TRUE,
                          change = FALSE,
@@ -7,12 +22,13 @@ plot_boxplot <- function(dt = newcube_flag,
   colinfo <- identify_coltypes(d)
   cubename <- get_cubename(d)
   cubefile <- get_cubefilename(d)
-  bpcols <- plot_boxplot_select_cols(d, change = change, colinfo = colinfo)
+  bpcols <- get_plot_cols(d, change = change, colinfo = colinfo, plot = "bp")
     plotvalue <- bpcols$plotvalue
     outlier <- bpcols$outlier
     newoutlier <- bpcols$newoutlier
     quantiles <- bpcols$quantiles
     limits <- bpcols$limits
+  if(plotvalue %notin% names(d)) stop(plotvalue, " not found in data, plot not generated")
   if(onlynew & bpcols$newoutlier %notin% names(d)) onlynew <- FALSE
 
   # Extract baseplotdata
@@ -70,13 +86,14 @@ plot_boxplot <- function(dt = newcube_flag,
         plotargs$subtitle <- paste0(plotargs$subtitle, "\n", i, ": ", unique(bp[[i]]))
       }
     plot <- plot_boxplot_plotfun(bp, ol, plotargs)
-    plot_boxplot_savefun(plot, change, cubename, cubefile, suffix, n_rows, save = save)
+
+    if(save) plot_boxplot_savefun(plot, change, cubename, cubefile, suffix, n_rows)
   }
 }
 
 #' @title plot_boxplot_plotfun
 #' @description
-#' Plotting function for [plot_boxplot()]
+#' Plotting function for [qualcontrol::plot_boxplot()]
 #' @keywords internal
 #' @noRd
 plot_boxplot_plotfun <- function(bp,
@@ -111,18 +128,18 @@ plot_boxplot_plotfun <- function(bp,
                           stat = "identity") +
     ggh4x::force_panelsizes(cols = ggplot2::unit(8, "cm"),
                             rows = ggplot2::unit(6, "cm")) +
-     theme_qc()
-    # ggplot2::theme(plot.subtitle = ggplot2::element_text(size = 16),
-    #                plot.caption = ggplot2::element_text(size = 16),
-    #                axis.title = ggplot2::element_text(size = 16),
-    #                axis.text = ggplot2::element_text(size = 12))
+    theme_qc() +
+    ggplot2::theme(plot.subtitle = ggplot2::element_text(size = 16),
+                   plot.caption = ggplot2::element_text(size = 16),
+                   axis.title = ggplot2::element_text(size = 16),
+                   axis.text = ggplot2::element_text(size = 12))
 
   return(plot)
 }
 
 #' @title plot_boxplot_savefun
 #' @description
-#' Save function for [plot_boxplot()]
+#' Save function for [qualcontrol::plot_boxplot()]
 #' @keywords internal
 #' @noRd
 plot_boxplot_savefun <- function(plot,
@@ -130,42 +147,21 @@ plot_boxplot_savefun <- function(plot,
                                  cubename,
                                  cubefile,
                                  suffix,
-                                 n_rows,
-                                 save){
+                                 n_rows){
 
   folder <- ifelse(change, "Boxplot_change", "Boxplot")
   savepath <- get_plotsavefolder(cubename, folder)
   savename <- paste0(cubefile, "_", suffix, ".png")
   height = n_rows*6 + 12
 
-  if(save){
-    ggplot2::ggsave(file.path(savepath, savename),
-                    plot,
-                    width = 45,
-                    height = height,
-                    units = "cm")
-  }
+  ggplot2::ggsave(file.path(savepath, savename),
+                  plot,
+                  width = 45,
+                  height = height,
+                  units = "cm")
 }
 
-## ---- HELPER FUNCTIONS ----
-
-#' @keywords internal
-#' @noRd
-plot_boxplot_select_cols <- function(dt, change, colinfo){
-
-  cols <- list()
-
-  cols$plotvalue <- attributes(dt)$outlier
-  if(is.null(cols$plotvalue)) cols$plotvalue <- select_outlier_pri(dt, colinfo = colinfo)
-  cols$outlier <- "OUTLIER"
-  cols$newoutlier <- "NEW_OUTLIER"
-  cols$quantiles <- c("wq25", "wq50", "wq75")
-  cols$limits <- c("LOW", "HIGH")
-
-  if(change) cols <- lapply(cols, function(x) paste0("change_", x))
-
-  return(cols)
-}
+# ---- HELPER FUNCTIONS ----
 
 #' @keywords internal
 #' @noRd

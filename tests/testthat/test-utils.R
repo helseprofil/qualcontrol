@@ -22,7 +22,7 @@ test_that("get_cubename and cubedatetag works", {
 })
 
 test_that("generate_qcfolders works", {
-  # skip_if(getOption("qualcontrol.skipslowtest"), "Skipping generate_qcfolders-test")
+  skip_if(getOption("qualcontrol.skipslowtest"), "Skipping generate_qcfolders-test")
   orgyear <- getOption("qualcontrol.year")
 
   generate_qcfolders(cube = "TESTKUBENAVN", year = "TESTFOLDER")

@@ -111,4 +111,35 @@ get_plot_filter <- function(dt,
   return(subsets$filter)
 }
 
+#' @title get_plot_cols
+#' @keywords internal
+#' @noRd
+#' @description
+#' Returns a list of relevant columns to contruct boxplots and timeseries plots
+#' @param dt plotdata
+#' @param change TRUE/FALSE. should the columns be the change variables?
+#' @param colinfo object created with [qualcontrol::identify_coltypes()]
+#' @param plot one of "bp" or "ts"
+#'
+#' @return list
+get_plot_cols <- function(dt, change, colinfo, plot = c("bp", "ts")){
 
+  cols <- list()
+
+  cols$plotvalue <- attributes(dt)$outlier
+  if(is.null(cols$plotvalue)) cols$plotvalue <- select_outlier_pri(dt, colinfo = colinfo)
+  cols$outlier <- "OUTLIER"
+  cols$newoutlier <- "NEW_OUTLIER"
+  if(plot == "bp"){
+    cols$quantiles <- c("wq25", "wq50", "wq75")
+    cols$limits <- c("LOW", "HIGH")
+  }
+
+  if(change) cols <- lapply(cols, function(x) paste0("change_", x))
+
+  return(cols)
+}
+
+archive_old_plots <- function(){
+
+}
