@@ -17,7 +17,7 @@ plot_timeseries_country <- function(dt = newcube,
   plotvals <- c(grep("^RATE.n|^SPVFLAGG$|TELLER|NEVNER", colinfo$vals.new, invert = T, value = T),
                 select_teller_pri(colinfo$vals.new),
                 select_nevner_pri(colinfo$vals.new))
-  plotheight = 4+2*ceiling(length(plotvals))
+  plotrows = ceiling(length(plotvals)/2)
   d <- d[, c(..colinfo[["dims.new"]], ..plotvals)]
   data.table::setkeyv(d, colinfo$dims.new)
   d[, let(AARx = as.numeric(sub("_\\d*", "", AAR)))]
@@ -31,7 +31,7 @@ plot_timeseries_country <- function(dt = newcube,
                                  variable.name = "PARAMETER",
                                  value.name = "yvalue")
     plot <- plot_timeseries_country_plotfun(plotdata, dim)
-    plot_timeseries_country_savefun(plot, dim, cubename, cubedate, plotheight, save = save)
+    plot_timeseries_country_savefun(plot, dim, cubename, cubedate, plotrows, save = save)
   }
 }
 
@@ -57,14 +57,15 @@ plot_timeseries_country_plotfun <- function(plotdata,
     theme_qc() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, size = 8),
                    panel.spacing = ggplot2::unit(0.5, "cm"))  +
-    ggh4x::force_panelsizes(rows = ggplot2::unit(5, "cm"))
+    ggh4x::force_panelsizes(rows = ggplot2::unit(5, "cm"),
+                            cols = ggplot2::unit(7, "cm"))
 
   suppresslegend <- nrow_legend > 3
   if(suppresslegend){
     plot <- plot + ggplot2::guides(color = "none")
   }
   if(!suppresslegend){
-    plot <-  plot +
+    plot <- plot +
     ggplot2::guides(color = ggplot2::guide_legend(title = NULL,
                                                   nrow = nrow_legend,
                                                   byrow = TRUE))
@@ -81,7 +82,7 @@ plot_timeseries_country_savefun <- function(plot,
                                             dim,
                                             cubename,
                                             cubedate,
-                                            plotheight,
+                                            plotrows,
                                             save = TRUE){
 
   savepath <- get_plotsavefolder(cubename, "TimeSeries_country")
@@ -90,8 +91,8 @@ plot_timeseries_country_savefun <- function(plot,
   if(save){
     ggplot2::ggsave(file.path(savepath, savename),
                     plot,
-                    width = 12,
-                    height = plotheight,
+                    width = 20,
+                    height =  8 + (6*plotrows),
                     units = "cm")
   }
   print(plot)

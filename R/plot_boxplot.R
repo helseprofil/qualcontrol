@@ -1,18 +1,11 @@
 #' @title plot_boxplot
 #' @description
 #' Generate boxplots indicating outliers (values outside q25-1.5IQR, q75+1.5IQR).
-#'
-#'
-#'
 #' @param dt flagged data file, default to newcube_flag
 #' @param onlynew should only new outliers be plotted? Default = TRUE
 #' @param change Should year-to-year changes be plotted? Default = FALSE
 #' @param save Should plots be saved to the default folder? Default = T
-#'
-#' @return
 #' @export
-#'
-#' @examples
 plot_boxplot <- function(dt = newcube_flag,
                          onlynew = TRUE,
                          change = FALSE,
@@ -79,23 +72,31 @@ plot_boxplot <- function(dt = newcube_flag,
                    quantiles = quantiles)
 
   for(i in filter){
+    cat("\nSaving file", which(filter == i), "/", length(filter))
     bp <- baseplotdata[eval(parse(text = i))][N_obs > 2]
     ol <- outlierdata[eval(parse(text = i))]
-    suffix <- plot_boxplot_get_suffix(bp, filedims)
-      for(i in filedims){
-        plotargs$subtitle <- paste0(plotargs$subtitle, "\n", i, ": ", unique(bp[[i]]))
-      }
-    plot <- plot_boxplot_plotfun(bp, ol, plotargs)
 
+    if(nrow(bp) > 0){
+      suffix <- get_multifile_plot_suffix(bp, filedims)
+      plotargs$subtitle_full <- plotargs$subtitle
+        for(i in filedims){
+          plotargs$subtitle_full <- paste0(plotargs$subtitle_full, "\n", i, ": ", unique(bp[[i]]))
+        }
+      plot <- plot_boxplot_plotfun(bp, ol, plotargs)
     if(save) plot_boxplot_savefun(plot, change, cubename, cubefile, suffix, n_rows)
+    }
   }
 }
 
+#'
 #' @title plot_boxplot_plotfun
 #' @description
 #' Plotting function for [qualcontrol::plot_boxplot()]
 #' @keywords internal
 #' @noRd
+#' @param bp data for generating the boxplots
+#' @param ol data with outliers
+#' @param plotargs list of plot arguments
 plot_boxplot_plotfun <- function(bp,
                                  ol,
                                  plotargs){
@@ -111,7 +112,7 @@ plot_boxplot_plotfun <- function(bp,
     ggplot2::labs(y = plotargs$ylab,
                   x = NULL,
                   title = plotargs$title,
-                  subtitle = plotargs$subtitle,
+                  subtitle = plotargs$subtitle_full,
                   caption = plotargs$caption) +
     ggplot2::coord_flip() +
     ggplot2::geom_text(data = ol,
@@ -160,21 +161,3 @@ plot_boxplot_savefun <- function(plot,
                   height = height,
                   units = "cm")
 }
-
-# ---- HELPER FUNCTIONS ----
-
-#' @keywords internal
-#' @noRd
-plot_boxplot_get_suffix <- function(dt, files = files){
-
-  if(length(files) == 0) return("alle")
-
-  suffix <- character()
-    for(i in files){
-      suffix <- ifelse(length(suffix) == 0,
-                       unique(dt[[i]]),
-                       paste0(suffix, ",", unique(dt[[i]])))
-    }
-  return(suffix)
-}
-

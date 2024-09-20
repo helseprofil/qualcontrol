@@ -85,9 +85,11 @@ plot_timeseries <- function(dt = newcube_flag,
     d_plot <- d[page == i]
     d_outlier <- outlierdata[page == i]
     d_line <- linedata[page == i]
-    plotargs[["geosuffix"]] <- paste0(min(d_plot$GEO), "-", max(d_plot$GEO))
-    plot <- plot_timeseries_plotfun(d_plot, d_outlier, d_line, plotargs)
-    if(save) plot_timeseries_savefun(plot, change, cubename, cubefile, plotargs$geosuffix)
+    if(nrow(d_plot) > 0){
+      geosuffix <- paste0(min(d_plot$GEO), "-", max(d_plot$GEO))
+      plot <- plot_timeseries_plotfun(d_plot, d_outlier, d_line, plotargs)
+      if(save) plot_timeseries_savefun(plot, change, cubename, cubefile, geosuffix)
+    }
   }
 }
 

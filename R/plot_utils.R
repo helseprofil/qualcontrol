@@ -140,6 +140,29 @@ get_plot_cols <- function(dt, change, colinfo, plot = c("bp", "ts")){
   return(cols)
 }
 
-archive_old_plots <- function(){
+#' @title get_multifile_plot_suffix
+#' @description
+#' Gets file name suffix when plotting to separate files.
+#'
+#' @keywords internal
+#' @noRd
+get_multifile_plot_suffix <- function(dt, files = files){
 
+  if(length(files) == 0) return("alle")
+
+  suffix <- character()
+  for(i in files){
+    suffix <- ifelse(length(suffix) == 0,
+                     unique(dt[[i]]),
+                     paste0(suffix, ",", unique(dt[[i]])))
+  }
+  return(suffix)
 }
+
+# archive_old_plots <- function(){
+# First -> Move savepath out of savefunctions, and pass as argument.
+# use this function to move all files in folder to "arkiv" before saving new plots
+
+# OR
+# Use inside savefun to move one file at a time when identical file exists.
+# }

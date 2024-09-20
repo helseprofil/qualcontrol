@@ -1,222 +1,159 @@
-#' TimeSeries
+#' TimelineBydel
 #'
-#' Creates time-series plots to visualize outliers.The purpose of these plots are to
-#' evaluate whether an outlier is also unreasonable within its own time series.
-#' The plots also contain information regarding the underlying numbers (TELLER or sumTELLER), as
-#' small absolute changes may have a big impact on RATE in small geographical units.
+#' Plots timelines for each bydel, with the weighted mean timeline for the bydel and kommune superimposed.
+#' Used to check the validity of data on bydel level. The mean timeline for bydel should approximately match
+#' the timeline for kommune.
 #'
-#' Plots are stored in folders PLOTT/BP and PLOTT/BPc
-#'
-#' @param data Dataset flagged for outliers, defaults to dfnew_flag
-#' @param change Should plots be based on year-to-year changes. Default = FALSE
-#' @param profileyear default = PROFILEYEAR
+#' @param data
+#' @param profileyear
+#' @param overwrite
 #'
 #' @return
 #' @export
 #'
 #' @examples
-TimeSeries <- function(data = dfnew_flag,
-                       onlynew = TRUE,
-                       change = FALSE,
-                       profileyear = PROFILEYEAR,
-                       data2 = NULL,
-                       overwrite = FALSE){
+TimelineBydel <- function(data = dfnew_flag,
+                          profileyear = PROFILEYEAR,
+                          overwrite = FALSE){
 
-  if(data[, length(unique(AAR))] < 2){
-    cat("Whoops! Only one unique AAR in file, time series not possible. No plots generated.")
-    return(invisible(NULL))
-  }
+  savebase <- .getPlotSaveBase(profileyear = profileyear, kubename = .GetKubename(data), savefolder = "TL")
+  filenamebase <- .getPlotFilenameBase(kubename = .GetKubename(data), datetag = .GetKubedatetag(data), "TL")
 
-  if(is.null(attr(data, "outliercol"))){
-    cat("Outliercol not detected, does dfnew_flag contain outlier flags?")
-    return(invisible(NULL))
-  }
-
-  savefolder <- ifelse(change, "TSc", "TS")
-  savebase <- .getPlotSaveBase(profileyear = profileyear, kubename = .GetKubename(data), savefolder = savefolder)
-  filenamebase <- .getPlotFilenameBase(kubename = .GetKubename(data), datetag = .GetKubedatetag(data), savefolder = savefolder)
-
-  # Identify target columns, outlier column, and TELLER column. Create savepath
   .IdentifyColumns(data)
-  .val <- attributes(data)$outliercol
-  .outlier <- "OUTLIER"
-  .newoutlier <- "NEW_OUTLIER"
-  .teller <- data.table::fcase("TELLER_uprikk" %in% .vals1, "TELLER_uprikk",
-                               "TELLER" %in% .vals1, "TELLER",
-                               "sumTELLER" %in% .vals1, "sumTELLER",
-                               default = NA_character_)
-
-  if(change){
-    .val <- paste0("change_", .val)
-    .outlier <- paste0("change_", .outlier)
-    .newoutlier <- paste0("change_", .newoutlier)
-    filenamebase <- paste0(filenamebase, "_y2y_(", format(Sys.time(), "%H%M"), ")")
-  } else {
-    filenamebase <- paste0(filenamebase, "_(", format(Sys.time(), "%H%M"), ")")
-  }
-
-  # If change is requested but not present, return here
-  if(change & !.val %in% .vals1){
-    cat("\nChange variable not found in data, year-to-year plot not generated")
-    return(invisible(NULL))
-  }
-
-  # Cannot filter only new outliers if not present
-  if(!.newoutlier %in% names(data) & isTRUE(onlynew)){
-    onlynew <- FALSE
-    cat(paste0("Column ", .newoutlier, " not present, all outliers are included"))
-  }
-
-  # Remove rows with missing data on plot value
+  .val <- data.table::fcase("MEIS" %in% .vals1, "MEIS",
+                            "RATE" %in% .vals1, "RATE",
+                            "SMR" %in% .vals1, "SMR",
+                            "MALTALL" %in% .vals1, "MALTALL",
+                            default = NA)
   data <- data[!is.na(get(.val))]
-  bycols <- stringr::str_subset(.dims1, "\\bAAR\\b", negate = T)
+  data[, KOMMUNE := data.table::fcase(grepl("^301", GEO), "Oslo",
+                                      grepl("^1103", GEO), "Stavanger",
+                                      grepl("^4601", GEO), "Bergen",
+                                      grepl("^5001", GEO), "Trondheim",
+                                      default = "nonrelevant")]
+  data <- data[KOMMUNE != "nonrelevant"]
 
-  # Find strata containing > 0 outlier, only keep strata with outliers
-  data[, n_outlier := sum(get(.outlier), na.rm = T), by = bycols]
-  data <- data[n_outlier > 0]
+  bycols <- c("KOMMUNE", stringr::str_subset(.dims1, "\\bGEO\\b", negate = T))
 
-  # Return here if no strata with outliers exist
-  if(nrow(data) == 0){
-    cat("\nNo strata containing outliers in data, plots not generated")
-    return(invisible(NULL))
-  }
-
-  # If data on new/prev outlier, reduce data to only strata with new outliers.
-  if(onlynew){
-    data[, n_new_outlier := sum(get(.newoutlier), na.rm = T), by = bycols]
-    data <- data[n_new_outlier > 0]
-  }
-
-  # Return here if no strata with new outliers exist
-  if(nrow(data) == 0){
-    cat("\nNo strata containing new outliers in data, plots not generated")
-    return(invisible(NULL))
-  }
-
-  outlierdata <- data[get(.outlier) == 1]
-
-  # For lines, only keep strata with >= 2 non-missing rows.
-  data[, n_obs := sum(!is.na(get(.val))), by = bycols]
-  linedata <- data[n_obs > 1]
-
-  # Add middle-point for labels
-  data[, y_middle := 0.5*(max(get(.val), na.rm = T) + min(get(.val), na.rm = T)), by = bycols]
-
-  # Generate filter to save as multiple files with max 25 panels per page
-  facets <- stringr::str_subset(bycols, "GEO", negate = TRUE)
+  # Generate filter to save as multiple files with max 4 (x 4) panels per page
+  facets <- stringr::str_subset(bycols, "\\bKOMMUNE\\b|\\bAAR\\b", negate = TRUE)
   filedims <- character()
-  filedims <- c(filedims, .findPlotSubset(d = data, b = facets, s = 25))
+  filedims <- c(filedims, .findPlotSubset(d = data, b = facets, s = 5))
   if(length(filedims > 0)){
     facets <- stringr::str_subset(facets,
                                   stringr::str_c("^", filedims, "$", collapse = "|"),
                                   negate = TRUE)
   }
   filter <- .findPlotFilter(data, filedims)
+  # Add rows for faceting in plot
+  data[, rows := interaction(mget(facets))]
+
+  # Split data into bydel/kommune
+  d <- data[GEO > 9999]
+  d[, n_geo := .N, by = c("GEO", filedims, "rows")]
+  kd <- data[GEO %in% c(301, 1103, 4601, 5001) & AAR %in% unique(d$AAR)]
+
+  # estimate weighted mean .val for kommune and bydel
+  kg <- collapse::GRP(kd, c(bycols, "rows"))
+  kw <- kd$WEIGHTS
+  kd <- collapse::fmutate(kg[["groups"]],
+                          y = fmean(kd[[.val]], w = kw, g = kg))
+  kd[, type := "Kommune"]
+
+  # estimate weighted mean .val for bydel
+  bg <- collapse::GRP(d, c(bycols, "rows"))
+  bw <- d$WEIGHTS
+  bd <- collapse::fmutate(bg[["groups"]],
+                          y = fmean(d[[.val]], w = bw, g = bg))
+  bd[, type := "Vektet bydel"]
+
+  # Combine trend-data, and remove trends with <= 1 observation
+  trends <- data.table::rbindlist(list(kd, bd))
+  trends[, N := .N, by = c("KOMMUNE", filedims, "rows", "type")]
+  trends <- trends[N > 1]
 
   # Generate global plot elements
-  plotby <- c("GEO", facets)
-  ylab <- ifelse(change, paste0(stringr::str_remove(.val, "change_"), ", (% change)"), .val)
+  caption <- paste0("Plots grouped by: ", stringr::str_c(facets, collapse = ", "))
+  ylab <- .val
+  title <- paste0("File: ", attributes(data)$Filename, ", Date: ", Sys.Date())
   plotvar <- paste0("Variable plotted: ", ylab)
-  caption <- paste0("Tellervariabel: ", .teller, "\nPlots grouped by: ", paste0(plotby, collapse = ", "))
-
-  if(onlynew){
-    if(is.null(data2)){
-      filenameold <- "not specified"
-    } else {
-      filenameold <- attributes(data2)$Filename
-    }
-    plotvar <- paste0(plotvar, ", only new outliers indicated. Old file: ", filenameold)
-  }
+  plotdims <- .allcombs(d, c("KOMMUNE", "rows"))
+  n_rows <- nrow(plotdims[, .N, by = rows])
 
   # Generate subsets, filenames, and make/save plot.
-  cat(paste0("Plots printed to PLOTT/", savefolder))
   for(i in filter){
 
-    # Generate subsets
-    d <- data[eval(parse(text = i))]
-    ld <- linedata[eval(parse(text = i))]
-    od <- outlierdata[eval(parse(text = i))]
+    pd <- d[eval(parse(text = i))]
+    td <- trends[eval(parse(text = i))]
 
-    n_pages <- ceiling(nrow(d[, .N, by = plotby])/25)
-
-    if(nrow(d) > 0){
+    if(nrow(pd) > 0){
       # Dynamically generate filename, savepath, and varying plot elements
       if(i == "TRUE"){
-        name <- "_alle.pdf"
+        name <- "_alle.png"
       } else {
         name <- character()
         for(i in filedims){
-          name <- paste0(name, "_", unique(d[[i]]))
+          name <- paste0(name, "_", unique(pd[[i]]))
         }
-        name <- paste0(name, ".pdf")
+        name <- paste0(name, ".png")
       }
       filename <- paste0(filenamebase, name)
       savepath <- file.path(savebase, filename)
 
-      subtitle <- paste0(plotvar, "\n")
+      subtitle <- plotvar
       for(i in filedims){
-        subtitle <- paste0(subtitle, i, ": ", unique(d[[i]]), "\n")
+        subtitle <- paste0(subtitle, "\n", i, ": ", unique(pd[[i]]))
       }
 
-      # Make plot
-      p <- ggplot(data = d, aes(x = AAR, y = get(.val)))
-
-      if(.newoutlier %in% names(od)){
-        od[, label := factor(fcase(get(.newoutlier) == 0, "Previous outlier",
-                                   get(.newoutlier) == 1, "New outlier"),
-                             levels = c("Previous outlier", "New outlier"))]
-        p <- p +
-          geom_point(data = od, aes(color = label), size = 5) +
-          scale_color_manual(values = c("Previous outlier" = "blue", "New outlier" = "red")) +
-          guides(color = guide_legend(title = NULL)) +
-          geom_point()
-      } else {
-        p <- p +
-          geom_point(data = od, color = "red", size = 5) +
-          geom_point()
-      }
-
-      if(nrow(ld) > 0){
-        p <- p +
-          geom_line(data = ld, aes(y = get(.val), group = 1))
-      }
-
-      if(!is.na(.teller)){
-        p <- p +
-          ggtext::geom_richtext(aes(label = round(get(.teller),0), y = y_middle),
-                                hjust = 0.5, angle = 90, alpha = 0.8, size = 8/.pt)
-      }
-
-      p <- p +
-        ggh4x::force_panelsizes(cols = unit(8, "cm"),
-                                rows = unit(5, "cm")) +
-        labs(y = ylab,
+      # Generate plot
+      p <- ggplot(plotdims) +
+        facet_grid(cols = vars(KOMMUNE),
+                   rows = vars(rows),
+                   switch = "y",
+                   scales = "free") +
+        labs(title = title,
+             subtitle = subtitle,
              caption = caption,
-             subtitle = subtitle) +
-        theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
+             y = ylab) +
+        geom_line(data = td,
+                  aes(x = AAR, y = y, color = type, group = type),
+                  linewidth = 1.5) +
+        scale_color_manual(values = c("red", "blue")) +
+        geom_line(data = pd,
+                  aes(x = AAR, y = get(.val), group = GEO), linetype = 2) +
+        geom_point(data = pd,
+                   aes(x = AAR, y = get(.val)),
+                   size = 3, shape = 1) +
+        guides(color = guide_legend(title = NULL)) +
+        theme(legend.position = "top",
+              axis.text.x = element_text(angle = 90, vjust = 0.5))
 
       # Save plot
-      if(file.exists(savepath) & !overwrite){
-        cat("\n", basename(savepath), "already exists")
-      } else {
-        pdf(savepath, width = 18, height = 12)
-        for(i in 1:n_pages){
-          print(p +
-                  ggforce::facet_wrap_paginate(plotby,
-                                               labeller = labeller(.multi_line = F),
-                                               scales = "free_y",
-                                               ncol = 5,
-                                               nrow = 5,
-                                               page = i))
-        }
-        dev.off()
-        cat(paste0("\n...", filename))
-      }
+      .saveTimeLine(file = savepath,
+                    plot = p,
+                    rows = n_rows,
+                    overwrite = overwrite)
     }
   }
 }
 
-
+.saveTimeLine <- function(file,
+                          plot,
+                          rows = n_rows,
+                          overwrite = FALSE){
+  if(file.exists(file) & !overwrite){
+    cat("\n", basename(file), "already exists")
+  } else {
+    ggsave(filename = file,
+           plot = plot,
+           device = "png",
+           dpi = 300,
+           width = 37,
+           height = rows*6 + 10,
+           units = "cm")
+    cat("\nSave file: ", basename(file))
+  }
+}
 
 
 
