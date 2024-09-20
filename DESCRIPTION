@@ -1,27 +1,27 @@
 Package: qualcontrol
 Title: Quality Control
-Version: 0.0.0.9000
+Version: 1.0.0
 Authors@R: 
     person("Vegard", "Lysne", , "vegard.lysne@helsedir.no", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-0816-5075"))
 Description: Quality control of publication-ready files.
 License: MIT + file LICENSE
-Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+Depends: 
+    R (>= 4.0.0)
 Imports: 
-    collapse (>= 2.0),
+    collapse (>= 2.0.16),
     data.table (>= 1.15.0),
     DBI (>= 1.2.0),
-    DT,
-    forcats,
-    ggh4x,
-    ggplot2 (>= 3.5.0),
+    DT (>= 0.33),
+    forcats (>= 1.0.0),
+    ggh4x (>= 0.2.8),
+    ggplot2 (>= 3.5.1),
     ggtext (>= 0.1.2),
-    norgeo,
-    orgdata
+    norgeo (>= 2.4.4),
+    orgdata (>= 1.5.0)
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
-Depends: 
-    R (>= 2.10)
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
