@@ -12,9 +12,9 @@ plot_boxplot <- function(dt = newcube_flag,
                          save = TRUE){
 
   d <- data.table::copy(dt)[!is.na(GEOniv)]
-  colinfo <- identify_coltypes(d)
   cubename <- get_cubename(d)
   cubefile <- get_cubefilename(d)
+  colinfo <- identify_coltypes(d)
   bpcols <- get_plot_cols(d, change = change, colinfo = colinfo, plot = "bp")
     plotvalue <- bpcols$plotvalue
     outlier <- bpcols$outlier
@@ -49,27 +49,22 @@ plot_boxplot <- function(dt = newcube_flag,
   filter <- get_plot_filter(baseplotdata, filedims)
 
   plotby <- c("GEOniv", panels)
-  allplotdims <- get_all_combinations(baseplotdata, plotby)
-  n_rows <- ceiling(nrow(allplotdims[, .N, by = panels])/5)
-  title <- paste0("File: ", attributes(dt)$Filename, ", Plotting date: ", Sys.Date())
-  caption <- paste0("Plots grouped by: ", paste0(panels, collapse = ", "))
-  ylab <- ifelse(change, paste0(sub("change_", "", plotvalue), ", (% change)"), plotvalue)
-  subtitle <- paste0("Variable plotted: ", ylab)
 
-  if(onlynew){
-    subtitle <- paste0(subtitle,
-                       ", only new outliers indicated. Comparison file: ",
-                       attributes(dt)$comparison)
-  }
-
+  # Create general plot parameters
   plotargs <- list(plotvalue = plotvalue,
-                   allplotdims = allplotdims,
                    panels = panels,
-                   title = title,
-                   subtitle = subtitle,
-                   caption = caption,
-                   ylab = ylab,
                    quantiles = quantiles)
+  plotargs$allplotdims <- get_all_combinations(baseplotdata, plotby)
+  plotargs$title <- paste0("File: ", attributes(dt)$Filename, ", Plotting date: ", Sys.Date())
+  plotargs$caption <- paste0("Plots grouped by: ", paste0(panels, collapse = ", "))
+  plotargs$ylab <- ifelse(change, paste0(sub("change_", "", plotvalue), ", (% change)"), plotvalue)
+  plotargs$subtitle <- paste0("Variable plotted: ", plotargs$ylab)
+  if(onlynew) plotargs$subtitle <- paste0(plotargs$subtitle, ", only new outliers indicated. Comparison file: ", attributes(dt)$comparison)
+
+  n_rows <- ceiling(nrow(allplotdims[, .N, by = panels])/5)
+  folder <- ifelse(change, "Boxplot_change", "Boxplot")
+  savepath <- get_plotsavefolder(cubename, folder)
+  if(save) archive_old_plots(savepath, cubefile)
 
   for(i in filter){
     cat("\nSaving file", which(filter == i), "/", length(filter))
@@ -83,12 +78,11 @@ plot_boxplot <- function(dt = newcube_flag,
           plotargs$subtitle_full <- paste0(plotargs$subtitle_full, "\n", i, ": ", unique(bp[[i]]))
         }
       plot <- plot_boxplot_plotfun(bp, ol, plotargs)
-    if(save) plot_boxplot_savefun(plot, change, cubename, cubefile, suffix, n_rows)
+    if(save) plot_boxplot_savefun(plot, savepath, cubefile, suffix, n_rows)
     }
   }
 }
 
-#'
 #' @title plot_boxplot_plotfun
 #' @description
 #' Plotting function for [qualcontrol::plot_boxplot()]
@@ -144,14 +138,11 @@ plot_boxplot_plotfun <- function(bp,
 #' @keywords internal
 #' @noRd
 plot_boxplot_savefun <- function(plot,
-                                 change,
-                                 cubename,
+                                 savepath,
                                  cubefile,
                                  suffix,
                                  n_rows){
 
-  folder <- ifelse(change, "Boxplot_change", "Boxplot")
-  savepath <- get_plotsavefolder(cubename, folder)
   savename <- paste0(cubefile, "_", suffix, ".png")
   height = n_rows*6 + 12
 

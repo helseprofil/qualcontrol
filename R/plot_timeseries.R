@@ -16,7 +16,6 @@ plot_timeseries <- function(dt = newcube_flag,
     cat("Only one unique year in the file, time series not plotted")
     return(invisible(NULL))
   }
-
   d <- data.table::copy(dt)[!is.na(GEOniv)]
   colinfo <- identify_coltypes(d)
   cubename <- get_cubename(d)
@@ -58,27 +57,22 @@ plot_timeseries <- function(dt = newcube_flag,
   linedata <- d[n_obs > 1]
 
   # Create general plot parameters
-  n_pages <- max(d$page)
-  title <- paste0("File: ", attributes(dt)$Filename, ", Plotting date: ", Sys.Date())
-  caption <- paste0("Tellervariabel: ", teller, "\nPlots grouped by: ", paste0(bycols, collapse = ", "))
-  ylab <- ifelse(change, paste0(sub("change_", "", plotvalue), ", (% change)"), plotvalue)
-  subtitle <- paste0("Variable plotted: ", ylab)
-  if(onlynew){
-    subtitle <- paste0(subtitle,
-                       "\nOnly strata with new outliers. Comparison file: ",
-                       attributes(dt)$comparison)
-  }
-
   plotargs <- list(plotvalue = plotvalue,
                    outlier = outlier,
                    newoutlier = newoutlier,
                    teller = teller,
                    isnewoutlier = isnewoutlier,
-                   bycols = bycols,
-                   title = title,
-                   subtitle = subtitle,
-                   caption = caption,
-                   ylab = ylab)
+                   bycols = bycols)
+  plotargs$title <- paste0("File: ", attributes(dt)$Filename, ", Plotting date: ", Sys.Date())
+  plotargs$caption <- paste0("Tellervariabel: ", teller, "\nPlots grouped by: ", paste0(bycols, collapse = ", "))
+  plotargs$ylab <- ifelse(change, paste0(sub("change_", "", plotvalue), ", (% change)"), plotvalue)
+  plotargs$subtitle <- paste0("Variable plotted: ", plotargs$ylab)
+  if(onlynew) plotargs$subtitle <- paste0(plotargs$subtitle, "\nOnly strata with new outliers. Comparison file: ", attributes(dt)$comparison)
+
+  n_pages <- max(d$page)
+  folder <- ifelse(change, "TimeSeries_change", "TimeSeries")
+  savepath <- get_plotsavefolder(cubename, folder)
+  if(save) archive_old_plots(savepath, cubefile)
 
   for(i in 1:n_pages){
     cat("\nSaving file", i, "/", n_pages)
@@ -88,7 +82,7 @@ plot_timeseries <- function(dt = newcube_flag,
     if(nrow(d_plot) > 0){
       geosuffix <- paste0(min(d_plot$GEO), "-", max(d_plot$GEO))
       plot <- plot_timeseries_plotfun(d_plot, d_outlier, d_line, plotargs)
-      if(save) plot_timeseries_savefun(plot, change, cubename, cubefile, geosuffix)
+      if(save) plot_timeseries_savefun(plot, savepath, cubefile, geosuffix)
     }
   }
 }
@@ -158,13 +152,10 @@ plot_timeseries_plotfun <- function(d_plot,
 #' @keywords internal
 #' @noRd
 plot_timeseries_savefun <- function(plot,
-                                    change,
-                                    cubename,
+                                    savepath,
                                     cubefile,
                                     geosuffix){
 
-  folder <- ifelse(change, "TimeSeries_change", "TimeSeries")
-  savepath <- get_plotsavefolder(cubename, folder)
   savename <- paste0(cubefile, "_GEO_", geosuffix, ".png")
 
   ggplot2::ggsave(file.path(savepath, savename),

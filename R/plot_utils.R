@@ -159,10 +159,19 @@ get_multifile_plot_suffix <- function(dt, files = files){
   return(suffix)
 }
 
-# archive_old_plots <- function(){
-# First -> Move savepath out of savefunctions, and pass as argument.
-# use this function to move all files in folder to "arkiv" before saving new plots
 
-# OR
-# Use inside savefun to move one file at a time when identical file exists.
-# }
+#' @title archive_old_plots
+#' @description
+#' move all existing plots into the arkiv-folder
+#'
+#' @keywords internal
+#' @noRd
+archive_old_plots <- function(savepath, cubefile){
+  cat("Moving existing files to archive")
+  files <- list.files(savepath, pattern = cubefile)
+  archive <- file.path(savepath, "arkiv")
+  for(file in files){
+    fs::file_move(file.path(savepath, file),
+                  file.path(archive, file))
+  }
+}

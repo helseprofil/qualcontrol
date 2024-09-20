@@ -5,11 +5,13 @@
 #' @export
 plot_timeseries_bydel <- function(dt = newcube_flag,
                                   save = TRUE){
-  d <- data.table::copy(dt)
-  if(nrow(d[GEOniv == "B"]) == 0){
+  if(nrow(dt[GEOniv == "B"]) == 0){
     cat("No data on bydel, no check performed")
     return(invisible(NULL))
   }
+  d <- data.table::copy(dt)
+  cubename <- get_cubename(d)
+  cubefile <- get_cubefilename(d)
   colinfo <- identify_coltypes(d)
   plotvalue <- select_outlier_pri(d, colinfo = colinfo)
   d <- d[(GEO %in% c(301, 1103, 4601, 5001) | GEOniv == "B") & !is.na(get(plotvalue))]
@@ -33,6 +35,8 @@ plot_timeseries_bydel <- function(dt = newcube_flag,
   plotargs$subtitle <- paste0("Variable plotted: ", plotvalue)
   plotargs$allplotdims <- get_all_combinations(d, c("KOMMUNE", "allpanels"))
   rows <- nrow(plotargs$allplotdims[, .N, by = allpanels])
+  savepath <- get_plotsavefolder(cubename, "TimeSeries_bydel")
+  if(save) archive_old_plots(savepath, cubefile)
 
   for(i in filter){
     cat("\nSaving file", which(filter == i), "/", length(filter))
@@ -46,7 +50,7 @@ plot_timeseries_bydel <- function(dt = newcube_flag,
         plotargs$subtitle_full <- paste0(plotargs$subtitle_full, "\n", i, ": ", unique(plotdata[[i]]))
       }
     plot <- plot_timeseries_bydel_plotfun(plotdata, trenddata, plotargs)
-    if(save) plot_timeseries_bydel_savefun(plot, cubename, cubefile, suffix, rows)
+    if(save) plot_timeseries_bydel_savefun(plot, savepath, cubefile, suffix, rows)
     }
   }
 }
@@ -98,12 +102,11 @@ plot_timeseries_bydel_plotfun <- function(pd,
 #' @param suffix suffix
 #' @param rows number of rows
 plot_timeseries_bydel_savefun <- function(plot,
-                                          cubename,
+                                          savepath,
                                           cubefile,
                                           suffix,
                                           rows){
 
-  savepath <- get_plotsavefolder(cubename, "TimeSeries_bydel")
   savename <- paste0(cubefile, "_", suffix, ".png")
   height = rows*6 + 12
 
@@ -113,7 +116,6 @@ plot_timeseries_bydel_savefun <- function(plot,
                   width = 37,
                   height = height,
                   units = "cm")
-
 }
 
 ## ---- HELPER FUNCTIONS ----
