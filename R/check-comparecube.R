@@ -35,6 +35,94 @@ comparecube_summary <- function(dt = comparecube){
                     nosearchcolumns = nosearch))
 }
 
+#' @title diffrow_summary
+#' @description
+#' Summarises number of diffrows and the sum of the diffs.
+#'
+#' @param dt comparecube
+#' @param byyear Get output by year, default = FALSE
+#' @export
+diffvals_summary <- function(dt = comparecube,
+                             byyear = FALSE){
+
+  d <- data.table::copy(dt[newrow == 0])
+  diffvals <- grep("_diff$", names(d), value = T)
+  diffvals_rmdiff <- sub("_diff", "", diffvals)
+  diffvals_rmTN <- grep("TELLER|NEVNER", diffvals_rmdiff, invert = T, value = T)
+  teller <- select_teller_pri(diffvals_rmdiff)
+  nevner <- select_nevner_pri(diffvals_rmdiff)
+  diffvals <- c(teller, nevner, diffvals_rmTN)
+
+  if(!byyear){
+    out <- list(AAR = "TOTAL")
+    for(val in diffvals){
+      diff <- paste0(val, "_diff")
+      out[[paste0(val, "_ndiff")]] <- d[get(diff) != 0, .N]
+      out[[paste0(val, "_sumdiff")]] <- d[, sum(get(diff), na.rm = T)]
+    }
+    data.table::setDT(out)
+  }
+
+  if(byyear){
+    out <- data.table::data.table(AAR = unique(d$AAR))
+    for(val in diffvals){
+      diff <- paste0(val, "_diff")
+      dd <- d[, .(ndiff = sum(get(diff) != 0, na.rm =T),
+                sumdiff = sum(get(diff), na.rm = T)),
+            by = AAR]
+      data.table::setnames(dd,
+                           old = 2:3,
+                           new = function(x) paste0(val, "_", x))
+      out <- collapse::join(out, dd, how = "left", on = "AAR", verbose = 0, overid = 0)
+    }
+  }
+
+  return(tab_output(qc_round(out), dom = "t", filter = "none"))
+}
+
+#' @title plot_diff_timeseries
+#' @description
+#' Plots differences between new and old cube file across time.
+#' Used to see if there are any patterns in the diffs over time. For indicators with strong trends,
+#' the differences are expected to become smaller with time as the data is standardized to the last year/period
+#' @param dt comparecube
+#' @param save Should plots be saved in the Diff_timetrends folder? Default = TRUE. If FALSE, the plot is just printed in the console.
+#' @return plot
+#' @export
+plot_diff_timetrends <- function(dt = comparecube,
+                                 save = TRUE){
+  if(is.null(dt)) return(invisible(NULL))
+
+  diffval <- select_diffval_pri(names(dt))
+  if(is.na(diffval)) return(invisible(NULL))
+  reldiffval <- sub("_diff", "_reldiff", diffval)
+  labelval <- sub("_diff", "", diffval)
+  cubename <- get_cubename(dt)
+  cubedate <- get_cubedatetag(dt)
+
+  dt <- data.table::copy(dt[newrow == 0 & SPVFLAGG_new == 0 & SPVFLAGG_old == 0]) |>
+    translate_geoniv()
+
+  dt[, let(Absolute = get(diffval),
+           Relative = get(reldiffval))]
+  dt <- data.table::melt(dt, measure.vars = c("Absolute", "Relative"))[, .(GEOniv, AAR, variable, value)]
+  allyears <- get_all_combinations(dt, c("GEOniv", "AAR", "variable"))
+  dt <- dt[!(variable == "Absolute" & value == 0 | variable == "Relative" & value == 1)]
+
+  plotdata <- collapse::join(allyears, dt, on = c("GEOniv", "AAR", "variable"), how = "left", multiple = T, verbose = 0)
+  xsize <- ifelse(length(unique(plotdata$AAR)) > 12, 10, 20)
+
+  for(geoniv in unique(dt$GEOniv)){
+    subset <- plotdata[GEOniv == geoniv]
+    plot <- plot_diff_timetrends_plotfun(subset, geoniv, labelval, xsize)
+    plot_diff_timetrends_savefun(plot, cubename, cubedate, geoniv, save = save)
+  }
+}
+
+
+
+## ---- HELPER FUNCTIONS ----
+
 #' @title summarise_diffvals
 #' @keywords internal
 #' @noRd
@@ -77,45 +165,6 @@ summarise_diffvals <- function(out,
                                                    Min_reldiff = round(min(diffdata[[reldiff]], na.rm = T), 3),
                                                    Max_reldiff = round(max(diffdata[[reldiff]], na.rm = T), 3))]
     }
-  }
-}
-
-#' @title plot_diff_timeseries
-#' @description
-#' Plots differences between new and old cube file across time.
-#' Used to see if there are any patterns in the diffs over time. For indicators with strong trends,
-#' the differences are expected to become smaller with time as the data is standardized to the last year/period
-#' @param dt comparecube
-#' @param save Should plots be saved in the Diff_timetrends folder? Default = TRUE. If FALSE, the plot is just printed in the console.
-#' @return plot
-#' @export
-plot_diff_timetrends <- function(dt = comparecube,
-                                 save = TRUE){
-  if(is.null(dt)) return(invisible(NULL))
-
-  diffval <- select_diffval_pri(names(dt))
-  if(is.na(diffval)) return(invisible(NULL))
-  reldiffval <- sub("_diff", "_reldiff", diffval)
-  labelval <- sub("_diff", "", diffval)
-  cubename <- get_cubename(dt)
-  cubedate <- get_cubedatetag(dt)
-
-  dt <- data.table::copy(dt[newrow == 0 & SPVFLAGG_new == 0 & SPVFLAGG_old == 0]) |>
-    translate_geoniv()
-
-  dt[, let(Absolute = get(diffval),
-           Relative = get(reldiffval))]
-  dt <- data.table::melt(dt, measure.vars = c("Absolute", "Relative"))[, .(GEOniv, AAR, variable, value)]
-  allyears <- get_all_combinations(dt, c("GEOniv", "AAR", "variable"))
-  dt <- dt[!(variable == "Absolute" & value == 0 | variable == "Relative" & value == 1)]
-
-  plotdata <- collapse::join(allyears, dt, on = c("GEOniv", "AAR", "variable"), how = "left", multiple = T, verbose = 0)
-  xsize <- ifelse(length(unique(plotdata$AAR)) > 12, 10, 20)
-
-  for(geoniv in unique(dt$GEOniv)){
-    subset <- plotdata[GEOniv == geoniv]
-    plot <- plot_diff_timetrends_plotfun(subset, geoniv, labelval, xsize)
-    plot_diff_timetrends_savefun(plot, cubename, cubedate, geoniv, save = save)
   }
 }
 

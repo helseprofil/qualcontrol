@@ -131,19 +131,19 @@ plot_timeseries_bydel_trendlines <- function(dt,
   bd <- dt[GEOniv == "B"][, n_geo := .N, by = c("GEO", filedims, "allpanels")]
   kd <- dt[GEOniv == "K" & AAR %in% unique(bd$AAR)][, n_geo := .N, by = c("GEO", filedims, "allpanels")]
 
+  bg <- collapse::GRP(bd, c(bycols, "allpanels"))
+  bw <- bd$WEIGHTS
+  bydel <- collapse::fmutate(bg[["groups"]],
+                          y = collapse::fmean(bd[[plotvalue]], w = bw, g = bg),
+                          type = "Vektet bydel")
+
   kg <- collapse::GRP(kd, c(bycols, "allpanels"))
   kw <- kd$WEIGHTS
-  kd <- collapse::fmutate(kg[["groups"]],
+  kommune <- collapse::fmutate(kg[["groups"]],
                           y = collapse::fmean(kd[[plotvalue]], w = kw, g = kg),
                           type = "Kommune")
 
-  bg <- collapse::GRP(d, c(bycols, "allpanels"))
-  bw <- d$WEIGHTS
-  bd <- collapse::fmutate(bg[["groups"]],
-                          y = collapse::fmean(d[[plotvalue]], w = bw, g = bg),
-                          type = "Vektet bydel")
-
-  trends <- data.table::rbindlist(list(kd, bd))
+  trends <- data.table::rbindlist(list(kommune, bydel))
   trends[, N := .N, by = c("KOMMUNE", filedims, "allpanels", "type")]
   trends <- trends[N > 1]
 

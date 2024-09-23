@@ -61,7 +61,7 @@ plot_boxplot <- function(dt = newcube_flag,
   plotargs$subtitle <- paste0("Variable plotted: ", plotargs$ylab)
   if(onlynew) plotargs$subtitle <- paste0(plotargs$subtitle, ", only new outliers indicated. Comparison file: ", attributes(dt)$comparison)
 
-  n_rows <- ceiling(nrow(allplotdims[, .N, by = panels])/5)
+  n_rows <- ceiling(nrow(plotargs$allplotdims[, .N, by = panels])/5)
   folder <- ifelse(change, "Boxplot_change", "Boxplot")
   savepath <- get_plotsavefolder(cubename, folder)
   if(save) archive_old_plots(savepath, cubefile)
