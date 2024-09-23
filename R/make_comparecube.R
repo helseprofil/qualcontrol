@@ -33,6 +33,7 @@ make_comparecube <- function(cube.new = newcube,
       data.table::setattr(newcube_flag, "comparison", get_cubefilename(cube.old))
     }
     comparecube <- combine_cubes(newcube_flag, oldcube_flag, colinfo)
+    diff
   }
 
   newcube_flag <<- newcube_flag
@@ -296,13 +297,13 @@ combine_cubes <- function(newcube_flag,
   d_new <- d_new[, c(..colinfo[["commondims"]], ..commonvals, "newrow", "GEOniv")]
   data.table::setnames(d_new, commonvals, paste0(commonvals, "_new"))
 
-###  # Handle new (add total to d_old) and expired (aggregate d_old) dimensions
-###  if(length(colinfo$expdims) > 0) aggregate_cube_multi(d_old, colinfo$expdims)
-###  if(length(colinfo$newdims) > 0) {
-###    for(dim in colinfo$newdims){
-###      d_old[, (dim) := find_total(d_new, dim)]
-###    }
-###  }
+  # Handle new (add total to d_old) and expired (aggregate d_old) dimensions
+  if(length(colinfo$expdims) > 0) aggregate_cube_multi(d_old, colinfo$expdims)
+  if(length(colinfo$newdims) > 0) {
+    for(dim in colinfo$newdims){
+      d_old[, (dim) := find_total(d_new, dim)]
+    }
+  }
 
   d_old <- d_old[, c(..colinfo[["commondims"]], ..commonvals)]
   data.table::setnames(d_old, commonvals, paste0(commonvals, "_old"))
@@ -352,6 +353,10 @@ add_diffcolumns <- function(comparecube,
       comparecube[, (delete) := NULL]
     }
   }
+
+  diffcolumns <- grep("_diff$", names(comparecube), value = T)
+  comparecube[, let(any_diffs = 0L)]
+  comparecube[rowSums(comparecube[, mget(diffcolumns)], na.rm = T) != 0, let(any_diffs = 1L)]
 }
 
 #' @title save_dump

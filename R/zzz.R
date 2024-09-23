@@ -8,8 +8,9 @@ opt.qualcontrol <- orgdata:::is_globs("qualcontrol")
 
   corrglobs <- orgdata:::is_correct_globs(optqualcontrol)
   if(!isTRUE(corrglobs)){
-    x <- utils::askYesNo("Options are not the same as in the config file, update options now?")
-    if(isTRUE(x)){
+    x <- utils::menu(title = "Options are not the same as in the config file, update options now?",
+                     choices = c("Yes", "No"))
+    if(x == 1){
       orgdata:::update_globs("qualcontrol")
     }
   }
