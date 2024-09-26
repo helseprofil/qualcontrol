@@ -3,7 +3,7 @@
 * `check_friskvik()` function added (#2)
 * `check_barometer()` function added (#3)
 * `plot_timeseries_bydel()` now handles situations where GEO and AAR are the only dimensions present (#4)
-* `archive_old_plots()` renamed to `archive_old_files()`, and implemented also for file dumps
+* `archive_old_plots()` renamed to `archive_old_files()`, for future implementation for file dumps. 
 
 # qualcontrol 1.1.0
 * Added `diffvals_summary()`
