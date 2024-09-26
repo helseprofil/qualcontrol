@@ -37,13 +37,14 @@ plot_timeseries <- function(dt = newcube_flag,
           teller_plot = get(teller)),
     by = bycols]
   d <- d[!is.na(get(plotvalue)) & n_outlier > 0]
-  d[, let(y_middle = 0.5*(max(get(plotvalue), na.rm = T) + min(get(plotvalue), na.rm = T))),
-    by = bycols]
 
   if(nrow(d) == 0){
     cat("No strata with", outlierfilter, "= 1, plots not generated")
     return(invisible(NULL))
   }
+
+  d[, let(y_middle = 0.5*(max(get(plotvalue), na.rm = T) + min(get(plotvalue), na.rm = T))),
+    by = bycols]
 
   # Split into multiple files with max 25 panels per file
   pageinfo <- plot_timeseries_filesplit(d, bycols)

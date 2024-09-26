@@ -2,7 +2,7 @@
 % Please edit documentation in R/check-comparecube.R
 \name{diffvals_summary}
 \alias{diffvals_summary}
-\title{diffrow_summary}
+\title{diffvals_summary}
 \usage{
 diffvals_summary(dt = comparecube, byyear = FALSE)
 }

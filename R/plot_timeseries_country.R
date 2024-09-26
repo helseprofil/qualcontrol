@@ -12,7 +12,7 @@ plot_timeseries_country <- function(dt = newcube,
   d <- data.table::copy(dt[GEO == 0])
   colinfo <- identify_coltypes(d)
   cubename <- get_cubename(d)
-  cubedate <- get_cubedatetag(d)
+  cubefile <- get_cubefilename(d)
   plotdims <- grep("^GEO$|^AAR$", colinfo$dims.new, invert = T, value = T)
   plotvals <- c(grep("^RATE.n|^SPVFLAGG$|TELLER|NEVNER", colinfo$vals.new, invert = T, value = T),
                 select_teller_pri(colinfo$vals.new),
@@ -24,14 +24,19 @@ plot_timeseries_country <- function(dt = newcube,
   d[, (plotvals) := lapply(.SD, as.numeric), .SDcols = plotvals]
   d[, (plotdims) := lapply(.SD, as.factor), .SDcols = plotdims]
 
-  for(dim in plotdims){
-    plotdata <- aggregate_cube_multi(d, grep(dim, plotdims, invert = T, value = T))
+  savepath <- get_plotsavefolder(cubename, "TimeSeries_country")
+  if(save) archive_old_files(savepath, cubefile)
+
+  for(dim in c("Total", plotdims)){
+    if(dim == "Total") plotdata <- aggregate_cube_multi(d, plotdims)
+    if(dim != "Total") plotdata <- aggregate_cube_multi(d, grep(dim, plotdims, invert = T, value = T))
     plotdata <- data.table::melt(plotdata,
                                  measure.vars = plotvals,
                                  variable.name = "PARAMETER",
                                  value.name = "yvalue")
+    plotdata[, let(Total = "total")]
     plot <- plot_timeseries_country_plotfun(plotdata, dim)
-    plot_timeseries_country_savefun(plot, dim, cubename, cubedate, plotrows, save = save)
+    plot_timeseries_country_savefun(plot, savepath, dim, cubefile, plotrows, save = save)
   }
 }
 
@@ -70,7 +75,6 @@ plot_timeseries_country_plotfun <- function(plotdata,
                                                   nrow = nrow_legend,
                                                   byrow = TRUE))
   }
-  return(plot)
 }
 
 #' @title plot_timeseries_country_savefun
@@ -79,14 +83,13 @@ plot_timeseries_country_plotfun <- function(plotdata,
 #' @keywords internal
 #' @noRd
 plot_timeseries_country_savefun <- function(plot,
+                                            savepath,
                                             dim,
-                                            cubename,
-                                            cubedate,
+                                            cubefile,
                                             plotrows,
                                             save = TRUE){
 
-  savepath <- get_plotsavefolder(cubename, "TimeSeries_country")
-  savename <- paste0(cubename, "_", cubedate, "_TS_by_", dim, ".png")
+  savename <- paste0(cubefile, "_", dim, ".png")
 
   if(save){
     ggplot2::ggsave(file.path(savepath, savename),
