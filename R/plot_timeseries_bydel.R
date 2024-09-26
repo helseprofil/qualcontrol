@@ -38,7 +38,7 @@ plot_timeseries_bydel <- function(dt = newcube_flag,
   plotargs$anyrows <- ifelse(length(panels) > 0, 1, 0)
   rows <- nrow(plotargs$allplotdims[, .N, by = allpanels])
   savepath <- get_plotsavefolder(cubename, "TimeSeries_bydel")
-  if(save) archive_old_plots(savepath, cubefile)
+  if(save) archive_old_files(savepath, cubefile)
 
   for(i in filter){
     cat("\nSaving file", which(filter == i), "/", length(filter))
