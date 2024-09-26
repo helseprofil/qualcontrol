@@ -98,6 +98,5 @@ plot_timeseries_country_savefun <- function(plot,
                     height =  8 + (6*plotrows),
                     units = "cm")
   }
-  print(plot)
 }
 
