@@ -37,13 +37,14 @@ plot_timeseries <- function(dt = newcube_flag,
           teller_plot = get(teller)),
     by = bycols]
   d <- d[!is.na(get(plotvalue)) & n_outlier > 0]
-  d[, let(y_middle = 0.5*(max(get(plotvalue), na.rm = T) + min(get(plotvalue), na.rm = T))),
-    by = bycols]
 
   if(nrow(d) == 0){
     cat("No strata with", outlierfilter, "= 1, plots not generated")
     return(invisible(NULL))
   }
+
+  d[, let(y_middle = 0.5*(max(get(plotvalue), na.rm = T) + min(get(plotvalue), na.rm = T))),
+    by = bycols]
 
   # Split into multiple files with max 25 panels per file
   pageinfo <- plot_timeseries_filesplit(d, bycols)
@@ -72,7 +73,7 @@ plot_timeseries <- function(dt = newcube_flag,
   n_pages <- max(d$page)
   folder <- ifelse(change, "TimeSeries_change", "TimeSeries")
   savepath <- get_plotsavefolder(cubename, folder)
-  if(save) archive_old_plots(savepath, cubefile)
+  if(save) archive_old_files(savepath, cubefile)
 
   for(i in 1:n_pages){
     cat("\nSaving file", i, "/", n_pages)

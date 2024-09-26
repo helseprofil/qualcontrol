@@ -35,7 +35,7 @@ comparecube_summary <- function(dt = comparecube){
                     nosearchcolumns = nosearch))
 }
 
-#' @title diffrow_summary
+#' @title diffvals_summary
 #' @description
 #' Summarises number of diffrows and the sum of the diffs.
 #'

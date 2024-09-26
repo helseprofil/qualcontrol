@@ -24,7 +24,8 @@ plot_timeseries_bydel <- function(dt = newcube_flag,
   filedims <- get_plot_subset(d, panels, maxpanels = 5)
   if(length(filedims > 0)) panels <- panels[panels %notin% filedims]
   filter <- get_plot_filter(d, filedims)
-  d[, allpanels := interaction(mget(panels))]
+  d[, let(allpanels = "alle")]
+  if(length(panels > 0)) d[, allpanels := interaction(mget(panels))]
 
   trends <- plot_timeseries_bydel_trendlines(d, bycols, filedims, plotvalue)
 
@@ -34,9 +35,10 @@ plot_timeseries_bydel <- function(dt = newcube_flag,
   plotargs$title <- paste0("File: ", attributes(dt)$Filename, ", Plotting date: ", Sys.Date())
   plotargs$subtitle <- paste0("Variable plotted: ", plotvalue)
   plotargs$allplotdims <- get_all_combinations(d, c("KOMMUNE", "allpanels"))
+  plotargs$anyrows <- ifelse(length(panels) > 0, 1, 0)
   rows <- nrow(plotargs$allplotdims[, .N, by = allpanels])
   savepath <- get_plotsavefolder(cubename, "TimeSeries_bydel")
-  if(save) archive_old_plots(savepath, cubefile)
+  if(save) archive_old_files(savepath, cubefile)
 
   for(i in filter){
     cat("\nSaving file", which(filter == i), "/", length(filter))
@@ -53,6 +55,7 @@ plot_timeseries_bydel <- function(dt = newcube_flag,
     if(save) plot_timeseries_bydel_savefun(plot, savepath, cubefile, suffix, rows)
     }
   }
+  return(plot)
 }
 
 #' @title plot_boxplot_plotfun
@@ -87,6 +90,12 @@ plot_timeseries_bydel_plotfun <- function(pd,
     ggplot2::guides(color = ggplot2::guide_legend(title = NULL)) +
     theme_qc() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5))
+
+  if(plotargs$anyrows == 0){
+    plot <- plot +
+      ggplot2::theme(strip.background.y = ggplot2::element_blank(),
+                     strip.text.y = ggplot2::element_blank())
+  }
 
   return(plot)
 }

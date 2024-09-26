@@ -64,7 +64,7 @@ plot_boxplot <- function(dt = newcube_flag,
   n_rows <- ceiling(nrow(plotargs$allplotdims[, .N, by = panels])/5)
   folder <- ifelse(change, "Boxplot_change", "Boxplot")
   savepath <- get_plotsavefolder(cubename, folder)
-  if(save) archive_old_plots(savepath, cubefile)
+  if(save) archive_old_files(savepath, cubefile)
 
   for(i in filter){
     cat("\nSaving file", which(filter == i), "/", length(filter))
