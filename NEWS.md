@@ -1,4 +1,4 @@
-# qualcontrol 1.2.1
+# qualcontrol 1.2.1 (dev)
 
 # qualcontrol 1.2.0
 * `plot_timeseries_country()` now generate a total plot, where all dimensions except AAR are aggregated (#1)
