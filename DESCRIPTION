@@ -1,6 +1,6 @@
 Package: qualcontrol
 Title: Quality Control
-Version: 1.2.0
+Version: 1.2.1
 Authors@R: 
     person("Vegard", "Lysne", , "vegard.lysne@helsedir.no", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-0816-5075"))
@@ -19,7 +19,7 @@ Imports:
     ggtext (>= 0.1.2),
     haven (>= 2.5.4),
     norgeo (>= 2.4.4),
-    orgdata (>= 1.5.0),
+    orgdata (>= 1.5.1),
     purrr (>= 1.0.2)
 Suggests: 
     testthat (>= 3.0.0)

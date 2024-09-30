@@ -28,13 +28,8 @@ publication-ready data files. Replaces project `KHvalitetskontroll`.
 
 ## Installation
 
-You can install the development version of qualcontrol from [GitHub](https://github.com/) with:
-
-``` r
-# install.packages("devtools")
-devtools::install_github("helseprofil/qualcontrol")
-```
+You can install qualcontrol by following the procedures described in the [manual](https://helseprofil.github.io/manual/start-install.html)
 
 ## User guide
 
-To perform quality control, use the master project containing .Rmd-files which generates complete QC-reports. 
+To perform quality control, locate the correct user files in the project `produksjon`
