@@ -30,5 +30,5 @@ test_that("plot_timeseries works", {
 
 test_that("plot_timeseries_bydel works", {
   skip_if(getOption("qualcontrol.skipslowtest"), "Skipping plot_timeseries-test")
-  invisible(capture.output(expect_no_error(plot_timeseries_bydel(save = F))))
+  invisible(capture.output(expect_no_error(plot_timeseries_bydel(save = FALSE))))
 })
