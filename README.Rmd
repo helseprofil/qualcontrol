@@ -28,7 +28,7 @@ publication-ready data files. Replaces project `KHvalitetskontroll`.
 
 ## Installation
 
-You can install qualcontrol by following the procedures described in the [manual](https://helseprofil.github.io/manual/start-install.html)
+You can install qualcontrol by following the procedures described in the [manual](https://helseprofil.github.io/manual/oppsett.html)
 
 ## User guide
 
