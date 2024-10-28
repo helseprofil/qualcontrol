@@ -1,5 +1,6 @@
 # qualcontrol 1.2.1 (dev)
 * add tests for friskvik and barometer 
+* plot_diff_timetrends() now archives old plots if existing. 
 
 # qualcontrol 1.2.0
 * `plot_timeseries_country()` now generate a total plot, where all dimensions except AAR are aggregated (#1)
