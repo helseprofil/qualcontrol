@@ -1,6 +1,7 @@
-# qualcontrol 1.2.1 (dev)
+# qualcontrol 1.2.1
 * add tests for friskvik and barometer 
-* plot_diff_timetrends() now archives old plots if existing. 
+* `plot_diff_timetrends()` now archives old plots if existing. 
+* Fixed bug in `plot_timeseries_country` where no plot was produced for dimensions with > 9 categories. 
 
 # qualcontrol 1.2.0
 * `plot_timeseries_country()` now generate a total plot, where all dimensions except AAR are aggregated (#1)
