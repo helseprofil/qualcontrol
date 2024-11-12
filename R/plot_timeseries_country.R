@@ -34,7 +34,8 @@ plot_timeseries_country <- function(dt = newcube,
                                  measure.vars = plotvals,
                                  variable.name = "PARAMETER",
                                  value.name = "yvalue")
-    plotdata[, let(Total = "total")]
+    plotdata <- plotdata[!is.na(yvalue)]
+    if(dim == "Total") plotdata[, let(Total = "total")]
     plot <- plot_timeseries_country_plotfun(plotdata, dim)
     plot_timeseries_country_savefun(plot, savepath, dim, cubefile, plotrows, save = save)
   }
@@ -65,16 +66,17 @@ plot_timeseries_country_plotfun <- function(plotdata,
     ggh4x::force_panelsizes(rows = ggplot2::unit(5, "cm"),
                             cols = ggplot2::unit(7, "cm"))
 
-  suppresslegend <- nrow_legend > 3
+  suppresslegend <- dim == "ALDER" && nrow_legend > 3
   if(suppresslegend){
-    plot <- plot + ggplot2::guides(color = "none")
-  }
-  if(!suppresslegend){
     plot <- plot +
-    ggplot2::guides(color = ggplot2::guide_legend(title = NULL,
-                                                  nrow = nrow_legend,
-                                                  byrow = TRUE))
+      ggplot2::guides(color = "none")
+  } else {
+    plot <- plot +
+      ggplot2::guides(color = ggplot2::guide_legend(title = NULL,
+                                                    nrow = nrow_legend,
+                                                    byrow = TRUE))
   }
+  return(plot)
 }
 
 #' @title plot_timeseries_country_savefun
