@@ -1,6 +1,6 @@
 Package: qualcontrol
 Title: Quality Control
-Version: 1.2.1
+Version: 1.2.2
 Authors@R: 
     person("Vegard", "Lysne", , "vegard.lysne@helsedir.no", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-0816-5075"))

@@ -1,3 +1,6 @@
+# qualcontrol 1.2.2
+* Fixed bug where split_kommuneniv failed when GEOniv == "K" was not present in data.
+
 # qualcontrol 1.2.1
 * add tests for friskvik and barometer 
 * `plot_diff_timetrends()` now archives old plots if existing. 
