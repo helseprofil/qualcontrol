@@ -1,3 +1,5 @@
+# qualcontrol (development version)
+
 # qualcontrol 1.2.2
 * Fixed bug where split_kommuneniv failed when GEOniv == "K" was not present in data.
 
