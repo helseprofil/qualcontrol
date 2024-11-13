@@ -1,7 +1,7 @@
-# qualcontrol (development version)
-
+# qualcontrol 1.2.3
+* Fixed bug where `diffvals_summary(byyear = TRUE)` only displayed first 10 years in long time series.
 # qualcontrol 1.2.2
-* Fixed bug where split_kommuneniv failed when GEOniv == "K" was not present in data.
+* Fixed bug where `split_kommuneniv()` failed when GEOniv == "K" was not present in data.
 
 # qualcontrol 1.2.1
 * add tests for friskvik and barometer 

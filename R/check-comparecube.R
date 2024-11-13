@@ -61,23 +61,21 @@ diffvals_summary <- function(dt = comparecube,
       out[[paste0(val, "_sumdiff")]] <- d[, sum(get(diff), na.rm = T)]
     }
     data.table::setDT(out)
+    return(tab_output(qc_round(out), dom = "t", filter = "none"))
   }
 
-  if(byyear){
-    out <- data.table::data.table(AAR = unique(d$AAR))
-    for(val in diffvals){
-      diff <- paste0(val, "_diff")
-      dd <- d[, .(ndiff = sum(get(diff) != 0, na.rm =T),
-                sumdiff = sum(get(diff), na.rm = T)),
-            by = AAR]
-      data.table::setnames(dd,
-                           old = 2:3,
-                           new = function(x) paste0(val, "_", x))
-      out <- collapse::join(out, dd, how = "left", on = "AAR", verbose = 0, overid = 0)
-    }
+  out <- data.table::data.table(AAR = unique(d$AAR))
+  for(val in diffvals){
+    diff <- paste0(val, "_diff")
+    dd <- d[, .(ndiff = sum(get(diff) != 0, na.rm =T),
+              sumdiff = sum(get(diff), na.rm = T)),
+          by = AAR]
+    data.table::setnames(dd,
+                         old = 2:3,
+                         new = function(x) paste0(val, "_", x))
+    out <- collapse::join(out, dd, how = "left", on = "AAR", verbose = 0, overid = 0)
   }
-
-  return(tab_output(qc_round(out), dom = "t", filter = "none"))
+  return(tab_output(qc_round(out), dom = "tp", filter = "none"))
 }
 
 #' @title plot_diff_timeseries
