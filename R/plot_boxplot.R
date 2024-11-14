@@ -67,7 +67,7 @@ plot_boxplot <- function(dt = newcube_flag,
   if(save) archive_old_files(savepath, cubefile)
 
   for(i in filter){
-    cat("\nSaving file", which(filter == i), "/", length(filter))
+    if(save) cat("\nSaving file", which(filter == i), "/", length(filter))
     bp <- baseplotdata[eval(parse(text = i))][N_obs > 2]
     ol <- outlierdata[eval(parse(text = i))]
 
@@ -78,7 +78,8 @@ plot_boxplot <- function(dt = newcube_flag,
           plotargs$subtitle_full <- paste0(plotargs$subtitle_full, "\n", i, ": ", unique(bp[[i]]))
         }
       plot <- plot_boxplot_plotfun(bp, ol, plotargs)
-    if(save) plot_boxplot_savefun(plot, savepath, cubefile, suffix, n_rows)
+      if(save) plot_boxplot_savefun(plot, savepath, cubefile, suffix, n_rows)
+      print(plot)
     }
   }
 }

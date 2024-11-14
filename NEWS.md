@@ -1,5 +1,6 @@
 # qualcontrol (development version)
 * sets overid = 0 in all functions using collapse::join, to prevent overidentification of joins. 
+* `plot_boxplot()`, `plot_timeseries_country()`, and `plot_diff_timetrends()` now prints the plot in the console.
 
 # qualcontrol 1.2.3
 * Fixed bug where `diffvals_summary(byyear = TRUE)` only displayed first 10 years in long time series.

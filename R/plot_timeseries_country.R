@@ -38,6 +38,7 @@ plot_timeseries_country <- function(dt = newcube,
     if(dim == "Total") plotdata[, let(Total = "total")]
     plot <- plot_timeseries_country_plotfun(plotdata, dim)
     plot_timeseries_country_savefun(plot, savepath, dim, cubefile, plotrows, save = save)
+    print(plot)
   }
 }
 
