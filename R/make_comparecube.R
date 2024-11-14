@@ -233,7 +233,7 @@ add_outlier <- function(dt,
     outliercol <- paste0("change_", outliercol)
   }
 
-  dt <- collapse::join(dt, cutoffs, on = by, overid = 0, verbose = 0)
+  dt <- collapse::join(dt, cutoffs, on = by, verbose = 0, overid = 0)
   dt[get(val) > get(highcutoff), (outliercol) := 1]
   dt[get(val) < get(lowcutoff), (outliercol) := 1]
   dt[get(val) > get(lowcutoff) & get(val) < get(highcutoff), (outliercol) := 0]

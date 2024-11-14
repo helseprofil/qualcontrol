@@ -161,7 +161,7 @@ recode_geo <- function(dt, recode){
   recodings <- .georecode[old %in% dt$GEO][order(old)]
   if(nrow(recodings > 0)) cat(paste0("\nIn ", cubeversion, " cube: Recoding ", nrow(recodings), " geographical codes to ", geoyear, "-codes"))
 
-  d <- collapse::join(dt, .georecode, on = c("GEO" = "old"), how = "left", verbose = 0)
+  d <- collapse::join(dt, .georecode, on = c("GEO" = "old"), how = "left", verbose = 0, overid = 0)
   d[, let(origgeo = GEO)]
   d[!is.na(current), let(GEO = current)]
   d[, let(current = NULL)]

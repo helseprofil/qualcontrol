@@ -1,5 +1,9 @@
+# qualcontrol (development version)
+* sets overid = 0 in all functions using collapse::join, to prevent overidentification of joins. 
+
 # qualcontrol 1.2.3
 * Fixed bug where `diffvals_summary(byyear = TRUE)` only displayed first 10 years in long time series.
+
 # qualcontrol 1.2.2
 * Fixed bug where `split_kommuneniv()` failed when GEOniv == "K" was not present in data.
 

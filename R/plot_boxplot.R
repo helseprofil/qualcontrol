@@ -33,7 +33,7 @@ plot_boxplot <- function(dt = newcube_flag,
                                        MINABOVELOW = collapse::fmin(get(plotvalue)[get(plotvalue) >= get(limits[1])]),
                                        MAXBELOWHIGH = collapse::fmax(get(plotvalue)[get(plotvalue) <= get(limits[2])])),
                                    by = bycols],
-                                 overid = 0, verbose = 0)
+                                 verbose = 0, overid = 0)
   baseplotdata[, (limits) := NULL]
 
   # Extract outlierdata

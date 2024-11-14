@@ -107,7 +107,7 @@ plot_diff_timetrends <- function(dt = comparecube,
   allyears <- get_all_combinations(d, c("GEOniv", "AAR", "variable"))
   d <- d[!(variable == "Absolute" & value == 0 | variable == "Relative" & value == 1)]
 
-  plotdata <- collapse::join(allyears, d, on = c("GEOniv", "AAR", "variable"), how = "left", multiple = T, verbose = 0)
+  plotdata <- collapse::join(allyears, d, on = c("GEOniv", "AAR", "variable"), how = "left", multiple = T, verbose = 0, overid = 0)
   xsize <- ifelse(length(unique(plotdata$AAR)) > 12, 10, 20)
   savepath <- get_plotsavefolder(cubename, "Diff_timetrends")
   if(save) archive_old_files(savepath, cubefile)
