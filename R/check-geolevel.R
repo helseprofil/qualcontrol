@@ -59,6 +59,7 @@ compare_geolevels <- function(dt = newcube,
   d[, (groupdims) := lapply(.SD, as.factor), .SDcols = groupdims]
   d[, (c(outcols, "Absolute")) := lapply(.SD, round, 0), .SDcols = c(outcols, "Absolute")]
   data.table::setorder(d, -Relative, na.last = T)
+  if(any(d$Absolute < 0)) cat("For some rows, lower GEOlevel > higher GEOlevel, see rows where Absolute < 0!!")
   return(tab_output(d, nosearchcolumns = outcols))
 }
 
