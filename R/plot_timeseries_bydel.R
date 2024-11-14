@@ -53,9 +53,9 @@ plot_timeseries_bydel <- function(dt = newcube_flag,
       }
     plot <- plot_timeseries_bydel_plotfun(plotdata, trenddata, plotargs)
     if(save) plot_timeseries_bydel_savefun(plot, savepath, cubefile, suffix, rows)
+    print(plot)
     }
   }
-  return(plot)
 }
 
 #' @title plot_boxplot_plotfun
