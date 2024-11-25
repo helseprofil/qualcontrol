@@ -128,7 +128,7 @@ read_cube <- function(filepath, type = c("New", "Old")){
   data.table::setattr(dt, "colnameinfo", list(orgnames = .orgnames, newnames = .newnames, diff = .diff))
   cat(paste0("\n", type, " cube loaded: ", sub("(.*PRODUKTER/)", "", filepath), "\n"))
   if(.diff == "yes"){list_renamecols(.orgnames, .newnames, type)}
-  if(type == "New"){is_valid_outcols(dt)}
+  if(type == "New" && grepl("ikkegeoprikket_", attributes(dt)$Filename)){is_valid_outcols(dt)}
 
   return(dt)
 }

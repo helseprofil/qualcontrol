@@ -1,4 +1,6 @@
 # qualcontrol (development version)
+* Bug fixed in `compare_geolevels()` where missing data interfered with checking if any lower level > higher level. 
+* `is_valid_outcols()` only applied if data file is not censored on geo.
 * sets overid = 0 in all functions using collapse::join, to prevent overidentification of joins. 
 * `plot_boxplot()`, `plot_timeseries_country()`, `plot_timeseries_bydel()`, and `plot_diff_timetrends()` now prints the plot in the console.
 * `compare_geolevels()` prints a message if lower geographical level > higher geographical level, e.g. kommune > fylke. 
