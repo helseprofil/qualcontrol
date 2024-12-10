@@ -1,4 +1,5 @@
 # qualcontrol (development version)
+* In plotting functions, `archive_old_files()` now matches on cube name and not cube file (including date tag) to archive all old files
 * Bug fixed in `compare_geolevels()` where missing data interfered with checking if any lower level > higher level. 
 * `is_valid_outcols()` only applied if data file is not censored on geo.
 * sets overid = 0 in all functions using collapse::join, to prevent overidentification of joins. 

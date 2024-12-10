@@ -73,7 +73,7 @@ plot_timeseries <- function(dt = newcube_flag,
   n_pages <- max(d$page)
   folder <- ifelse(change, "TimeSeries_change", "TimeSeries")
   savepath <- get_plotsavefolder(cubename, folder)
-  if(save) archive_old_files(savepath, cubefile)
+  if(save) archive_old_files(savepath, cubename)
 
   for(i in 1:n_pages){
     cat("\nSaving file", i, "/", n_pages)
