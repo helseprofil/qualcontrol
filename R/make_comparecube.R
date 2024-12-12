@@ -19,21 +19,20 @@ make_comparecube <- function(cube.new = newcube,
   if(outliers) outlierval <- select_outlier_pri(cube.new, cube.old, colinfo)
 
   newcube_flag <- flag_rows(cube.new, cube.old, colinfo, "newrow")
-  if(outliers){
+  if(outliers && !is.na(outlierval)){
     newcube_flag <- flag_outliers(newcube_flag, outlierval)
     data.table::setattr(newcube_flag, "outlier", outlierval)
   }
 
   if(!is.null(cube.old)){
     oldcube_flag <- flag_rows(cube.new, cube.old, colinfo, "exprow")
-    if(outliers){
+    if(outliers && !is.na(outlierval)){
       oldcube_flag <- flag_outliers(oldcube_flag, outlierval)
       add_prev_outlier(newcube_flag, oldcube_flag, colinfo)
       data.table::setattr(oldcube_flag, "outlier", outlierval)
       data.table::setattr(newcube_flag, "comparison", get_cubefilename(cube.old))
     }
     comparecube <- combine_cubes(newcube_flag, oldcube_flag, colinfo)
-    diff
   }
 
   newcube_flag <<- newcube_flag
@@ -166,6 +165,9 @@ flag_outliers <- function(cube,
 #' order within each strata.
 #'
 #' If < 2 unique years in the data file, nothing is done.
+#'
+#' To avoid change values of Inf, when the previous value was 0, this is replaced with
+#' half of the minimum non-zero value in the data set
 #' @param dt data file ordered by
 #' @param val value column to calculate change from
 #' @param by dimensions to group the change value by
@@ -175,10 +177,12 @@ add_changeval <- function(dt,
   if(length(unique(dt$AAR)) < 2) return(dt)
   if(!all.equal(data.table::key(dt), c(by, "AAR"))) data.table::setkeyv(dt, c(by, "AAR"))
   changevalue <- paste0("change_", val)
+  min_nonzeroval <- dt[get(val) != 0, collapse::fmin(get(val))]
   g <- collapse::GRP(dt, by)
 
   dt[, (changevalue) := collapse::flag(dt[[val]], g = g)]
   dt[, (changevalue) := zoo::na.locf(get(changevalue), na.rm = F), by = by]
+  dt[get(changevalue) == 0, (changevalue) := min_nonzeroval/2]
   dt[, (changevalue) := 100*(get(val)/get(changevalue)-1)]
   return(dt)
 }
