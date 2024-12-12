@@ -33,7 +33,7 @@ plot_boxplot <- function(dt = newcube_flag,
                                        MINABOVELOW = collapse::fmin(get(plotvalue)[get(plotvalue) >= get(limits[1])]),
                                        MAXBELOWHIGH = collapse::fmax(get(plotvalue)[get(plotvalue) <= get(limits[2])])),
                                    by = bycols],
-                                 overid = 0, verbose = 0)
+                                 verbose = 0, overid = 0)
   baseplotdata[, (limits) := NULL]
 
   # Extract outlierdata
@@ -64,10 +64,10 @@ plot_boxplot <- function(dt = newcube_flag,
   n_rows <- ceiling(nrow(plotargs$allplotdims[, .N, by = panels])/5)
   folder <- ifelse(change, "Boxplot_change", "Boxplot")
   savepath <- get_plotsavefolder(cubename, folder)
-  if(save) archive_old_files(savepath, cubefile)
+  if(save) archive_old_files(savepath, cubename)
 
   for(i in filter){
-    cat("\nSaving file", which(filter == i), "/", length(filter))
+    if(save) cat("\nSaving file", which(filter == i), "/", length(filter))
     bp <- baseplotdata[eval(parse(text = i))][N_obs > 2]
     ol <- outlierdata[eval(parse(text = i))]
 
@@ -78,7 +78,8 @@ plot_boxplot <- function(dt = newcube_flag,
           plotargs$subtitle_full <- paste0(plotargs$subtitle_full, "\n", i, ": ", unique(bp[[i]]))
         }
       plot <- plot_boxplot_plotfun(bp, ol, plotargs)
-    if(save) plot_boxplot_savefun(plot, savepath, cubefile, suffix, n_rows)
+      if(save) plot_boxplot_savefun(plot, savepath, cubefile, suffix, n_rows)
+      print(plot)
     }
   }
 }

@@ -25,7 +25,7 @@ plot_timeseries_country <- function(dt = newcube,
   d[, (plotdims) := lapply(.SD, as.factor), .SDcols = plotdims]
 
   savepath <- get_plotsavefolder(cubename, "TimeSeries_country")
-  if(save) archive_old_files(savepath, cubefile)
+  if(save) archive_old_files(savepath, cubename)
 
   for(dim in c("Total", plotdims)){
     if(dim == "Total") plotdata <- aggregate_cube_multi(d, plotdims)
@@ -38,6 +38,7 @@ plot_timeseries_country <- function(dt = newcube,
     if(dim == "Total") plotdata[, let(Total = "total")]
     plot <- plot_timeseries_country_plotfun(plotdata, dim)
     plot_timeseries_country_savefun(plot, savepath, dim, cubefile, plotrows, save = save)
+    print(plot)
   }
 }
 

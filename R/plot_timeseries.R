@@ -48,7 +48,7 @@ plot_timeseries <- function(dt = newcube_flag,
 
   # Split into multiple files with max 25 panels per file
   pageinfo <- plot_timeseries_filesplit(d, bycols)
-  d <- collapse::join(d, pageinfo, on = bycols, how = "left", multiple = T, overid = 0, verbose = 0)
+  d <- collapse::join(d, pageinfo, on = bycols, how = "left", multiple = T, verbose = 0, overid = 0)
   outlierdata <- d[get(outlier) == 1]
   if(onlynew & isnewoutlier){
     outlierdata[, label := factor(data.table::fcase(get(newoutlier) == 0, "Previous outlier",
@@ -73,7 +73,7 @@ plot_timeseries <- function(dt = newcube_flag,
   n_pages <- max(d$page)
   folder <- ifelse(change, "TimeSeries_change", "TimeSeries")
   savepath <- get_plotsavefolder(cubename, folder)
-  if(save) archive_old_files(savepath, cubefile)
+  if(save) archive_old_files(savepath, cubename)
 
   for(i in 1:n_pages){
     cat("\nSaving file", i, "/", n_pages)
@@ -82,7 +82,7 @@ plot_timeseries <- function(dt = newcube_flag,
     d_line <- linedata[page == i]
     if(nrow(d_plot) > 0){
       geosuffix <- paste0(min(d_plot$GEO), "-", max(d_plot$GEO))
-      plot <- plot_timeseries_plotfun(d_plot, d_outlier, d_line, plotargs)
+      plot <- plot_timeseries_plotfun(d_plot, d_outlier, d_line, plotargs, geosuffix)
       if(save) plot_timeseries_savefun(plot, savepath, cubefile, geosuffix)
     }
   }
@@ -96,7 +96,8 @@ plot_timeseries <- function(dt = newcube_flag,
 plot_timeseries_plotfun <- function(d_plot,
                                     d_outlier,
                                     d_line,
-                                    plotargs){
+                                    plotargs,
+                                    geosuffix){
 
   plot <- ggplot2::ggplot(d_plot,
                           ggplot2::aes(x = AAR, y = get(plotargs$plotvalue))) +
@@ -140,7 +141,7 @@ plot_timeseries_plotfun <- function(d_plot,
     ggplot2::labs(title = plotargs$title,
                   y = plotargs$ylab,
                   caption = plotargs$caption,
-                  subtitle = paste0(plotargs$subtitle, "\nGEO codes: ", plotargs$geosuffix)) +
+                  subtitle = paste0(plotargs$subtitle, "\nGEO codes: ", geosuffix)) +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5))
 
 

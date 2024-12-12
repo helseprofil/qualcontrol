@@ -128,7 +128,7 @@ read_cube <- function(filepath, type = c("New", "Old")){
   data.table::setattr(dt, "colnameinfo", list(orgnames = .orgnames, newnames = .newnames, diff = .diff))
   cat(paste0("\n", type, " cube loaded: ", sub("(.*PRODUKTER/)", "", filepath), "\n"))
   if(.diff == "yes"){list_renamecols(.orgnames, .newnames, type)}
-  if(type == "New"){is_valid_outcols(dt)}
+  if(type == "New" && grepl("ikkegeoprikket_", attributes(dt)$Filename)){is_valid_outcols(dt)}
 
   return(dt)
 }
@@ -161,7 +161,7 @@ recode_geo <- function(dt, recode){
   recodings <- .georecode[old %in% dt$GEO][order(old)]
   if(nrow(recodings > 0)) cat(paste0("\nIn ", cubeversion, " cube: Recoding ", nrow(recodings), " geographical codes to ", geoyear, "-codes"))
 
-  d <- collapse::join(dt, .georecode, on = c("GEO" = "old"), how = "left", verbose = 0)
+  d <- collapse::join(dt, .georecode, on = c("GEO" = "old"), how = "left", verbose = 0, overid = 0)
   d[, let(origgeo = GEO)]
   d[!is.na(current), let(GEO = current)]
   d[, let(current = NULL)]

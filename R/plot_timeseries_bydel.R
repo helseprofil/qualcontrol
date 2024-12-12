@@ -38,7 +38,7 @@ plot_timeseries_bydel <- function(dt = newcube_flag,
   plotargs$anyrows <- ifelse(length(panels) > 0, 1, 0)
   rows <- nrow(plotargs$allplotdims[, .N, by = allpanels])
   savepath <- get_plotsavefolder(cubename, "TimeSeries_bydel")
-  if(save) archive_old_files(savepath, cubefile)
+  if(save) archive_old_files(savepath, cubename)
 
   for(i in filter){
     cat("\nSaving file", which(filter == i), "/", length(filter))
@@ -53,9 +53,9 @@ plot_timeseries_bydel <- function(dt = newcube_flag,
       }
     plot <- plot_timeseries_bydel_plotfun(plotdata, trenddata, plotargs)
     if(save) plot_timeseries_bydel_savefun(plot, savepath, cubefile, suffix, rows)
+    print(plot)
     }
   }
-  return(plot)
 }
 
 #' @title plot_boxplot_plotfun
