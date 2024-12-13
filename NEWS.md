@@ -1,5 +1,10 @@
 # qualcontrol (development version)
 
+## Bugfixes
+
+1. Increased the width of time series plots, to make room for large numbers on the x-axis without cropping the plot.
+
+
 # qualcontrol 1.2.4
 
 ## New features

@@ -162,7 +162,7 @@ plot_timeseries_savefun <- function(plot,
 
   ggplot2::ggsave(file.path(savepath, savename),
                   plot,
-                  width = 50,
+                  width = 53,
                   height = 42,
                   units = "cm")
 }
