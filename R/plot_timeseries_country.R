@@ -14,9 +14,11 @@ plot_timeseries_country <- function(dt = newcube,
   cubename <- get_cubename(d)
   cubefile <- get_cubefilename(d)
   plotdims <- grep("^GEO$|^AAR$", colinfo$dims.new, invert = T, value = T)
-  plotvals <- c(grep("^RATE.n|^SPVFLAGG$|TELLER|NEVNER", colinfo$vals.new, invert = T, value = T),
-                select_teller_pri(colinfo$vals.new),
-                select_nevner_pri(colinfo$vals.new))
+  teller <- select_teller_pri(colinfo$vals.new)
+  nevner <- select_nevner_pri(colinfo$vals.new)
+  plotvals <- c(grep("^RATE.n|^SPVFLAGG$|TELLER|NEVNER", colinfo$vals.new, invert = T, value = T), teller, nevner)
+  plotvals <- plotvals[!is.na(plotvals)]
+
   plotrows = ceiling(length(plotvals)/2)
   d <- d[, c(..colinfo[["dims.new"]], ..plotvals)]
   data.table::setkeyv(d, colinfo$dims.new)

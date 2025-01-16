@@ -3,9 +3,9 @@
 # Read test files
 
 # TRANGBODD
-readfiles(cube.new = "TRANGBODDHET_2023-11-20-11-05",
+readfiles(cube.new = "FLx_UTDN_DIFF_15_2025-01-13-09-56",
           modus.new = "KH",
-          cube.old = "TRANGBODDHET_2023-01-03-14-38",
+          cube.old = "FLx_UTDN_DIFF_15_2025-01-09-16-17",
           modus.old = "KH",
           recode.old = T)
 

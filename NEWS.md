@@ -3,7 +3,7 @@
 ## Bugfixes
 
 1. Increased the width of time series plots, to make room for large numbers on the x-axis without cropping the plot.
-
+2. `plot_timeseries()` handles files with no teller columns
 
 # qualcontrol 1.2.4
 
