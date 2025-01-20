@@ -237,7 +237,7 @@ add_outlier <- function(dt,
     outliercol <- paste0("change_", outliercol)
   }
 
-  dt <- collapse::join(dt, cutoffs, on = by, verbose = 0, overid = 0)
+  dt <- collapse::join(dt, cutoffs, on = by, verbose = 0, overid = 2)
   dt[get(val) > get(highcutoff), (outliercol) := 1]
   dt[get(val) < get(lowcutoff), (outliercol) := 1]
   dt[get(val) > get(lowcutoff) & get(val) < get(highcutoff), (outliercol) := 0]
@@ -312,7 +312,7 @@ combine_cubes <- function(newcube_flag,
   d_old <- d_old[, c(..colinfo[["commondims"]], ..commonvals)]
   data.table::setnames(d_old, commonvals, paste0(commonvals, "_old"))
 
-  compare <- collapse::join(d_new, d_old, on = colinfo[["commondims"]], how = "left", verbose = 0, overid = 0)
+  compare <- collapse::join(d_new, d_old, on = colinfo[["commondims"]], how = "full", verbose = 0, overid = 2)
 
   colorder <- c("GEOniv", "newrow", colinfo[["commondims"]])
   for(val in commonvals){

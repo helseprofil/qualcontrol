@@ -47,7 +47,7 @@ plot_timeseries <- function(dt = newcube_flag,
 
   # Split into multiple files with max 25 panels per file
   pageinfo <- plot_timeseries_filesplit(d, bycols)
-  d <- collapse::join(d, pageinfo, on = bycols, how = "left", multiple = T, verbose = 0, overid = 0)
+  d <- collapse::join(d, pageinfo, on = bycols, how = "left", multiple = T, verbose = 0, overid = 2)
   outlierdata <- d[get(outlier) == 1]
   if(isnewoutlier){
     outlierdata[, label := factor(data.table::fcase(get(newoutlier) == 0, "Previous outlier",
