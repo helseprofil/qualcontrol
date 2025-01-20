@@ -1,3 +1,11 @@
+# qualcontrol 1.2.5
+
+## Bugfixes
+
+1. Increased the width of time series plots, to make room for large numbers on the x-axis without cropping the plot.
+2. `plot_timeseries()` and `plot_timeseries_country()` handles files with no teller columns
+3. In all functions using collapse::join, overid is changed from 0 to 2, to ensure matching on all columns. Early termination of the algorithm caused wrong matching in comparecube. 
+
 # qualcontrol 1.2.4
 
 ## New features

@@ -114,7 +114,7 @@ compare_censoring <- function(cube.new = newcube,
 
   new <- cube.new[, .("N (new)" = .N), keyby = c("SPVFLAGG", by)]
   old <- cube.old[, .("N (old)" = .N), keyby = c("SPVFLAGG", by)]
-  output <- collapse::join(new, old, on = c("SPVFLAGG", by), how = "left", verbose = 0, overid = 0)
+  output <- collapse::join(new, old, on = c("SPVFLAGG", by), how = "left", verbose = 0, overid = 2)
 
   cols <- c("N (new)", "N (old)")
   output[, (cols) := lapply(.SD, collapse::replace_na, 0), .SDcols = cols]

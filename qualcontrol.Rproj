@@ -1,8 +1,9 @@
 Version: 1.0
+ProjectId: 5cf0eded-659c-4eb2-abc6-1b9f00e96a60
 
 RestoreWorkspace: No
 SaveWorkspace: No
-AlwaysSaveHistory: Default
+AlwaysSaveHistory: No
 
 EnableCodeIndexing: Yes
 UseSpacesForTab: Yes
@@ -20,3 +21,5 @@ BuildType: Package
 PackageUseDevtools: Yes
 PackageInstallArgs: --no-multiarch --with-keep.source
 PackageRoxygenize: rd,collate,namespace
+
+QuitChildProcessesOnExit: Yes

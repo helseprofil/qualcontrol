@@ -73,7 +73,7 @@ diffvals_summary <- function(dt = comparecube,
     data.table::setnames(dd,
                          old = 2:3,
                          new = function(x) paste0(val, "_", x))
-    out <- collapse::join(out, dd, how = "left", on = "AAR", verbose = 0, overid = 0)
+    out <- collapse::join(out, dd, how = "left", on = "AAR", verbose = 0, overid = 2)
   }
   return(tab_output(qc_round(out), dom = "tp", filter = "none"))
 }
@@ -108,7 +108,7 @@ plot_diff_timetrends <- function(dt = comparecube,
   d <- d[!(variable == "Absolute" & value == 0 | variable == "Relative" & value == 1)]
   if(nrow(d) == 0) return("No rows with diffs, no plots generated")
 
-  plotdata <- collapse::join(allyears, d, on = c("GEOniv", "AAR", "variable"), how = "left", multiple = T, verbose = 0, overid = 0)
+  plotdata <- collapse::join(allyears, d, on = c("GEOniv", "AAR", "variable"), how = "left", multiple = T, verbose = 0, overid = 2)
   xsize <- ifelse(length(unique(plotdata$AAR)) > 12, 10, 20)
   savepath <- get_plotsavefolder(cubename, "Diff_timetrends")
   if(save) archive_old_files(savepath, cubename)

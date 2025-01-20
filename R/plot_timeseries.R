@@ -33,8 +33,7 @@ plot_timeseries <- function(dt = newcube_flag,
   bycols <- grep("^AAR$", colinfo$dims.new, invert = T, value = T)
   outlierfilter <- ifelse(onlynew, newoutlier, outlier)
   d[, let(n_outlier = sum(get(outlierfilter), na.rm = T),
-          n_obs = sum(!is.na(get(plotvalue))),
-          teller_plot = get(teller)),
+          n_obs = sum(!is.na(get(plotvalue)))),
     by = bycols]
   d <- d[!is.na(get(plotvalue)) & n_outlier > 0]
 
@@ -48,9 +47,9 @@ plot_timeseries <- function(dt = newcube_flag,
 
   # Split into multiple files with max 25 panels per file
   pageinfo <- plot_timeseries_filesplit(d, bycols)
-  d <- collapse::join(d, pageinfo, on = bycols, how = "left", multiple = T, verbose = 0, overid = 0)
+  d <- collapse::join(d, pageinfo, on = bycols, how = "left", multiple = T, verbose = 0, overid = 2)
   outlierdata <- d[get(outlier) == 1]
-  if(onlynew & isnewoutlier){
+  if(isnewoutlier){
     outlierdata[, label := factor(data.table::fcase(get(newoutlier) == 0, "Previous outlier",
                                                     get(newoutlier) == 1, "New outlier"),
                                   levels = c("Previous outlier", "New outlier"))]
@@ -162,7 +161,7 @@ plot_timeseries_savefun <- function(plot,
 
   ggplot2::ggsave(file.path(savepath, savename),
                   plot,
-                  width = 50,
+                  width = 53,
                   height = 42,
                   units = "cm")
 }
