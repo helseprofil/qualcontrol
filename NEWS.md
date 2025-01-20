@@ -1,3 +1,8 @@
+# qualcontrol (development version)
+
+## New features
+## Bugfixes
+
 # qualcontrol 1.2.5
 
 ## Bugfixes
