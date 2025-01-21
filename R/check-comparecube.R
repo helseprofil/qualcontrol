@@ -97,6 +97,8 @@ plot_diff_timetrends <- function(dt = comparecube,
   labelval <- sub("_diff", "", diffval)
   cubename <- get_cubename(dt)
   cubefile <- get_cubefilename(dt)
+  savepath <- get_plotsavefolder(cubename, "Diff_timetrends")
+  if(save) archive_old_files(savepath, ".png")
 
   d <- data.table::copy(dt[newrow == 0 & SPVFLAGG_new == 0 & SPVFLAGG_old == 0]) |>
     translate_geoniv()
@@ -110,8 +112,6 @@ plot_diff_timetrends <- function(dt = comparecube,
 
   plotdata <- collapse::join(allyears, d, on = c("GEOniv", "AAR", "variable"), how = "left", multiple = T, verbose = 0, overid = 2)
   xsize <- ifelse(length(unique(plotdata$AAR)) > 12, 10, 20)
-  savepath <- get_plotsavefolder(cubename, "Diff_timetrends")
-  if(save) archive_old_files(savepath, cubename)
 
   for(geoniv in unique(d$GEOniv)){
     subset <- plotdata[GEOniv == geoniv]

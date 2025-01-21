@@ -1,7 +1,13 @@
-# qualcontrol (development version)
+# qualcontrol 1.2.6
 
 ## New features
+
+1. All old filedumps will be moved to archive when new files are requested
+
 ## Bugfixes
+
+1. All plotting functions archive old files also when the function exits due to no data. 
+2. Fixed test for `make_comparecube()` 
 
 # qualcontrol 1.2.5
 

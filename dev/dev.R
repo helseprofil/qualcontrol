@@ -12,9 +12,9 @@ readfiles(cube.new = "FLx_UTDN_DIFF_15_2025-01-13-09-56",
 make_comparecube(newcube, oldcube, dumps = NULL)
 
 # HKR
-readfiles(cube.new = "HKR_2024-02-01-12-42",
+readfiles(cube.new = "ALKOHOL_UNGDATA_2025-01-03-21-18",
           modus.new = "KH",
-          cube.old = "HKR_2023-09-20-14-52",
+          cube.old = "ALKOHOL_UNGDATA_2024-01-09-12-47",
           modus.old = "KH",
           recode.old = T)
 

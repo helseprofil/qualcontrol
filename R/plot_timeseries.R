@@ -20,6 +20,10 @@ plot_timeseries <- function(dt = newcube_flag,
   colinfo <- identify_coltypes(d)
   cubename <- get_cubename(d)
   cubefile <- get_cubefilename(d)
+  folder <- ifelse(change, "TimeSeries_change", "TimeSeries")
+  savepath <- get_plotsavefolder(cubename, folder)
+  if(save) archive_old_files(savepath, ".png")
+
   tscols <- get_plot_cols(d, change = change, colinfo = colinfo, plot = "ts")
     plotvalue <- tscols$plotvalue
     outlier <- tscols$outlier
@@ -68,11 +72,8 @@ plot_timeseries <- function(dt = newcube_flag,
   plotargs$ylab <- ifelse(change, paste0(sub("change_", "", plotvalue), ", (% change)"), plotvalue)
   plotargs$subtitle <- paste0("Variable plotted: ", plotargs$ylab)
   if(onlynew) plotargs$subtitle <- paste0(plotargs$subtitle, "\nOnly strata with new outliers. Comparison file: ", attributes(dt)$comparison)
-
   n_pages <- max(d$page)
-  folder <- ifelse(change, "TimeSeries_change", "TimeSeries")
-  savepath <- get_plotsavefolder(cubename, folder)
-  if(save) archive_old_files(savepath, cubename)
+
 
   for(i in 1:n_pages){
     cat("\nSaving file", i, "/", n_pages)
