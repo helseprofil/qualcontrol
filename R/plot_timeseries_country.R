@@ -13,6 +13,9 @@ plot_timeseries_country <- function(dt = newcube,
   colinfo <- identify_coltypes(d)
   cubename <- get_cubename(d)
   cubefile <- get_cubefilename(d)
+  savepath <- get_plotsavefolder(cubename, "TimeSeries_country")
+  if(save) archive_old_files(savepath, ".png")
+
   plotdims <- grep("^GEO$|^AAR$", colinfo$dims.new, invert = T, value = T)
   teller <- select_teller_pri(colinfo$vals.new)
   nevner <- select_nevner_pri(colinfo$vals.new)
@@ -25,9 +28,6 @@ plot_timeseries_country <- function(dt = newcube,
   d[, let(AARx = as.numeric(sub("_\\d*", "", AAR)))]
   d[, (plotvals) := lapply(.SD, as.numeric), .SDcols = plotvals]
   d[, (plotdims) := lapply(.SD, as.factor), .SDcols = plotdims]
-
-  savepath <- get_plotsavefolder(cubename, "TimeSeries_country")
-  if(save) archive_old_files(savepath, cubename)
 
   for(dim in c("Total", plotdims)){
     if(dim == "Total") plotdata <- aggregate_cube_multi(d, plotdims)

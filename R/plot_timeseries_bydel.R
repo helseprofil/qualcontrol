@@ -12,6 +12,9 @@ plot_timeseries_bydel <- function(dt = newcube_flag,
   d <- data.table::copy(dt)
   cubename <- get_cubename(d)
   cubefile <- get_cubefilename(d)
+  savepath <- get_plotsavefolder(cubename, "TimeSeries_bydel")
+  if(save) archive_old_files(savepath, ".png")
+
   colinfo <- identify_coltypes(d)
   plotvalue <- select_outlier_pri(d, colinfo = colinfo)
   d <- d[(GEO %in% c(301, 1103, 4601, 5001) | GEOniv == "B") & !is.na(get(plotvalue))]
@@ -37,8 +40,6 @@ plot_timeseries_bydel <- function(dt = newcube_flag,
   plotargs$allplotdims <- get_all_combinations(d, c("KOMMUNE", "allpanels"))
   plotargs$anyrows <- ifelse(length(panels) > 0, 1, 0)
   rows <- nrow(plotargs$allplotdims[, .N, by = allpanels])
-  savepath <- get_plotsavefolder(cubename, "TimeSeries_bydel")
-  if(save) archive_old_files(savepath, cubename)
 
   for(i in filter){
     cat("\nSaving file", which(filter == i), "/", length(filter))

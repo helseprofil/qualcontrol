@@ -15,6 +15,10 @@ plot_boxplot <- function(dt = newcube_flag,
   cubename <- get_cubename(d)
   cubefile <- get_cubefilename(d)
   colinfo <- identify_coltypes(d)
+  folder <- ifelse(change, "Boxplot_change", "Boxplot")
+  savepath <- get_plotsavefolder(cubename, folder)
+  if(save) archive_old_files(savepath, ".png")
+
   bpcols <- get_plot_cols(d, change = change, colinfo = colinfo, plot = "bp")
     plotvalue <- bpcols$plotvalue
     outlier <- bpcols$outlier
@@ -47,7 +51,6 @@ plot_boxplot <- function(dt = newcube_flag,
   filedims <- get_plot_subset(baseplotdata, panels, maxpanels = 25)
   if(length(filedims > 0)) panels <- panels[panels %notin% filedims]
   filter <- get_plot_filter(baseplotdata, filedims)
-
   plotby <- c("GEOniv", panels)
 
   # Create general plot parameters
@@ -62,9 +65,7 @@ plot_boxplot <- function(dt = newcube_flag,
   if(onlynew) plotargs$subtitle <- paste0(plotargs$subtitle, ", only new outliers indicated. Comparison file: ", attributes(dt)$comparison)
 
   n_rows <- ceiling(nrow(plotargs$allplotdims[, .N, by = panels])/5)
-  folder <- ifelse(change, "Boxplot_change", "Boxplot")
-  savepath <- get_plotsavefolder(cubename, folder)
-  if(save) archive_old_files(savepath, cubename)
+
 
   for(i in filter){
     if(save) cat("\nSaving file", which(filter == i), "/", length(filter))

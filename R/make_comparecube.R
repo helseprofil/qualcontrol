@@ -11,8 +11,7 @@
 make_comparecube <- function(cube.new = newcube,
                              cube.old = oldcube,
                              outliers = TRUE,
-                             dumps = getOption("qualcontrol.dumps"),
-                             overwrite = FALSE){
+                             dumps = getOption("qualcontrol.dumps")){
 
   newcube_flag <- oldcube_flag <- comparecube <- outlierval <- NULL
   colinfo <- identify_coltypes(cube.new, cube.old)
@@ -41,12 +40,14 @@ make_comparecube <- function(cube.new = newcube,
 
   if(!is.null(dumps)){
     generate_qcfolders(get_cubename(cube.new), year = getOption("qualcontrol.year"))
+    savepath <- get_dump_folder(cubename = get_cubename(newcube_flag))
+    archive_old_files(savepath, ".csv")
     for(dump in dumps){
       save_dump(dump,
                 newcube_flag = newcube_flag,
                 oldcube_flag = oldcube_flag,
                 comparecube = comparecube,
-                overwrite = overwrite)
+                path = savepath)
     }
   }
 }
@@ -363,6 +364,19 @@ add_diffcolumns <- function(comparecube,
   comparecube[rowSums(comparecube[, mget(diffcolumns)], na.rm = T) != 0, let(any_diffs = 1L)]
 }
 
+#' @title get_dump_folder
+#' @keywords internal
+#' @noRd
+#' @description
+#' Helper function to save file dumps created by [qualcontrol::make_comparecube()]. Generate file path.
+get_dump_folder <- function(cubename){
+  file.path(getOption("qualcontrol.root"),
+            getOption("qualcontrol.output"),
+            getOption("qualcontrol.year"),
+            cubename,
+            "FILDUMPER")
+}
+
 #' @title save_dump
 #' @keywords internal
 #' @noRd
@@ -372,7 +386,7 @@ save_dump <- function(dump,
                       newcube_flag,
                       oldcube_flag,
                       comparecube,
-                      overwrite = FALSE){
+                      path){
 
   file <- switch(dump,
                  "newcube_flag" = qc_round(newcube_flag),
@@ -384,24 +398,12 @@ save_dump <- function(dump,
     return(invisible(NULL))
   }
 
-  saveroot <- file.path(getOption("qualcontrol.root"),
-                        getOption("qualcontrol.output"),
-                        getOption("qualcontrol.year"),
-                        get_cubename(newcube_flag),
-                        "FILDUMPER")
-
   filename <- switch(dump,
                      "newcube_flag" = paste0("newflag_", get_cubename(newcube_flag), "_", get_cubedatetag(newcube_flag), ".csv"),
                      "oldcube_flag" = paste0("oldflag_", get_cubename(oldcube_flag), "_", get_cubedatetag(oldcube_flag), ".csv"),
                      "comparecube" = set_filename_comparecube(newcube_flag, oldcube_flag))
 
-  savepath <- file.path(saveroot, filename)
-
-  if(file.exists(savepath) && !overwrite){
-    cat(paste0("\nFILEDUMP ", filename, " already exists"))
-    return(invisible(NULL))
-  }
-
+  savepath <- file.path(path, filename)
   data.table::fwrite(file, savepath, sep = ";")
   cat(paste0("\nFILEDUMP saved ", filename, "\n"))
 }
