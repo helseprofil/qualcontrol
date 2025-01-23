@@ -361,7 +361,7 @@ add_diffcolumns <- function(comparecube,
 
   diffcolumns <- grep("_diff$", names(comparecube), value = T)
   comparecube[, let(any_diffs = 0L)]
-  comparecube[rowSums(comparecube[, mget(diffcolumns)], na.rm = T) != 0, let(any_diffs = 1L)]
+  comparecube[rowSums(abs(comparecube[, ..diffcolumns]) > 0.1) > 0, let(any_diffs = 1L)]
 }
 
 #' @title get_dump_folder

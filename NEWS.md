@@ -1,5 +1,9 @@
 # qualcontrol (development version)
 
+## New features
+
+1. The any_diffs column in comparecube now only reflects any differences > 0.1 (@hanhel)
+
 # qualcontrol 1.2.6
 
 ## New features
