@@ -1,4 +1,4 @@
-# qualcontrol (development version)
+# qualcontrol 1.2.7
 
 ## New features
 
