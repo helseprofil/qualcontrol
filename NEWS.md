@@ -2,7 +2,13 @@
 
 ## New features
 
-1. The any_diffs column in comparecube now only reflects any differences > 0.1 (@hanhel)
+1. The any_diffs column in comparecube now only reflects any differences > 0.1 (requested by @hanhel)
+2. `unknown_bydel()` no longer prints out a summary of number of complete strata, unless there are no complete strata in the file. 
+
+## Bugfixes
+
+1. `unknown_bydel()` gave a warning due to different column classes of target columns. Now all targets are converted to double.
+
 
 # qualcontrol 1.2.6
 
