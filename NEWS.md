@@ -1,9 +1,12 @@
+# qualcontrol (development version)
+
 # qualcontrol 1.2.7
 
 ## New features
 
 1. The any_diffs column in comparecube now only reflects any differences > 0.1 (requested by @hanhel)
 2. `unknown_bydel()` no longer prints out a summary of number of complete strata, unless there are no complete strata in the file. 
+3. The startup message now provide information on the population file used for weighting and categorizing geo-level, as well as geo-recode year (#6)
 
 ## Bugfixes
 
