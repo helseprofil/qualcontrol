@@ -19,14 +19,15 @@ opt.qualcontrol <- orgdata:::is_globs("qualcontrol")
 }
 
 .onAttach <- function(libname, pkgname){
-  packageStartupMessage("qualcontrol version ",
-                        utils::packageDescription("qualcontrol")[["Version"]])
-
-  newver <- orgdata:::is_latest_version("qualcontrol")
+  newver <- suppressMessages(orgdata:::is_latest_version("qualcontrol"))
   if (newver){
     x <- utils::askYesNo("Update qualcontrol now?")
     if (isTRUE(x)){
       orgdata::update_khpackage("qualcontrol")
     }
   }
+  packageStartupMessage("qualcontrol version: ",
+                        utils::packageDescription("qualcontrol")[["Version"]],
+                        "\n- Population file used for weighting and geo-level: ", attributes(.popinfo)$popfile,
+                        "\n- Geo recode year: ", attributes(.georecode)$year)
 }

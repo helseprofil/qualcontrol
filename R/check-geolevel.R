@@ -87,6 +87,7 @@ unknown_bydel <- function(dt = newcube,
   nevnerval <- select_nevner_pri(colinfo$vals.new)
   targets <- c(tellerval, nevnerval)
   targets <- targets[!is.na(targets)]
+  d[, names(.SD) := lapply(.SD, as.numeric), .SDcols = targets]
   bydims <- grep("^GEO$", colinfo$dims.new, invert = T, value = T)
 
   if(length(targets) == 0){
@@ -117,11 +118,16 @@ unknown_bydel <- function(dt = newcube,
   data.table::setcolorder(d, c("KOMMUNE", bydims, "TARGET", "K", "B", "UNKNOWN"))
   data.table::setnames(d, c("K", "B", "UNKNOWN"), c("Kommune", "Bydel", "UNKNOWN, %"))
 
-  cat(paste0("Total number of strata with complete bydel (teller): ", nrow(d[TARGET == tellerval])))
-  cat(paste0("\nOslo: ", nrow(d[TARGET == tellerval & KOMMUNE == "Oslo"])))
-  cat(paste0("\nBergen: ", nrow(d[TARGET == tellerval & KOMMUNE == "Bergen"])))
-  cat(paste0("\nStavanger: ", nrow(d[TARGET == tellerval & KOMMUNE == "Stavanger"])))
-  cat(paste0("\nTrondheim: ", nrow(d[TARGET == tellerval & KOMMUNE == "Trondheim"])))
+  # cat(paste0("Total number of strata with complete bydel (teller): ", nrow(d[TARGET == tellerval])))
+  n_oslo <- nrow(d[TARGET == tellerval & KOMMUNE == "Oslo"])
+  n_bergen <- nrow(d[TARGET == tellerval & KOMMUNE == "Bergen"])
+  n_stavanger <- nrow(d[TARGET == tellerval & KOMMUNE == "Stavanger"])
+  n_trondheim <- nrow(d[TARGET == tellerval & KOMMUNE == "Trondheim"])
+
+  if(n_oslo == 0) cat(paste0("\nNo strata with complete bydel for Oslo!"))
+  if(n_bergen == 0) cat(paste0("\nNo strata with complete bydel for Bergen!"))
+  if(n_stavanger == 0) cat(paste0("\nNo strata with complete bydel for Stavanger!"))
+  if(n_trondheim == 0) cat(paste0("\nNo strata with complete bydel for Trondheim!"))
 
   if(crop && nrow(d) > maxrows){
     combinations <- length(unique(d$KOMMUNE)) * length(unique(d$TARGET))
