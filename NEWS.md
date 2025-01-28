@@ -3,7 +3,7 @@
 ## New features
 
 1. Generate new folder for table outputs
-2. Save csv output for `comparecube_summary()` and `diffvals_summary()` 
+2. Save csv output for `comparecube_summary()`, `diffvals_summary()`, `compare_censoring()`, `compare_censoring_timeseries()`
 
 
 ## Bugfixes
