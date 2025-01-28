@@ -189,7 +189,7 @@ add_geoparams <- function(dt){
 
 #' @keywords internal
 #' @noRd
-add_csv <- function(cubename){
-  if(grepl(".*\\.csv$", cubename)) return(cubename)
-  return(paste0(cubename, ".csv"))
+add_csv <- function(string){
+  if(grepl(".*\\.csv$", string)) return(string)
+  return(paste0(string, ".csv"))
 }

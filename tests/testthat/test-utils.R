@@ -36,6 +36,8 @@ test_that("generate_qcfolders works", {
         dir.exists(file.path(cubepath, "arkiv")),
         dir.exists(file.path(cubepath, "FILDUMPER")),
         dir.exists(file.path(cubepath, "FILDUMPER", "arkiv")),
+        dir.exists(file.path(cubepath, "TABELLER")),
+        dir.exists(file.path(cubepath, "TABELLER", "arkiv")),
         dir.exists(file.path(cubepath, "PLOTT")),
         dir.exists(file.path(cubepath, "PLOTT", "arkiv")),
         dir.exists(file.path(cubepath, "PLOTT", "Boxplot")),
@@ -67,6 +69,8 @@ test_that("generate_qcfolders works", {
         dir.exists(file.path(cubepath2, "arkiv")),
         dir.exists(file.path(cubepath2, "FILDUMPER")),
         dir.exists(file.path(cubepath2, "FILDUMPER", "arkiv")),
+        dir.exists(file.path(cubepath2, "TABELLER")),
+        dir.exists(file.path(cubepath2, "TABELLER", "arkiv")),
         dir.exists(file.path(cubepath2, "PLOTT")),
         dir.exists(file.path(cubepath2, "PLOTT", "arkiv")),
         dir.exists(file.path(cubepath2, "PLOTT", "Boxplot")),
@@ -85,7 +89,6 @@ test_that("generate_qcfolders works", {
         dir.exists(file.path(cubepath2, "PLOTT", "Diff_timetrends", "arkiv")))
   )
   expect_false(dir.exists(file.path(cubepath2, "NOTEXIST")))
-
 
   fs::dir_delete(testroot)
   fs::dir_delete(testroot2)

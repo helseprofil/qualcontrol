@@ -1,5 +1,13 @@
 # qualcontrol (development version)
 
+## New features
+
+1. Generate new folder for table outputs
+2. Save csv output for `comparecube_summary()` and `diffvals_summary()` 
+
+
+## Bugfixes
+
 # qualcontrol 1.2.7
 
 ## New features
