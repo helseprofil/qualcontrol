@@ -14,9 +14,13 @@
 #' # compare_geolevels(data, "OO")
 compare_geolevels <- function(dt = newcube,
                               comparison = c("FL", "LF", "KF", "FK", "BK", "KB", "OO")){
-
   comparison <- match.arg(comparison)
   comparison <- paste0(sort(strsplit(comparison, "")[[1]]), collapse = "")
+
+  cubefile <- get_cubefilename(dt)
+  savepath <- get_table_savefolder(get_cubename(dt))
+  suffix <- paste0("compare_geolevel_", comparison)
+
   d <- data.table::copy(dt)
   groupdims <- grep("^GEO$", identify_coltypes(d)$dims.new, invert = T, value = T)
   teller_val <- select_teller_pri(names(d))
@@ -60,6 +64,7 @@ compare_geolevels <- function(dt = newcube,
   d[, (c(outcols, "Absolute")) := lapply(.SD, round, 0), .SDcols = c(outcols, "Absolute")]
   data.table::setorder(d, -Relative, na.last = T)
   if(any(d$Absolute[!is.na(d$Absolute)] < 0)) cat("For some rows, lower GEOlevel > higher GEOlevel, see rows where Absolute < 0!!")
+  save_table_output(table = d, savepath = savepath, cubefile = cubefile, suffix = suffix)
   return(tab_output(d, nosearchcolumns = outcols))
 }
 
@@ -81,6 +86,10 @@ unknown_bydel <- function(dt = newcube,
     cat("No data on bydel, no check performed")
     return(invisible(NULL))
   }
+
+  cubefile <- get_cubefilename(dt)
+  savepath <- get_table_savefolder(get_cubename(dt))
+  suffix <- paste0("unknown_bydel")
 
   colinfo <- identify_coltypes(d)
   tellerval <- select_teller_pri(colinfo$vals.new)
@@ -128,6 +137,8 @@ unknown_bydel <- function(dt = newcube,
   if(n_bergen == 0) cat(paste0("\nNo strata with complete bydel for Bergen!"))
   if(n_stavanger == 0) cat(paste0("\nNo strata with complete bydel for Stavanger!"))
   if(n_trondheim == 0) cat(paste0("\nNo strata with complete bydel for Trondheim!"))
+
+  save_table_output(table = d, savepath = savepath, cubefile = cubefile, suffix = suffix)
 
   if(crop && nrow(d) > maxrows){
     combinations <- length(unique(d$KOMMUNE)) * length(unique(d$TARGET))
