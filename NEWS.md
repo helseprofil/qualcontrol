@@ -1,3 +1,5 @@
+# qualcontrol (development version)
+
 # qualcontrol 1.2.8
 
 ## New features
