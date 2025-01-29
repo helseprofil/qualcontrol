@@ -8,8 +8,7 @@ make_comparecube(
   cube.new = newcube,
   cube.old = oldcube,
   outliers = TRUE,
-  dumps = getOption("qualcontrol.dumps"),
-  overwrite = FALSE
+  dumps = getOption("qualcontrol.dumps")
 )
 }
 \arguments{

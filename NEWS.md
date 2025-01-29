@@ -1,4 +1,13 @@
-# qualcontrol (development version)
+# qualcontrol 1.2.8
+
+## New features
+
+1. Generate new folder for table outputs
+2. Save csv output for `comparecube_summary()`, `diffvals_summary()`, `compare_censoring()`, `compare_censoring_timeseries()`, `compare_geolevels()`, and `unknown_bydel()`
+3. New function: `check_nevner_change_ungdata()`, comparing NEVNER to the previous and maximum NEVNER in the same strata. 
+
+
+## Bugfixes
 
 # qualcontrol 1.2.7
 

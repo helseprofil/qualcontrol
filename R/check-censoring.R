@@ -93,10 +93,16 @@ compare_censoring <- function(cube.new = newcube,
 
   if(is.null(cube.new)) stop("cube.new must be provided")
 
+  cubefile <- get_cubefilename(cube.new)
+  savepath <- get_table_savefolder(get_cubename(cube.new))
+  suffix <- "compare_censoring"
+  if(!is.null(by)) suffix <- paste0(suffix, "_by_", paste0(by, collapse = "_"))
+
   # If only new file available (new indicator), return table of new file
   if (is.null(cube.old)) {
     output <- cube.new[, .("N (new)" = .N), keyby = c("SPVFLAGG", by)]
     convert_coltype(output, "SPVFLAGG", "factor")
+    save_table_output(table = output, savepath = savepath, cubefile = cubefile, suffix = suffix)
     return(tab_output(output,
                       nosearchcolumns = grep("SPVFLAGG", names(output), invert = T, value = T)))
   }
@@ -125,6 +131,7 @@ compare_censoring <- function(cube.new = newcube,
   nosearch <- names(output)[names(output) %notin% c("SPVFLAGG", by)]
   convert_coltype(output, c("SPVFLAGG", by), "factor")
 
+  save_table_output(table = output, savepath = savepath, cubefile = cubefile, suffix = suffix)
   return(tab_output(output,
                     nosearchcolumns = nosearch))
 
@@ -143,6 +150,10 @@ compare_censoring_timeseries <- function(cube.new = newcube,
                                          cube.old = oldcube){
 
   if(is.null(cube.new)) stop("cube.new must be provided")
+
+  cubefile <- get_cubefilename(cube.new)
+  savepath <- get_table_savefolder(get_cubename(cube.new))
+  suffix <- "compare_censoring_timeseries"
 
   colinfo <- identify_coltypes(cube.new, cube.old)
 
@@ -170,5 +181,6 @@ compare_censoring_timeseries <- function(cube.new = newcube,
     data.table::setnames(d, names(d), gsub("_", " ", names(d)))
   }
 
+  save_table_output(table = d, savepath = savepath, cubefile = cubefile, suffix = suffix)
   return(tab_output(d, nosearchcolumns = 2:ncol(d) - 1))
 }

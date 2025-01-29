@@ -197,6 +197,7 @@ generate_qcfolders <- function(cubename,
   cubedir <- file.path(path, cubename)
   filedumpdir <- file.path(cubedir, "FILDUMPER")
   plotdir <- file.path(cubedir, "PLOTT")
+  tabledir <- file.path(cubedir, "TABELLER")
   bpdir <- file.path(plotdir, "Boxplot")
   bpcdir <- file.path(plotdir, "Boxplot_change")
   tsdir <- file.path(plotdir, "TimeSeries")
@@ -208,6 +209,7 @@ generate_qcfolders <- function(cubename,
   folders <- c(cubedir,
                filedumpdir,
                plotdir,
+               tabledir,
                bpdir,
                bpcdir,
                tsdir,
@@ -299,6 +301,21 @@ get_cubedatetag <- function(cube){
 #' @noRd
 get_cubefilename <- function(cube){
   paste(get_cubename(cube), get_cubedatetag(cube), sep = "_")
+}
+
+#' @keywords internal
+#' @noRd
+get_table_savefolder <- function(cubename){
+  path <- file.path(getOption("qualcontrol.root"),
+                    getOption("qualcontrol.output"),
+                    getOption("qualcontrol.year"),
+                    cubename,
+                    "TABELLER")
+  if(!dir.exists(path)){
+    dir.create(path)
+    dir.create(file.path(path, "arkiv"))
+  }
+  return(path)
 }
 
 #' @title identify_coltypes
@@ -410,4 +427,21 @@ translate_geoniv <- function(dt){
 update_qcyear <- function(year = NULL){
   if(is.null(year)) year <- yaml::yaml.load_file(paste("https://raw.githubusercontent.com/helseprofil/config/main/config-qualcontrol.yml"))$year
   options(qualcontrol.year = year)
+}
+
+
+#' @title save_table_ouput
+#' @description
+#' Function to save table output to TABELLER-folder
+#' @param table table object
+#' @param savepath path to TABELLER folder, generated with get_table_savefolder
+#' @param cubefile name of cube file, generated with get_cubefilename
+#' @param suffix name of output file, which will be cubefile_suffix.csv
+#' @noRd
+#' @keywords internal
+save_table_output <- function(table, savepath, cubefile, suffix){
+  suffix <- add_csv(suffix)
+  capture.output(archive_old_files(savepath, pattern = suffix))
+  filename <- paste0(cubefile, "_", suffix)
+  data.table::fwrite(table, file.path(savepath, filename), sep = ";")
 }
