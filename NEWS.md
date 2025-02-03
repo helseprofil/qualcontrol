@@ -1,4 +1,7 @@
-# qualcontrol (development version)
+# qualcontrol 1.2.9
+
+## Bugfix
+1. make_comparecube correctly reflects differences in the any_diffs column. Previously it didn't indicate differences in SPVFLAGG. 
 
 # qualcontrol 1.2.8
 
