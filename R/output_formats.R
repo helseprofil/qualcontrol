@@ -5,6 +5,7 @@ theme_qc <- function(){
   ggplot2::theme(legend.position = "top",
                  panel.grid.minor = ggplot2::element_blank(),
                  text = ggplot2::element_text(color = "black", size = 20),
+                 strip.text = ggplot2::element_text(hjust = 0),
                  plot.margin = ggplot2::margin(t = 1, b = 1, r = 1, l = 1, unit = "cm"))
 }
 
