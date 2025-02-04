@@ -1,3 +1,8 @@
+# qualcontrol 1.2.10
+
+## Bugfix
+1. strip.text of output plot are now left-aligned (@hanhel)
+
 # qualcontrol 1.2.9
 
 ## Bugfix
