@@ -68,8 +68,8 @@ archive_old_files <- function(savepath, pattern){
   files <- list.files(savepath, pattern = pattern)
   archive <- file.path(savepath, "arkiv")
   for(file in files){
-    fs::file_move(file.path(savepath, file),
-                  file.path(archive, file))
+    try(fs::file_move(file.path(savepath, file),
+                      file.path(archive, file)))
   }
 }
 
