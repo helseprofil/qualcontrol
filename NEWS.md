@@ -1,3 +1,10 @@
+# qualcontrol (development version)
+
+## New features
+- `check_nevner_change_ungdata()` changes name to `check_nevner_change()` and provide sumNEVNER_last in output
+- `archive_old_files()` handles cases when file is open
+- All functions producing a table output gains a save argument (default = T) to be able to not save output if not wanted
+
 # qualcontrol 1.2.10
 
 ## Bugfix
