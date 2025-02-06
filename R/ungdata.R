@@ -1,10 +1,11 @@
-#' @title check_nevner_change_ungdata
+#' @title check_nevner_change
 #' @description
 #' compare NEVNER towards the last and the maximum NEVNER in the time series.
 #'
 #' @param dt cube file
 #' @export
-check_nevner_change_ungdata <- function(dt = newcube){
+check_nevner_change <- function(dt = newcube,
+                                save = TRUE){
 
   cubefile <- get_cubefilename(dt)
   savepath <- get_table_savefolder(get_cubename(dt))
@@ -24,15 +25,15 @@ check_nevner_change_ungdata <- function(dt = newcube){
   data.table::setkeyv(d, c(bycols, "AAR"))
   g <- collapse::GRP(d, bycols)
 
-  d[, nevnerlag := collapse::flag(d[[nevnercol]], g = g)]
-  d[, nevnerlag := zoo::na.locf(nevnerlag, na.rm = F), by = bycols]
+  d[, sumNEVNER_last := collapse::flag(d[[nevnercol]], g = g)]
+  d[, sumNEVNER_last := zoo::na.locf(sumNEVNER_last, na.rm = F), by = bycols]
   d[, sumNEVNER_max := collapse::fmax(d[[nevnercol]], g = g, TRA = 1)]
-  d[, sumNEVNER_vs_last := round(get(nevnercol)/nevnerlag, 2)]
+  d[, sumNEVNER_vs_last := round(get(nevnercol)/sumNEVNER_last, 2)]
   d[, sumNEVNER_vs_max := round(get(nevnercol)/sumNEVNER_max, 2)]
 
-  d <- d[, mget(c("GEO", "AAR", nevnercol, "sumNEVNER_max", "sumNEVNER_vs_last", "sumNEVNER_vs_max"))]
+  d <- d[, mget(c("GEO", "AAR", nevnercol, "sumNEVNER_max", "sumNEVNER_last", "sumNEVNER_vs_last", "sumNEVNER_vs_max"))]
   convert_coltype(d, c("GEO", "AAR"), "factor")
 
-  save_table_output(table = d, savepath = savepath, cubefile = cubefile, suffix = suffix)
+  if(save) save_table_output(table = d, savepath = savepath, cubefile = cubefile, suffix = suffix)
   return(tab_output(d[order(sumNEVNER_vs_max)]))
 }
