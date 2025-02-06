@@ -9,7 +9,8 @@
 #'
 #' @return a DT output table
 #' @export
-comparecube_summary <- function(dt = comparecube){
+comparecube_summary <- function(dt = comparecube,
+                                save = TRUE){
 
   cubefile <- get_cubefilename(dt)
   savepath <- get_table_savefolder(get_cubename(dt))
@@ -33,7 +34,7 @@ comparecube_summary <- function(dt = comparecube){
     summarise_diffvals(out, subset, diffvals, geolevel)
   }
 
-  save_table_output(table = out, savepath = savepath, cubefile = cubefile, suffix = "comparecube_summary")
+  if(save) save_table_output(table = out, savepath = savepath, cubefile = cubefile, suffix = "comparecube_summary")
   nosearch <- grep("^GEOniv$|^Value$", names(out), invert = T, value = T)
 
   return(tab_output(out,
@@ -48,7 +49,8 @@ comparecube_summary <- function(dt = comparecube){
 #' @param byyear Get output by year, default = FALSE
 #' @export
 diffvals_summary <- function(dt = comparecube,
-                             byyear = FALSE){
+                             byyear = FALSE,
+                             save = TRUE){
 
   cubefile <- get_cubefilename(dt)
   savepath <- get_table_savefolder(get_cubename(dt))
@@ -70,7 +72,7 @@ diffvals_summary <- function(dt = comparecube,
       out[[paste0(val, "_sumdiff")]] <- d[, sum(get(diff), na.rm = T)]
     }
     data.table::setDT(out)
-    save_table_output(table = out, savepath = savepath, cubefile = cubefile, suffix = suffix)
+    if(save) save_table_output(table = out, savepath = savepath, cubefile = cubefile, suffix = suffix)
     return(tab_output(qc_round(out), dom = "t", filter = "none"))
   }
 
@@ -85,7 +87,7 @@ diffvals_summary <- function(dt = comparecube,
                          new = function(x) paste0(val, "_", x))
     out <- collapse::join(out, dd, how = "left", on = "AAR", verbose = 0, overid = 2)
   }
-  save_table_output(table = out, savepath = savepath, cubefile = cubefile, suffix = suffix)
+  if(save) save_table_output(table = out, savepath = savepath, cubefile = cubefile, suffix = suffix)
   return(tab_output(qc_round(out), dom = "tp", filter = "none"))
 }
 
