@@ -4,7 +4,7 @@
 \alias{comparecube_summary}
 \title{comparecube_summary}
 \usage{
-comparecube_summary(dt = comparecube)
+comparecube_summary(dt = comparecube, save = TRUE)
 }
 \arguments{
 \item{dt}{comparecube}

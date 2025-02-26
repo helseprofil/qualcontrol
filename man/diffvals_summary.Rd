@@ -4,7 +4,7 @@
 \alias{diffvals_summary}
 \title{diffvals_summary}
 \usage{
-diffvals_summary(dt = comparecube, byyear = FALSE)
+diffvals_summary(dt = comparecube, byyear = FALSE, save = TRUE)
 }
 \arguments{
 \item{dt}{comparecube}

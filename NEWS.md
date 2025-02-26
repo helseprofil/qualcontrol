@@ -1,9 +1,11 @@
 # qualcontrol (development version)
 
 ## New features
-- `check_nevner_change_ungdata()` changes name to `check_nevner_change()` and provide sumNEVNER_last in output
-- `archive_old_files()` handles cases when file is open
-- All functions producing a table output gains a save argument (default = T) to be able to not save output if not wanted
+1. `check_nevner_change_ungdata()` changes name to `check_nevner_change()` and provide sumNEVNER_last in output
+2. `archive_old_files()` handles cases when file is open
+3. All functions producing a table output gains a save argument (default = T) to be able to not save output if not wanted
+4. `readfiles()` now cleans environment, removing all existing cube objects when reading new files
+5. `make_comparecube()` is now implemented in `readfiles()`
 
 # qualcontrol 1.2.10
 
