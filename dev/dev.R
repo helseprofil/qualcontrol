@@ -16,7 +16,10 @@ readfiles(cube.new = "ALKOHOL_UNGDATA_2025-01-03-21-18",
           modus.new = "KH",
           cube.old = "ALKOHOL_UNGDATA_2024-01-09-12-47",
           modus.old = "KH",
-          recode.old = T)
+          recode.old = T,
+          comparecube = T,
+          outliers = T,
+          dumps = NULL)
 
 # dt <- data.table::copy(comparecube)
 

@@ -11,6 +11,10 @@
 #' @export
 comparecube_summary <- function(dt = comparecube,
                                 save = TRUE){
+  if(is.null(dt)){
+    cat("comparecube is NULL, no check performed")
+    return(invisible(NULL))
+  }
 
   cubefile <- get_cubefilename(dt)
   savepath <- get_table_savefolder(get_cubename(dt))
@@ -52,6 +56,11 @@ diffvals_summary <- function(dt = comparecube,
                              byyear = FALSE,
                              save = TRUE){
 
+  if(is.null(dt)){
+    cat("comparecube is NULL, no check performed")
+    return(invisible(NULL))
+  }
+
   cubefile <- get_cubefilename(dt)
   savepath <- get_table_savefolder(get_cubename(dt))
   suffix <- paste0("diffvals_summary", ifelse(byyear, "_by_year", ""))
@@ -63,6 +72,7 @@ diffvals_summary <- function(dt = comparecube,
   teller <- select_teller_pri(diffvals_rmdiff)
   nevner <- select_nevner_pri(diffvals_rmdiff)
   diffvals <- c(teller, nevner, diffvals_rmTN)
+  diffvals <- diffvals[!is.na(diffvals)]
 
   if(!byyear){
     out <- list(AAR = "TOTAL")
@@ -102,7 +112,10 @@ diffvals_summary <- function(dt = comparecube,
 #' @export
 plot_diff_timetrends <- function(dt = comparecube,
                                  save = TRUE){
-  if(is.null(dt)) return(invisible(NULL))
+  if(is.null(dt)){
+    cat("comparecube is NULL, no check performed")
+    return(invisible(NULL))
+  }
 
   diffval <- select_diffval_pri(names(dt))
   if(is.na(diffval)) return(invisible(NULL))
