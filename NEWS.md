@@ -1,6 +1,9 @@
-# qualcontrol 1.3.1
+# qualcontrol 1.3.2
 
-# qualcontrol 1.3.0
+## Bugfix
+1. Reading error in `check_friskvik()` fixed
+
+# qualcontrol 1.3.1
 
 ## New features
 1. `check_nevner_change_ungdata()` changes name to `check_nevner_change()`, aggregates all dims except GEO/AAR, and provide sumNEVNER_last in output. 
