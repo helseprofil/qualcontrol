@@ -13,7 +13,8 @@
 #' # compare_geolevels(data, "BK")
 #' # compare_geolevels(data, "OO")
 compare_geolevels <- function(dt = newcube,
-                              comparison = c("FL", "LF", "KF", "FK", "BK", "KB", "OO")){
+                              comparison = c("FL", "LF", "KF", "FK", "BK", "KB", "OO"),
+                              save= TRUE){
   comparison <- match.arg(comparison)
   comparison <- paste0(sort(strsplit(comparison, "")[[1]]), collapse = "")
 
@@ -64,7 +65,7 @@ compare_geolevels <- function(dt = newcube,
   d[, (c(outcols, "Absolute")) := lapply(.SD, round, 0), .SDcols = c(outcols, "Absolute")]
   data.table::setorder(d, -Relative, na.last = T)
   if(any(d$Absolute[!is.na(d$Absolute)] < 0)) cat("For some rows, lower GEOlevel > higher GEOlevel, see rows where Absolute < 0!!")
-  save_table_output(table = d, savepath = savepath, cubefile = cubefile, suffix = suffix)
+  if(save) save_table_output(table = d, savepath = savepath, cubefile = cubefile, suffix = suffix)
   return(tab_output(d, nosearchcolumns = outcols))
 }
 
@@ -80,7 +81,8 @@ compare_geolevels <- function(dt = newcube,
 #' @export
 unknown_bydel <- function(dt = newcube,
                           crop = TRUE,
-                          maxrows = 4000){
+                          maxrows = 4000,
+                          save = TRUE){
   d <- data.table::copy(dt)
   if(nrow(d[GEOniv == "B"]) == 0){
     cat("No data on bydel, no check performed")
@@ -138,7 +140,7 @@ unknown_bydel <- function(dt = newcube,
   if(n_stavanger == 0) cat(paste0("\nNo strata with complete bydel for Stavanger!"))
   if(n_trondheim == 0) cat(paste0("\nNo strata with complete bydel for Trondheim!"))
 
-  save_table_output(table = d, savepath = savepath, cubefile = cubefile, suffix = suffix)
+  if(save) save_table_output(table = d, savepath = savepath, cubefile = cubefile, suffix = suffix)
 
   if(crop && nrow(d) > maxrows){
     combinations <- length(unique(d$KOMMUNE)) * length(unique(d$TARGET))

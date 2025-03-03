@@ -1,20 +1,21 @@
-#' @title check_nevner_change_ungdata
+#' @title check_nevner_change
 #' @description
 #' compare NEVNER towards the last and the maximum NEVNER in the time series.
+#' Aggregate all dimensions except GEO and AAR
 #'
 #' @param dt cube file
 #' @export
-check_nevner_change_ungdata <- function(dt = newcube){
+check_nevner_change <- function(dt = newcube,
+                                save = TRUE){
 
   cubefile <- get_cubefilename(dt)
   savepath <- get_table_savefolder(get_cubename(dt))
-  suffix <- "ungdata_dekningsgrad"
+  suffix <- "nevner_dekningsgrad"
 
   d <- data.table::copy(dt)[GEOniv %in% c("K", "B")]
   colinfo <- identify_coltypes(d)
-  for(dim in c("KJONN", "SOES")){
-    if(dim %in% colinfo$dims.new) d <- aggregate_cube(d, dim)
-  }
+  aggdims <- grep("^GEO$|^AAR$", colinfo$dims.new, value = T, invert = T)
+  d <- aggregate_cube_multi(d, aggdims)
   nevnercol <- select_nevner_pri(colinfo$vals.new)
   if(is.na(nevnercol)) return("no nevner in file")
   d <- d[!is.na(get(nevnercol))]
@@ -24,15 +25,18 @@ check_nevner_change_ungdata <- function(dt = newcube){
   data.table::setkeyv(d, c(bycols, "AAR"))
   g <- collapse::GRP(d, bycols)
 
-  d[, nevnerlag := collapse::flag(d[[nevnercol]], g = g)]
-  d[, nevnerlag := zoo::na.locf(nevnerlag, na.rm = F), by = bycols]
+  d[, sumNEVNER_last := collapse::flag(d[[nevnercol]], g = g)]
+  d[, sumNEVNER_last := zoo::na.locf(sumNEVNER_last, na.rm = F), by = bycols]
   d[, sumNEVNER_max := collapse::fmax(d[[nevnercol]], g = g, TRA = 1)]
-  d[, sumNEVNER_vs_last := round(get(nevnercol)/nevnerlag, 2)]
+  d[, sumNEVNER_vs_last := round(get(nevnercol)/sumNEVNER_last, 2)]
   d[, sumNEVNER_vs_max := round(get(nevnercol)/sumNEVNER_max, 2)]
 
-  d <- d[, mget(c("GEO", "AAR", nevnercol, "sumNEVNER_max", "sumNEVNER_vs_last", "sumNEVNER_vs_max"))]
-  convert_coltype(d, c("GEO", "AAR"), "factor")
+  dims <- c("GEO", "AAR")
+  if("ALDER" %in% names(d)) dims <- c(dims, "ALDER")
 
-  save_table_output(table = d, savepath = savepath, cubefile = cubefile, suffix = suffix)
+  d <- d[, mget(c(dims, nevnercol, "sumNEVNER_max", "sumNEVNER_last", "sumNEVNER_vs_last", "sumNEVNER_vs_max"))]
+  convert_coltype(d, dims, "factor")
+
+  if(save) save_table_output(table = d, savepath = savepath, cubefile = cubefile, suffix = suffix)
   return(tab_output(d[order(sumNEVNER_vs_max)]))
 }

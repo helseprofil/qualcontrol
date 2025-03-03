@@ -6,7 +6,8 @@
 \usage{
 compare_geolevels(
   dt = newcube,
-  comparison = c("FL", "LF", "KF", "FK", "BK", "KB", "OO")
+  comparison = c("FL", "LF", "KF", "FK", "BK", "KB", "OO"),
+  save = TRUE
 )
 }
 \arguments{

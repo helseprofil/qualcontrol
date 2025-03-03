@@ -1,3 +1,19 @@
+# qualcontrol 1.3.0
+
+## New features
+1. `check_nevner_change_ungdata()` changes name to `check_nevner_change()`, aggregates all dims except GEO/AAR, and provide sumNEVNER_last in output. 
+2. `archive_old_files()` handles cases when file is open
+3. All functions producing a table output gains a save argument (default = T) to be able to not save output if not wanted
+4. `readfiles()` now cleans environment, removing all existing cube objects when reading new files
+5. `make_comparecube()` is now implemented in `readfiles()`
+6. Added functions `check_coverage_geolevel()` and `check_coverage_geocode()` to assess the proportion of geo codes getting any and how much data.
+
+## Bugfix
+1. `check_censoring_timeseries()` now orders output when oldcube is not provided
+2. All functions using comparecube as input now output a proper message when comparecube does not exist.
+3. `check_comparecube()` now handles data files without TELLER/NEVNER
+4. `check_friskvik()` rewritten and now functions properly
+
 # qualcontrol 1.2.10
 
 ## Bugfix
@@ -30,7 +46,6 @@
 ## Bugfixes
 
 1. `unknown_bydel()` gave a warning due to different column classes of target columns. Now all targets are converted to double.
-
 
 # qualcontrol 1.2.6
 

@@ -18,8 +18,11 @@ readfiles <- function(cube.new = NULL,
                       recode.new = FALSE,
                       cube.old = NULL,
                       modus.old = c("KH", "NH"),
-                      recode.old = FALSE){
-
+                      recode.old = FALSE,
+                      comparecube = TRUE,
+                      outliers = TRUE,
+                      dumps = getOption("qualcontrol.dumps")){
+  clean_environment()
   newcube <- oldcube <- NULL
 
   modus.new <- match.arg(modus.new)
@@ -42,6 +45,8 @@ readfiles <- function(cube.new = NULL,
 
   newcube <<- newcube
   oldcube <<- oldcube
+
+  if(comparecube) make_comparecube(cube.new = newcube, cube.old = oldcube, outliers = outliers, dumps = dumps)
 }
 
 #' @keywords internal
@@ -193,3 +198,12 @@ add_csv <- function(string){
   if(grepl(".*\\.csv$", string)) return(string)
   return(paste0(string, ".csv"))
 }
+
+#' @keywords internal
+#' @noRd
+clean_environment <- function(){
+  allobjects <- ls(envir = globalenv())
+  rmobjects <- grep("newcube|oldcube|newcube_flag|oldcube_flag|comparecube", allobjects)
+  rm(list = allobjects[rmobjects], pos = globalenv())
+}
+

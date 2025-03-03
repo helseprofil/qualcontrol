@@ -8,7 +8,8 @@ compare_censoring(
   cube.new = newcube,
   cube.old = oldcube,
   by = NULL,
-  filter.cubes = TRUE
+  filter.cubes = TRUE,
+  save = TRUE
 )
 }
 \arguments{

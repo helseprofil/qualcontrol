@@ -10,7 +10,10 @@ readfiles(
   recode.new = FALSE,
   cube.old = NULL,
   modus.old = c("KH", "NH"),
-  recode.old = FALSE
+  recode.old = FALSE,
+  comparecube = TRUE,
+  outliers = TRUE,
+  dumps = getOption("qualcontrol.dumps")
 )
 }
 \arguments{

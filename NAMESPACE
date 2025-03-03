@@ -2,8 +2,10 @@
 
 export(check_barometer)
 export(check_censoring)
+export(check_coverage_geocode)
+export(check_coverage_geolevel)
 export(check_friskvik)
-export(check_nevner_change_ungdata)
+export(check_nevner_change)
 export(compare_censoring)
 export(compare_censoring_timeseries)
 export(compare_colnames)
