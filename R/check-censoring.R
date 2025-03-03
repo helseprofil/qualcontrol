@@ -163,7 +163,7 @@ compare_censoring_timeseries <- function(cube.new = newcube,
     d <- data.table::copy(cube.new)
     groupdims <- grep("^AAR$", colinfo$dims.new, invert = T, value = T)
     d <- d[, .(N_censored = sum(SPVFLAGG != 0, na.rm = T)), by = groupdims]
-    d <- d[, .N, by = N_censored]
+    d <- d[, .N, by = N_censored][order(N_censored)]
     d[, let(Proportion = paste(round(100*N/sum(N), 1), "%"))]
   }
 
@@ -185,4 +185,59 @@ compare_censoring_timeseries <- function(cube.new = newcube,
 
   if(save) save_table_output(table = d, savepath = savepath, cubefile = cubefile, suffix = suffix)
   return(tab_output(d, nosearchcolumns = 2:ncol(d) - 1))
+}
+
+#' @title check_coverage_geolevel
+#' @description
+#' Calculates the number and proportion of GEO-codes per level getting at least 1 number.
+#'
+#' @param dt new datafile
+#' @param save save as csv?
+#' @export
+check_coverage_geolevel <- function(dt = newcube, save = TRUE){
+  cubefile <- get_cubefilename(dt)
+  savepath <- get_table_savefolder(get_cubename(dt))
+  suffix <- "coverage_per_geolevel"
+
+  split_kommuneniv(dt)
+  bycols = c("GEOniv", "AAR")
+  total <- dt[, .("Total codes" = length(unique(GEO))), by = bycols]
+  get_data <- dt[SPVFLAGG == 0, .("Gets data" = length(unique(GEO))), by = bycols]
+  out <- collapse::join(total, get_data, how = "l", on = bycols, verbose = 0, overid = 2)
+  out <- collapse::fmutate(out, `Coverage (%)` = round(100*`Gets data`/`Total codes`, 1))[order(`Coverage (%)`)]
+
+  convert_coltype(out, c("GEOniv", "AAR"), "factor")
+  nosearch = grep("GEOniv|AAR", names(out), invert = T, value = T)
+  if(save) save_table_output(table = out, savepath = savepath, cubefile = cubefile, suffix = suffix)
+  return(tab_output(out, nosearchcolumns = nosearch))
+}
+
+#' @title check_coverage_geocode
+#' @description
+#' For each geo-code, calculate the proportion of uncensored and censored rows per year.
+#'
+#' @param dt new data file
+#' @param save save as csv?
+#' @returns a table showing the proportion of censored rows per geo-code
+#' @export
+check_coverage_geocode <- function(dt = newcube, save = TRUE){
+
+  cubefile <- get_cubefilename(dt)
+  savepath <- get_table_savefolder(get_cubename(dt))
+  suffix <- "coverage_per_geocode"
+
+  g <- collapse::GRP(dt, c("GEO", "AAR"))
+  out <- collapse::add_vars(g[["groups"]],
+                            `Total rows` = collapse::fnobs(dt$SPVFLAGG, g = g),
+                            Uncensored = collapse::fsum(dt$SPVFLAGG == 0, g = g),
+                            Censored = collapse::fsum(dt$SPVFLAGG > 0, g = g))
+  out <- out[Censored > 0]
+  out <- collapse::fmutate(out,
+                           `Coverage (%)` = round(100*Uncensored/`Total rows`, 1),
+                           `Censored (%)` = round(100*Censored/`Total rows`, 1))[order(`Coverage (%)`)]
+  convert_coltype(out, c("GEO", "AAR"), "factor")
+  nosearch = grep("GEO|AAR", names(out), invert = T, value = T)
+
+  if(save) save_table_output(table = out, savepath = savepath, cubefile = cubefile, suffix = suffix)
+  return(tab_output(out, nosearchcolumns = nosearch))
 }
