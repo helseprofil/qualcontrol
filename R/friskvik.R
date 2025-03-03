@@ -24,7 +24,7 @@ check_friskvik <- function(profile = c("FHP", "OVP"),
   out_format <- data.table::setDT(as.list(setNames(rep(NA_character_, length(outcols)), outcols)))
   out <- data.table::copy(out_format)
 
-  for(file in friskvikfiles[1:3]){
+  for(file in friskvikfiles){
     newline <- out_format
     newline[["Friskvik"]] <- file
 
