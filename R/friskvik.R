@@ -67,7 +67,7 @@ check_friskvik <- function(profile = c("FHP", "OVP"),
   }
 
   cat("\nOutput generated")
-  data.table::fwrite(out, file = savename, sep = ";")
+  data.table::fwrite(out, file = paths$save, sep = ";")
   RODBC::odbcClose(con)
   cat(paste("\nOutput written to", paths$save))
 }
