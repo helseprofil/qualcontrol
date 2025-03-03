@@ -11,4 +11,5 @@ check_nevner_change(dt = newcube, save = TRUE)
 }
 \description{
 compare NEVNER towards the last and the maximum NEVNER in the time series.
+Aggregate all dimensions except GEO and AAR
 }
