@@ -110,13 +110,9 @@ friskvik_read_file <- function(filename = NULL,
   friskvikdatetag <- sub(".*(\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2})(.csv$)", "\\1", friskvikfilepath)
   FRISKVIK <<- read_friskvik(path = friskvikfilepath)
 
-  cubefilepath <- get_cube_path(cubefile = cubefile, basepath = basepath, datetag = friskvikdatetag)
-  specfilepath <- get_specfile_path(cubefile = cubefile, basepath = basepath, datetag = friskvikdatetag)
-  if(length(cubefilepath) > 1 && !is.null(con)) {
-    correctkube <- friskvik_read_access(con, "KUBE_NAVN", "FRISKVIK", friskvikindikator, profile, geolevel, profileyear)
-    cubefilepath <- grep(correctkube, cubefilepath, value = TRUE)
-    specfilepath <- grep(correctkube, specfilepath, value = TRUE)
-  }
+  correctcube <- friskvik_read_access(con, "KUBE_NAVN", "FRISKVIK", friskvikindikator, profile, geolevel, profileyear)
+  cubefilepath <- get_cube_path(cubefile = cubefile, basepath = basepath, datetag = friskvikdatetag, correctcube = currectcube)
+  specfilepath <- get_specfile_path(cubefile = cubefile, basepath = basepath, datetag = friskvikdatetag, correctcube = correctcube)
 
   KUBE <- read_friskvik_cube(path = cubefilepath)
   SPEC <<- data.table::fread(specfilepath)
@@ -137,20 +133,6 @@ clean_friskvik_environment <- function(){
   .GlobalEnv[["SPEC"]] <- NULL
 }
 
-# friskvik_compare_year <- function(data1 = FRISKVIK,
-#                                   data2 = KUBE){
-#
-#   kubeyears <- data.table::data.table(KUBE = data2[, sort(unique(AAR), decreasing = TRUE)])
-#   kubeyears[, join := KUBE]
-#   friskvikyears <- data.table::data.table(FRISKVIK = data1[, sort(unique(AAR), decreasing = TRUE)])
-#   friskvikyears[, join := FRISKVIK]
-#
-#   out <- data.table::merge.data.table(friskvikyears, kubeyears, by = "join", all.y = T)[sort(join, decreasing = TRUE)]
-#   out[,join := NULL]
-#
-#   out[]
-# }
-
 read_friskvik <- function(path){
   file <- data.table::fread(path)
   data.table::setattr(file, "Filename", basename(path))
@@ -169,7 +151,7 @@ read_friskvik_cube <- function(path){
   return(KUBE)
 }
 
-get_cube_path <- function(cubefile, basepath, datetag){
+get_cube_path <- function(cubefile, basepath, datetag, correctcube){
   if(!is.null(cubefile)) return(file.path(basepath, cubefile))
 
   kubepath_kh <- file.path(basepath, "KOMMUNEHELSA", "DATERT", "csv")
@@ -178,10 +160,11 @@ get_cube_path <- function(cubefile, basepath, datetag){
   path <- c(list.files(kubepath_kh, pattern = datetag, full.names = T),
             list.files(kubepath_nh, pattern = datetag, full.names = T))
 
+  if(length(cubefilepath) > 1) path <- grep(correctcube, path, value = TRUE)
   return(path)
 }
 
-get_specfile_path <- function(cubefile, basepath, datetag){
+get_specfile_path <- function(cubefile, basepath, datetag, correctcube){
   specpath_kh <- file.path(basepath, "KOMMUNEHELSA", "SPECS")
   specpath_nh <- file.path(basepath, "NORGESHELSA", "SPECS")
 
@@ -190,6 +173,7 @@ get_specfile_path <- function(cubefile, basepath, datetag){
   path <- c(list.files(specpath_kh, pattern = datetag, full.names = T),
             list.files(specpath_nh, pattern = datetag, full.names = T))
 
+  if(length(specfilepath) > 1) path <- grep(correctcube, path, value = TRUE)
   return(path)
 }
 
