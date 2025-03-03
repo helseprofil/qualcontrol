@@ -114,7 +114,7 @@ friskvik_read_file <- function(filename = NULL,
   specfilepath <- get_specfile_path(cubefile = cubefile, basepath = basepath, datetag = friskvikdatetag)
   if(length(cubefilepath) > 1 && !is.null(con)) {
     correctkube <- friskvik_read_access(con, "KUBE_NAVN", "FRISKVIK", friskvikindikator, profile, geolevel, profileyear)
-    cubepath <- grep(correctkube, cubefilepath, value = TRUE)
+    cubefilepath <- grep(correctkube, cubefilepath, value = TRUE)
     specfilepath <- grep(correctkube, specfilepath, value = TRUE)
   }
 
