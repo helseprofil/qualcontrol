@@ -1,3 +1,8 @@
+# qualcontrol (development version)
+
+## Bugfix
+1. `check_barometer()` now warns of untrustworthy results when barometer is not complete.
+
 # qualcontrol 1.3.2
 
 ## Bugfix
