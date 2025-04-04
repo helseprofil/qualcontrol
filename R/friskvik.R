@@ -18,11 +18,10 @@ check_friskvik <- function(profile = c("FHP", "OVP"),
   con <- ConnectKHelsa()
   paths <- friskvik_create_path(profile = profile, geolevel = geolevel, profileyear = profileyear, test = test)
   friskvikfiles <- list.files(paths$godkjent, pattern = ".csv")
-
   outcols <- c("Friskvik", "Kube", "File_in_NESSTAR", "FRISKVIK_ETAB", "KUBE_KJONN", "KUBE_ALDER", "KUBE_UTDANN", "KUBE_INNVKAT", "KUBE_LANDBAK",
                "FRISKVIK_YEAR", "Last_year", "Periode_bm", "Periode_nn", "Identical_prikk", "Matching_kubecol", "Different_kubecol", "Enhet", "REFVERDI_VP", "VALID")
   out_format <- data.table::setDT(as.list(setNames(rep(NA_character_, length(outcols)), outcols)))
-  out <- data.table::copy(out_format)
+  out <- data.table::copy(out_format[0, ])
 
   for(file in friskvikfiles){
     newline <- out_format
@@ -111,7 +110,7 @@ friskvik_read_file <- function(filename = NULL,
   FRISKVIK <<- read_friskvik(path = friskvikfilepath)
 
   correctcube <- friskvik_read_access(con, "KUBE_NAVN", "FRISKVIK", friskvikindikator, profile, geolevel, profileyear)
-  cubefilepath <- get_cube_path(cubefile = cubefile, basepath = basepath, datetag = friskvikdatetag, correctcube = currectcube)
+  cubefilepath <- get_cube_path(cubefile = cubefile, basepath = basepath, datetag = friskvikdatetag, correctcube = correctcube)
   specfilepath <- get_specfile_path(cubefile = cubefile, basepath = basepath, datetag = friskvikdatetag, correctcube = correctcube)
 
   KUBE <- read_friskvik_cube(path = cubefilepath)
@@ -160,7 +159,7 @@ get_cube_path <- function(cubefile, basepath, datetag, correctcube){
   path <- c(list.files(kubepath_kh, pattern = datetag, full.names = T),
             list.files(kubepath_nh, pattern = datetag, full.names = T))
 
-  if(length(cubefilepath) > 1) path <- grep(correctcube, path, value = TRUE)
+  if(length(path) > 1) path <- grep(correctcube, path, value = TRUE)
   return(path)
 }
 
@@ -173,7 +172,7 @@ get_specfile_path <- function(cubefile, basepath, datetag, correctcube){
   path <- c(list.files(specpath_kh, pattern = datetag, full.names = T),
             list.files(specpath_nh, pattern = datetag, full.names = T))
 
-  if(length(specfilepath) > 1) path <- grep(correctcube, path, value = TRUE)
+  if(length(path) > 1) path <- grep(correctcube, path, value = TRUE)
   return(path)
 }
 
