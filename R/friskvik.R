@@ -5,17 +5,21 @@
 #' @param profile "FHP" or "OVP"
 #' @param geolevel "B", "K", or "F"
 #' @param profileyear 4-digit year
-#' @return csv-file in QualControl/FRISKVIKSJEKK
+#' @param save write CSV?
+#' @param test write to testfolder?
+#' @return Table in global environment and csv-file in QualControl/FRISKVIKSJEKK if save = TRUE
 #' @export
 check_friskvik <- function(profile = c("FHP", "OVP"),
                            geolevel = c("B", "K", "F"),
                            profileyear = NULL,
+                           save = TRUE,
                            test = FALSE){
   if(!profile %in% c("FHP", "OVP") | length(profile) != 1) stop("profile must be either 'FHP' or 'OVP'")
   if(!geolevel %in% c("B", "K", "F") | length(geolevel) != 1) stop("geolevel must be either 'B', 'K', or 'F'")
   if(is.null(profileyear)) profileyear <- getOption("qualcontrol.year")
 
   con <- ConnectKHelsa()
+  on.exit(RODBC::odbcClose(con), add = TRUE)
   paths <- friskvik_create_path(profile = profile, geolevel = geolevel, profileyear = profileyear, test = test)
   friskvikfiles <- list.files(paths$godkjent, pattern = ".csv")
   outcols <- c("Friskvik", "Kube", "File_in_NESSTAR", "FRISKVIK_ETAB", "KUBE_KJONN", "KUBE_ALDER", "KUBE_UTDANN", "KUBE_INNVKAT", "KUBE_LANDBAK",
@@ -65,10 +69,13 @@ check_friskvik <- function(profile = c("FHP", "OVP"),
     out <- data.table::rbindlist(list(out, newline))
   }
 
+  assign(paste("FRISKVIKSJEKK",profile,geolevel, sep = "_"), out, envir = .GlobalEnv)
+
   cat("\nOutput generated")
-  data.table::fwrite(out, file = paths$save, sep = ";")
-  RODBC::odbcClose(con)
-  cat(paste("\nOutput written to", paths$save))
+  if(save){
+    data.table::fwrite(out, file = paths$save, sep = ";")
+    cat(paste("\nOutput written to", paths$save))
+  }
 }
 
 #' @title friskvik_read_file
