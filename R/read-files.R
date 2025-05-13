@@ -164,17 +164,17 @@ recode_geo <- function(dt, recode){
   geoyear <- attributes(.georecode)$year
   cubeversion <- attributes(dt)$Cubeversion
   recodings <- .georecode[old %in% dt$GEO][order(old)]
-  if(nrow(recodings > 0)) cat(paste0("\nIn ", cubeversion, " cube: Recoding ", nrow(recodings), " geographical codes to ", geoyear, "-codes"))
+  if(nrow(recodings) == 0) return(dt)
 
-  d <- collapse::join(dt, .georecode, on = c("GEO" = "old"), how = "left", verbose = 0, overid = 2)
-  d[, let(origgeo = GEO)]
-  d[!is.na(current), let(GEO = current)]
-  d[, let(current = NULL)]
+  cat(paste0("\nIn ", cubeversion, " cube: Recoding ", nrow(recodings), " geographical codes to ", geoyear, "-codes"))
+  dt[, let(origgeo = GEO)]
+  dt[recodings, on = setNames("old", "GEO"), GEO := i.current]
 
-  data.table::setattr(d, "GEOrecode", list(orgcodes = recodings$old,
-                                           newcodes = recodings$current))
+  geo99 <- dt[grepl("99$", GEO), .N]
+  if(geo99 > 0) cat("\n - ", geo99, " rows recoded to invalid 99-geocodes")
 
-  return(d)
+  data.table::setattr(dt, "GEOrecode", list(orgcodes = recodings$old, newcodes = recodings$current))
+  return(dt)
 }
 
 #' @keywords internal
@@ -183,10 +183,15 @@ recode_geo <- function(dt, recode){
 #' Adds columns GEOniv to identify geographical levels and WEIGHTS to represent population size.
 #' Uses population info from "sysdata.rda", stored as the internal object .popinfo
 #' Adds the columns by reference, no need to overwrite object.
+#' If invalid 99-geocodes are found, they are set manually to FKBV depending on nchar(GEO)
 #' @examples
 #' # add_geoparams(dt)
 add_geoparams <- function(dt){
   dt[.popinfo, let(GEOniv = i.GEOniv, WEIGHTS = i.WEIGHTS), on = "GEO"]
+  dt[is.na(GEOniv) & grepl("99$", GEO), GEOniv := data.table::fcase(nchar(GEO) == 2, "F",
+                                                                    nchar(GEO) == 4, "K",
+                                                                    nchar(GEO) == 6, "B",
+                                                                    nchar(GEO) == 8, "V")]
   dt[, GEOniv := forcats::fct_drop(GEOniv)]
   dt[is.na(WEIGHTS), let(WEIGHTS = 0)]
   return(dt)

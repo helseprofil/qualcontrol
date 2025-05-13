@@ -388,12 +388,13 @@ select_nevner_pri <- function(valuecolumns){
 #' @title split_kommuneniv
 #' @description
 #' Splits GEOniv = K into K (WEIGHTS > 10000) and k (WEIGHTS < 10000). Used for plotting purposes.
+#' Invalid 99-geocodes are kept as K
 #' @keywords internal
 #' @noRd
 split_kommuneniv <- function(data){
   if(all(c("GEOniv", "WEIGHTS") %in% names(data)) && "K" %in% levels(data$GEOniv)){
     data[, let(GEOniv = forcats::fct_expand(GEOniv, "k", after = which(levels(GEOniv) == "K")))]
-    data[GEOniv == "K" & WEIGHTS < 10000, let(GEOniv = "k")]
+    data[GEOniv == "K" & WEIGHTS < 10000 & !grepl("99$", GEO), let(GEOniv = "k")]
     levels <- c("L", "H", "F")
   }
   return(data)
