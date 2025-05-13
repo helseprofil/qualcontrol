@@ -1,7 +1,14 @@
 # qualcontrol (development version)
 
+## New features
+1. `check_friskvik()` now returns output to environment as well as writing .csv 
+2. `recode_geo()` now reports on recoded 99-geocodes. 
+3. `add_geoparams()` now manually sets GEOniv for recoded 99-codes, as missing values caused problems when flagging outlier
+4. `split_kommuneniv()` ignores 99-kommunecodes when splitting small kommune into GEOniv = "k"
+
 ## Bugfix
 1. `check_barometer()` now warns of untrustworthy results when barometer is not complete.
+2. `get_plot_subset()` correctly identifies panels. Previously dimensions containing "..NA..", e.g. STONADSLENGDE, matched and was not included in the calculation
 
 # qualcontrol 1.3.2
 
