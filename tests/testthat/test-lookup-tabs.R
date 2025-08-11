@@ -1,6 +1,4 @@
 test_that("internal objects exists", {
-  expect_true(exists(".validdims"))
-  expect_type(.validdims, "character")
   expect_true(exists(".validgeo"))
   expect_type(.validgeo, "double")
   expect_true(exists(".georecode"))
@@ -20,7 +18,7 @@ test_that("update_georecode works", {
 })
 
 test_that("update_popinfo works", {
-  invisible(capture.output(expect_no_error(update_popinfo("O:/Prosjekt/FHP/PRODUKSJON/PRODUKTER/KUBER/KOMMUNEHELSA/DATERT/csv/BEFOLK_GK_2024-06-17-14-13.csv",
+  invisible(capture.output(expect_no_error(update_popinfo("O:/Prosjekt/FHP/PRODUKSJON/PRODUKTER/KUBER/KOMMUNEHELSA/DATERT/csv/BEFOLK_GK_2025-03-03-15-59.csv",
                                                           overwrite = F))))
 })
 

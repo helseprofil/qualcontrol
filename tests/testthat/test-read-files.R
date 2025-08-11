@@ -1,18 +1,13 @@
 test_that("readfiles_works", {
   # When file deleted from DATERT, change to an existing file (small size for speed".
-  invisible(capture.output(expect_no_error(readfiles(cube.new = "LUFT_2_5_PWC_2024-02-28-20-41",
-                                                     modus.new = "KH",
+  suppressWarnings(invisible(capture.output(expect_no_error(readfiles(cube.new = "LUFT_2_5_PWC_2024-02-28-20-41",
                                                      cube.old = "LUFT_2_5_PWC_2024-02-28-20-41",
-                                                     modus.old = "KH",
-                                                     recode.old = T))))
-  invisible(capture.output(expect_no_error(readfiles(cube.new = "LUFT_2_5_PWC_2024-02-28-20-41",
-                                                     modus.new = "KH",
-                                                     cube.old = NULL))))
-  invisible(capture.output(expect_error(readfiles(cube.new = "LUFT_2_5_PWC_2024-02-28-20-4",
-                                                  modus.new = "KH",
+                                                     recode.old = T)))))
+  suppressWarnings(invisible(capture.output(expect_no_error(readfiles(cube.new = "LUFT_2_5_PWC_2024-02-28-20-41",
+                                                     cube.old = NULL)))))
+  suppressWarnings(invisible(capture.output(expect_error(readfiles(cube.new = "LUFT_2_5_PWC_2024-02-28-20-4",
                                                   cube.old = "LUFT_2_5_PWC_2024-02-28-20-41",
-                                                  modus.old = "KH",
-                                                  recode.old = T))))
+                                                  recode.old = T)))))
 })
 
 test_that("readfiles_checkargs", {
@@ -22,29 +17,27 @@ test_that("readfiles_checkargs", {
   cube.new_incorrect <- cube.old_incorrect <- "CUBE_1234-12-34-56"
   cube.new_null <- NULL
   cube.old_null <- NULL
-  modus_correct = "KH"
-  modus_incorrect = "KHS"
-  recode_correct = TRUE
-  recode_incorrect = NULL
+  recode_correct <- comparecube_correct <- outliers_correct <- TRUE
+  recode_incorrect <- comparecube_incorrect <- outliers_incorrect <- NULL
 
-  expect_no_error(readfiles_checkargs(cube.new_correct, cube.old_correct, modus_correct,  modus_correct, recode_correct, recode_correct))
-  expect_no_error(readfiles_checkargs(cube.new_correct_csv, cube.old_correct_csv, modus_correct, modus_correct, recode_correct, recode_correct))
-  expect_no_error(readfiles_checkargs(cube.new_correct_csv, cube.old_null, modus_correct, modus_correct, recode_correct, recode_correct))
+  expect_no_error(readfiles_checkargs(cube.new_correct, cube.old_correct, recode_correct, recode_correct, comparecube_correct, outliers_correct))
+  expect_no_error(readfiles_checkargs(cube.new_correct_csv, cube.old_correct_csv, recode_correct, recode_correct, comparecube_correct, outliers_correct))
+  expect_no_error(readfiles_checkargs(cube.new_correct_csv, cube.old_null, recode_correct, recode_correct, comparecube_correct, outliers_correct))
 
-  expect_error(readfiles_checkargs(cube.new_null, cube.old_correct_csv, modus_correct, modus_correct, recode_correct, recode_correct))
-  expect_error(readfiles_checkargs(cube.new_incorrect, cube.old_correct, modus_correct, modus_correct, recode_correct, recode_correct))
-  expect_error(readfiles_checkargs(cube.new_correct, cube.old_incorrect, modus_correct, modus_correct, recode_correct, recode_correct))
-  expect_error(readfiles_checkargs(cube.new_correct, cube.old_correct, modus_incorrect, modus_correct, recode_correct, recode_correct))
-  expect_error(readfiles_checkargs(cube.new_correct, cube.old_correct, modus_correct, modus_incorrect, recode_correct, recode_correct))
-  expect_error(readfiles_checkargs(cube.new_correct, cube.old_correct, modus_correct, modus_correct, recode_incorrect, recode_correct))
-  expect_error(readfiles_checkargs(cube.new_correct, cube.old_correct, modus_correct, modus_correct, recode_correct, recode_incorrect))
+  expect_error(readfiles_checkargs(cube.new_null, cube.old_correct_csv, recode_correct, recode_correct, comparecube_correct, outliers_correct))
+  expect_error(readfiles_checkargs(cube.new_incorrect, cube.old_correct, recode_correct, recode_correct, comparecube_correct, outliers_correct))
+  expect_error(readfiles_checkargs(cube.new_correct, cube.old_incorrect, recode_correct, recode_correct, comparecube_correct, outliers_correct))
+  expect_error(readfiles_checkargs(cube.new_correct, cube.old_correct, recode_incorrect, recode_correct, comparecube_correct, outliers_correct))
+  expect_error(readfiles_checkargs(cube.new_correct, cube.old_correct, recode_correct, recode_incorrect, comparecube_correct, outliers_correct))
+  expect_error(readfiles_checkargs(cube.new_correct, cube.old_correct, recode_correct, recode_correct, comparecube_correct, outliers_incorrect))
+  expect_error(readfiles_checkargs(cube.new_correct, cube.old_correct, recode_correct, recode_correct, comparecube_incorrect, outliers_correct))
 })
 
 test_that("find_cube works", {
   expect_null(find_cube(cubename = NULL))
-  expect_error(find_cube(cubename = "NOFILE_1234-12-34-56-78", cubemodus = "KH"))
-  expect_no_error(find_cube("LUFT_2_5_PWC_2024-02-28-20-41.csv", cubemodus = "KH", force_datert = F))
-  expect_no_error(find_cube("LUFT_2_5_PWC_2024-02-28-20-41.csv", cubemodus = "KH", force_datert = T))
+  expect_error(find_cube(cubename = "NOFILE_1234-12-34-56-78"))
+  expect_no_error(find_cube("LUFT_2_5_PWC_2024-02-28-20-41.csv", force_datert = F))
+  expect_no_error(find_cube("LUFT_2_5_PWC_2024-02-28-20-41.csv", force_datert = T))
   expect_error(find_cube("IKKESLETT_9999-99-99-99-99.csv", cubemodus = "KH", force_datert = T)) # 2 files
 })
 

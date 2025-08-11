@@ -72,7 +72,7 @@ get_plot_subset <- function(dt,
   incdims <- combs[, do.call(paste, c(.SD, sep = "|")), .SDcols = patterns("^dim")]
   nondims <- list()
   for(i in seq_along(incdims)){
-    nondims[[i]] <- grep(incdims[i], by, invert = T, value = T)
+    nondims[[i]] <- grep(paste0("^(", incdims[i], ")$"), by, invert = T, value = T)
   }
   nondims <- lapply(nondims, function(x) ref[dim %in% x, n])
   nondims <- as.integer(lapply(nondims, function(x) if(length(x) > 0) Reduce("*", x) else 1))

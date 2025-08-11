@@ -103,7 +103,7 @@ convert_coltype <- function(data,
 #' @description
 #' Initiates an empty data.table with the standard dimension and value columns, mainly for testing purposes.
 create_empty_standard_dt <- function(){
-  vals <- c(.standarddimensions, .standardvalues)
+  vals <- c(getOption("qualcontrol.standarddimensions"), getOption("qualcontrol.standardvalues"))
   x <- as.list(setNames(rep(NA_character_, length(vals)), vals))
   data.table::setDT(x)
   return(x)
@@ -288,7 +288,7 @@ get_complete_strata <- function(data,
 #' @keywords internal
 #' @noRd
 get_cubename <- function(cube){
-  gsub("^QC_|_\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}|\\.csv$", "", attributes(cube)$Filename)
+  gsub("^QC_|_\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}|\\.csv$|.parquet$", "", attributes(cube)$Filename)
 }
 
 #' @keywords internal
@@ -320,7 +320,7 @@ get_table_savefolder <- function(cubename){
 
 #' @title identify_coltypes
 #' @description
-#' Uses internal object .validdims to identify dimension and value columns
+#' Uses getOption("qualcontrol.alldimensions") to identify dimension and value columns
 #'
 #' @param cube.new new file
 #' @param cube.old old file, or NULL
@@ -336,12 +336,12 @@ identify_coltypes <- function(cube.new = NULL,
   misc_cols <- c("origgeo", "GEOniv", "KOMMUNE", "WEIGHTS")
   out <- list()
 
-  out[["dims.new"]] <- names(cube.new)[names(cube.new) %in% .validdims]
+  out[["dims.new"]] <- names(cube.new)[names(cube.new) %in% getOption("qualcontrol.alldimensions")]
   out[["vals.new"]] <- names(cube.new)[names(cube.new) %notin% c(out$dims.new, misc_cols)]
   out[["misc.new"]] <- names(cube.new)[names(cube.new) %in% misc_cols]
 
   if(!is.null(cube.old)){
-    out[["dims.old"]] <- names(cube.old)[names(cube.old) %in% .validdims]
+    out[["dims.old"]] <- names(cube.old)[names(cube.old) %in% getOption("qualcontrol.alldimensions")]
     out[["vals.old"]] <- names(cube.old)[names(cube.old) %notin% c(out$dims.old, misc_cols)]
     out[["misc.old"]] <- names(cube.old)[names(cube.old) %in% misc_cols]
     out[["commondims"]] <- intersect(out$dims.new, out$dims.old)
@@ -388,12 +388,13 @@ select_nevner_pri <- function(valuecolumns){
 #' @title split_kommuneniv
 #' @description
 #' Splits GEOniv = K into K (WEIGHTS > 10000) and k (WEIGHTS < 10000). Used for plotting purposes.
+#' Invalid 99-geocodes are kept as K
 #' @keywords internal
 #' @noRd
 split_kommuneniv <- function(data){
   if(all(c("GEOniv", "WEIGHTS") %in% names(data)) && "K" %in% levels(data$GEOniv)){
     data[, let(GEOniv = forcats::fct_expand(GEOniv, "k", after = which(levels(GEOniv) == "K")))]
-    data[GEOniv == "K" & WEIGHTS < 10000, let(GEOniv = "k")]
+    data[GEOniv == "K" & WEIGHTS < 10000 & !grepl("99$", GEO), let(GEOniv = "k")]
     levels <- c("L", "H", "F")
   }
   return(data)

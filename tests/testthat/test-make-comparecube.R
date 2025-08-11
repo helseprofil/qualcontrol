@@ -1,8 +1,7 @@
-invisible(capture.output(readfiles(cube.new = "TRANGBODDHET_2023-11-20-11-05",
-                                   modus.new = "KH",
-                                   cube.old = "TRANGBODDHET_2023-01-03-14-38",
-                                   modus.old = "KH",
-                                   recode.old = T)))
+suppressWarnings(invisible(capture.output(readfiles(cube.new = "TRANGBODDHET_2025-02-25-08-47",
+                                                    cube.old = "TRANGBODDHET_2023-11-20-11-05",
+                                                    recode.old = T,
+                                                    comparecube = F, outliers = F, dumps = NULL))))
 
 test_that("make_comparecube works", {
 

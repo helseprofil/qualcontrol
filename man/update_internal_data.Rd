@@ -12,8 +12,8 @@ update_internal_data(geoyear, overwrite = TRUE)
 \item{overwrite}{overwrite data?}
 }
 \value{
-. .standarddims
 \itemize{
+\item .standarddims
 \item .validdims
 \item .validgeo
 \item .popinfo

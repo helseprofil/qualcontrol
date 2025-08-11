@@ -61,9 +61,8 @@ check_barometer <- function(type = c("FHP", "OVP"),
   }
 
   if(0 %in% bar$LPnr){
-    bar[, corrected_LPnr := LPnr + 1]
-    data.table::setcolorder(bar, "corrected_LPnr", after = "LPnr")
-    message("OBS: LPnr contain 0, corrected_LPnr corresponds to barometer")
+    bar[, LPnr := LPnr + 1]
+    message("\nOBS: LPnr contained 0, and has been corrected to correspond to barometer")
   }
 
   data.table::setkey(bar, LPnr)
@@ -83,6 +82,13 @@ check_barometer <- function(type = c("FHP", "OVP"),
   indraw[, setdiff(names(indraw), indVar) := NULL]
   ind <- indraw[SpraakId == "BOKMAAL"]
 
+  if(any(!unique(bar$LPnr) %in% unique(ind$LPnr))){
+    missing <- unique(ind$LPnr)[!unique(bar$LPnr) %in% unique(ind$LPnr)]
+    message("\nOBS!\nBarometeret er ikke komplett sammenlignet med indikatorlisten\n",
+            "Indikator(er) som mangler (LPnr): ", paste(missing, sep = ","), "\n",
+            "Utslag på LPnr fra og med nr ", min(missing), " kan ikke stoles på")
+
+  }
   cat("... \n")
   withVar <- c("Aar", indV1)
   bar[ind, (withVar) := mget(withVar), on = c(stedskode_string = "Sted_kode", LPnr = "LPnr")]

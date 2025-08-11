@@ -8,6 +8,7 @@ check_friskvik(
   profile = c("FHP", "OVP"),
   geolevel = c("B", "K", "F"),
   profileyear = NULL,
+  save = TRUE,
   test = FALSE
 )
 }
@@ -17,9 +18,13 @@ check_friskvik(
 \item{geolevel}{"B", "K", or "F"}
 
 \item{profileyear}{4-digit year}
+
+\item{save}{write CSV?}
+
+\item{test}{write to testfolder?}
 }
 \value{
-csv-file in QualControl/FRISKVIKSJEKK
+Table in global environment and csv-file in QualControl/FRISKVIKSJEKK if save = TRUE
 }
 \description{
 Runs a series of checks on the files in the most recent GODKJENT-folder, comparing the file to the corresponding

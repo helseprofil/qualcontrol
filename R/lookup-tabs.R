@@ -24,6 +24,7 @@ update_georecode <- function(year, overwrite = TRUE){
     saveRDS(tab, path)
     cat("georecode updated, remember to push the new changes to GitHub")
   }
+  return(tab)
 }
 
 
@@ -40,6 +41,7 @@ update_georecode <- function(year, overwrite = TRUE){
 #'
 update_popinfo <- function(popfile, overwrite = TRUE){
 
+  # DEV: Last inn full .parquet-kube, bare nødvendige kolonner og filtrer ut siste år med dplyr::filter.
   tab <- data.table::fread(popfile)
   tab <- tab[KJONN == 0 & ALDER == "0_120" & AAR == max(AAR), .(GEO, TELLER)]
   data.table::setnames(tab, "TELLER", "WEIGHTS")
@@ -97,29 +99,24 @@ update_validgeo <- function(year){
 #' @param overwrite overwrite data?
 #'
 #' @return
-#' . .standarddims
+#' - .standarddims
 #' - .validdims
 #' - .validgeo
 #' - .popinfo
 #' - .georecode
 update_internal_data <- function(geoyear, overwrite = TRUE){
 
-  .standardvalues <- getOption("qualcontrol.standardvalues")
-  .standarddimensions <- getOption("qualcontrol.standarddimensions")
-  .validdims <- update_dimlist()
   .validgeo <- update_validgeo(geoyear)
   .popinfo <- readRDS(system.file("data", "popinfo.rds", package = "qualcontrol"))
   .georecode <- readRDS(system.file("data", "georecode.rds", package = "qualcontrol"))
+  if(attributes(.georecode)$year != geoyear) .georecode <- update_georecode(geoyear, overwrite = TRUE)
 
   if(overwrite){
-  usethis::use_data(.standardvalues,
-                    .standarddimensions,
-                    .validdims,
-                    .validgeo,
-                    .popinfo,
-                    .georecode,
-                    internal = TRUE,
-                    overwrite = TRUE)
+    usethis::use_data(.validgeo,
+                      .popinfo,
+                      .georecode,
+                      internal = TRUE,
+                      overwrite = TRUE)
   cat("Internal data updated, remember to push the new changes to GitHub")
   }
 }
