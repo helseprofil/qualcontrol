@@ -3,6 +3,7 @@
 ## New features
 1. Implemented .parquet format, and standardized column types
 2. Updated internal data (georecode, population info, etc.)
+3. Moved internal dimension and value lists to options for easier updates
 
 ## Other changes
 1. Deprecated modus argument, as NH is no longer used.
