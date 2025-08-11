@@ -1,21 +1,17 @@
 # qualcontrol 1.3.3
 
 ## New features
-1. Implemented .parquet format, and standardized column types
-2. Updated internal data (georecode, population info, etc.)
-3. Moved internal dimension and value lists to options for easier updates
-
-## Other changes
-1. Deprecated modus argument, as NH is no longer used.
-2. Fixed tests failing due to new file format and deleted source files
-
-
-
-## New features
 1. `check_friskvik()` now returns output to environment as well as writing .csv 
 2. `recode_geo()` now reports on recoded 99-geocodes. 
 3. `add_geoparams()` now manually sets GEOniv for recoded 99-codes, as missing values caused problems when flagging outlier
 4. `split_kommuneniv()` ignores 99-kommunecodes when splitting small kommune into GEOniv = "k"
+5. Implemented .parquet format, and standardized column types
+6. Updated internal data (georecode, population info, etc.)
+7. Moved internal dimension and value lists to options for easier updates
+
+## Other changes
+1. Deprecated modus argument, as NH is no longer used.
+2. Fixed tests failing due to new file format and deleted source files
 
 ## Bugfix
 1. `check_barometer()` now warns of untrustworthy results when barometer is not complete.
