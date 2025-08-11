@@ -15,5 +15,5 @@ identify_coltypes(cube.new = NULL, cube.old = NULL)
 a list containing information on dimension and value columns
 }
 \description{
-Uses internal object .validdims to identify dimension and value columns
+Uses getOption("qualcontrol.alldimensions") to identify dimension and value columns
 }

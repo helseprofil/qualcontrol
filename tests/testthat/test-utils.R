@@ -1,10 +1,8 @@
-invisible(capture.output(cube1 <- read_cube(system.file("testdata", "testcube1.csv", package = "qualcontrol"))))
-invisible(capture.output(cube2 <- read_cube(system.file("testdata", "testcube2.csv", package = "qualcontrol"))))
-invisible(capture.output(readfiles(cube.new = "TRANGBODDHET_2023-11-20-11-05",
-                                   modus.new = "KH",
-                                   cube.old = "TRANGBODDHET_2023-01-03-14-38",
-                                   modus.old = "KH",
-                                   recode.old = T)))
+suppressWarnings(invisible(capture.output(cube1 <- read_cube(system.file("testdata", "testcube1.csv", package = "qualcontrol")))))
+suppressWarnings(invisible(capture.output(cube2 <- read_cube(system.file("testdata", "testcube2.csv", package = "qualcontrol")))))
+suppressWarnings(invisible(capture.output(readfiles(cube.new = "TRANGBODDHET_2025-02-25-08-47",
+                                                    cube.old = "TRANGBODDHET_2023-11-20-11-05",
+                                                    recode.old = T))))
 
 test_that("identify_coltypes works", {
 
@@ -18,7 +16,7 @@ test_that("identify_coltypes works", {
 
 test_that("get_cubename and cubedatetag works", {
   expect_equal(get_cubename(newcube), "TRANGBODDHET")
-  expect_equal(get_cubedatetag(newcube), "2023-11-20-11-05")
+  expect_equal(get_cubedatetag(newcube), "2025-02-25-08-47")
 })
 
 test_that("generate_qcfolders works", {
@@ -213,7 +211,7 @@ test_that("get_plotsavefolder works", {
 
 test_that("create_empty_standard_dt works", {
   expect_no_error(x <- create_empty_standard_dt())
-  expect_equal(names(x), c(.standarddimensions, .standardvalues))
+  expect_equal(names(x), c(getOption("qualcontrol.standarddimensions"), getOption("qualcontrol.standardvalues")))
 })
 
 test_that("qc_round works", {
@@ -224,7 +222,7 @@ test_that("qc_round works", {
                "MEIS_new", "MEIS_old", "MEIS_diff", "MEIS_reldiff", "NO_ROUNDING")
   d[, (addcols) := NA_real_]
   target <- data.table::copy(d)
-  d[, names(.SD) := as.numeric(1.234), .SDcols = names(d)[names(d) %notin% .validdims]]
+  d[, names(.SD) := as.numeric(1.234), .SDcols = names(d)[names(d) %notin% getOption("qualcontrol.alldimensions")]]
   expect_no_error(d <- qc_round(d))
 
   target[, let(TELLER = 1.2,

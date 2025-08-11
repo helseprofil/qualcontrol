@@ -1,4 +1,14 @@
-# qualcontrol (development version)
+# qualcontrol 1.3.3
+
+## New features
+1. Implemented .parquet format, and standardized column types
+2. Updated internal data (georecode, population info, etc.)
+
+## Other changes
+1. Deprecated modus argument, as NH is no longer used.
+2. Fixed tests failing due to new file format and deleted source files
+
+
 
 ## New features
 1. `check_friskvik()` now returns output to environment as well as writing .csv 

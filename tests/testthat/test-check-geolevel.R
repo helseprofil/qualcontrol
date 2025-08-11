@@ -1,6 +1,5 @@
-invisible(capture.output(readfiles(cube.new = "TRANGBODDHET_2023-11-20-11-05",
-                                   modus.new = "KH",
-                                   cube.old = NULL)))
+suppressWarnings(invisible(capture.output(readfiles(cube.new = "TRANGBODDHET_2023-11-20-11-05",
+                                   cube.old = NULL))))
 
 test_that("compare_geolevels works", {
   expect_equal(compare_geolevels(newcube, "FL"), compare_geolevels(newcube, "LF"))

@@ -6,10 +6,8 @@
 \usage{
 readfiles(
   cube.new = NULL,
-  modus.new = c("KH", "NH"),
   recode.new = FALSE,
   cube.old = NULL,
-  modus.old = c("KH", "NH"),
   recode.old = FALSE,
   comparecube = TRUE,
   outliers = TRUE,
@@ -17,17 +15,19 @@ readfiles(
 )
 }
 \arguments{
-\item{newcubefile}{new cube filename, in the format "NAME_1234-12-34-56-78"}
+\item{cube.new}{Full name of new cube file, including date-tag}
 
-\item{modusnew}{"KH" or "NH"}
+\item{recode.new}{TRUE/FALSE, recode GEO-codes in new cube?}
 
-\item{recode.newcube}{TRUE/FALSE, should GEO codes in new file be recoded to current GEO}
+\item{cube.old}{Full name of new cube file, including date-tag}
 
-\item{oldcubefile}{old/comparison cube filename, in the format "NAME_1234-12-34-56-78" or NULL}
+\item{recode.old}{TRUE/FALSE, recode GEO-codes in old cube?}
 
-\item{modusold}{"KH" or "NH"}
+\item{comparecube}{TRUE/FALSE, should comparecube be generated (default = TRUE)}
 
-\item{recode.oldcube}{TRUE/FALSE, should GEO codes in old file be recoded to current GEO}
+\item{outliers}{Should outliers be detected and flagged?}
+
+\item{dumps}{save csv-files? Available options are \code{comparecube}, \code{newcube_flag}, and \code{oldcube_flag}}
 }
 \value{
 New and old file with attributes

@@ -145,7 +145,7 @@ flag_outliers <- function(cube,
                           outlierval){
   dt <- data.table::copy(cube)
   split_kommuneniv(dt)
-  dims <- grep("^AAR$", names(dt)[names(dt) %in% .validdims], invert = T, value = T)
+  dims <- grep("^AAR$", names(dt)[names(dt) %in% getOption("qualcontrol.alldimensions")], invert = T, value = T)
   keyvars <- c(dims, "AAR")
   data.table::setkeyv(dt, keyvars)
 
@@ -435,7 +435,7 @@ qc_round <- function(dt){
   if(is.null(dt)) return(invisible(NULL))
 
   dt <- data.table::copy(dt)
-  values <- names(dt)[names(dt) %notin% .validdims]
+  values <- names(dt)[names(dt) %notin% getOption("qualcontrol.alldimensions")]
   round0 <- values[grepl("SPVFLAGG.*|RATE\\.n.*", values)]
   round1 <- values[grepl("TELLER|NEVNER", values) & !grepl("_reldiff", values)]
   round2 <- values[grepl("RATE|SMR|MEIS|MIN$|MAX$|LOW$|HIGH$|.*wq\\d{2}$", values, perl = T) | grepl("_reldiff", values)]

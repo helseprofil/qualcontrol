@@ -1,43 +1,34 @@
-# Temporary file to copy old functions while rewriting
-
 #' @title readcubes
 #' @description
 #' Reads cube files for quality control routines
-#'
-#' @param newcubefile new cube filename, in the format "NAME_1234-12-34-56-78"
-#' @param modusnew "KH" or "NH"
-#' @param recode.newcube TRUE/FALSE, should GEO codes in new file be recoded to current GEO
-#' @param oldcubefile old/comparison cube filename, in the format "NAME_1234-12-34-56-78" or NULL
-#' @param modusold "KH" or "NH"
-#' @param recode.oldcube TRUE/FALSE, should GEO codes in old file be recoded to current GEO
+#' @param cube.new Full name of new cube file, including date-tag
+#' @param recode.new TRUE/FALSE, recode GEO-codes in new cube?
+#' @param cube.old Full name of new cube file, including date-tag
+#' @param recode.old TRUE/FALSE, recode GEO-codes in old cube?
+#' @param comparecube TRUE/FALSE, should comparecube be generated (default = TRUE)
+#' @param outliers Should outliers be detected and flagged?
+#' @param dumps save csv-files? Available options are `comparecube`, `newcube_flag`, and `oldcube_flag`
 #'
 #' @returns New and old file with attributes
 #' @export
 readfiles <- function(cube.new = NULL,
-                      modus.new = c("KH", "NH"),
                       recode.new = FALSE,
                       cube.old = NULL,
-                      modus.old = c("KH", "NH"),
                       recode.old = FALSE,
                       comparecube = TRUE,
                       outliers = TRUE,
                       dumps = getOption("qualcontrol.dumps")){
   clean_environment()
   newcube <- oldcube <- NULL
+  readfiles_checkargs(cube.new, cube.old, recode.new, recode.old, comparecube, outliers)
 
-  modus.new <- match.arg(modus.new)
-  modus.old <- match.arg(modus.old)
-  readfiles_checkargs(cube.new, cube.old, modus.new, modus.old, recode.new, recode.old)
-
-  cube.new <- add_csv(cube.new)
-  path.new <- find_cube(cube.new, modus.new)
+  path.new <- find_cube(cube.new)
   newcube <- read_cube(path.new, type = "New")
   newcube <- recode_geo(newcube, recode.new)
   add_geoparams(newcube)
 
   if(!is.null(cube.old)){
-    cube.old <- add_csv(cube.old)
-    path.old <- find_cube(cube.old, modus.old)
+    path.old <- find_cube(cube.old)
     oldcube <- read_cube(path.old, type = "Old")
     oldcube <- recode_geo(oldcube, recode.old)
     add_geoparams(oldcube)
@@ -51,12 +42,7 @@ readfiles <- function(cube.new = NULL,
 
 #' @keywords internal
 #' @noRd
-readfiles_checkargs <- function(cube.new,
-                                cube.old,
-                                modus.new,
-                                modus.old,
-                                recode.new,
-                                recode.old) {
+readfiles_checkargs <- function(cube.new, cube.old, recode.new, recode.old, comparecube, outliers){
   if (is.null(cube.new) ||
       !grepl(".*_\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}(\\.csv)?$", cube.new))
     stop("cube.new must be provided in the format FILENAME_YYYY-MM-DD-hh-mm")
@@ -65,57 +51,55 @@ readfiles_checkargs <- function(cube.new,
       !grepl(".*_\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}(\\.csv)?$", cube.old))
     stop("cube.old must be NULL or provided in the format FILENAME_YYYY-MM-DD-hh-mm")
 
-  if(is.null(modus.new) || !modus.new %in% c("KH", "NH"))
-    stop('modus.new must be "KH" or "NH"')
-
-  if(is.null(modus.old) || !modus.old %in% c("KH", "NH"))
-    stop('modus.old must be "KH" or "NH"')
-
   if(!is.logical(recode.new))
     stop("recode.new must be TRUE/FALSE")
 
   if(!is.logical(recode.old))
     stop("recode.old must be TRUE/FALSE")
 
+  if(!is.logical(comparecube))
+    stop("comparecube must be TRUE/FALSE")
+
+  if(!is.logical(outliers))
+    stop("outliers must be TRUE/FALSE")
+
   invisible()
 }
 
 #' @keywords internal
 #' @noRd
-find_cube <- function(cubename,
-                      cubemodus = c("KH", "NH"),
-                      force_datert = FALSE){
+find_cube <- function(cubename, force_datert = FALSE){
 
   if(is.null(cubename)) return(NULL)
-
-  cubemodus <- match.arg(cubemodus)
-  mode <- switch(cubemodus,
-                 "KH" = getOption("qualcontrol.mode")$kh,
-                 "NH" = getOption("qualcontrol.mode")$nh
-                 )
-
-  path <- file.path(getOption("qualcontrol.root"),
-                    getOption("qualcontrol.files"),
-                    mode)
+  path <- file.path(getOption("qualcontrol.root"), getOption("qualcontrol.cubefiles"))
 
   if(!force_datert){
-  qc_file <- list.files(file.path(path, "QC"), pattern = cubename, full.names = T)
-  if(length(qc_file) == 1 && file.exists(qc_file)) return(qc_file)
+    qc_files <- list.files(file.path(path, "QC"), pattern = cubename, full.names = T)
+    if(length(qc_files) == 1 && file.exists(qc_files)) return(qc_files)
+    if(length(qc_files) > 1){
+      parquet_file <- qc_files[grep(".parquet$", qc_files)]
+      if(length(parquet_file) == 1 && file.exists(parquet_file)) return(parquet_file)
+    }
+  } else {
+    qc_files <- list.files(file.path(path, "DATERT/csv"), pattern = cubename, full.names = T)
+    if(length(qc_files) == 1 && file.exists(qc_files)) return(qc_files)
   }
 
-  datert_file <- list.files(file.path(path, "DATERT/csv"), pattern = cubename, full.names = T)
-  if(length(datert_file) == 1 && file.exists(datert_file)) return(datert_file)
-
-  stop(cubename, " not found, check spelling or modus")
+  if(length(qc_files) > 1) stop("> 1 file with the same name found: ", qc_files)
+  if(length(qc_files) == 0) stop(cubename, " not found in QC or DATERT, check spelling")
 }
 
 #' @keywords internal
 #' @noRd
 read_cube <- function(filepath, type = c("New", "Old")){
-
   type <- match.arg(type)
+  charcols <- getOption("qualcontrol.alldimensions")[!getOption("qualcontrol.alldimensions") %in% c("GEO", "KJONN", "UTDANN", "INNVKAT", "LANDBAK")]
+  filetype <- ifelse(grepl(".parquet$", filepath), "PARQUET", "CSV")
+  dt <- switch(filetype,
+               CSV = do_read_csv(filepath, charcols),
+               PARQUET = do_read_parquet(filepath, charcols))
 
-  dt <- data.table::fread(filepath, encoding = "UTF-8")
+  # dt <- data.table::fread(filepath, encoding = "UTF-8")
   data.table::setattr(dt, "Filename", basename(filepath))
   data.table::setattr(dt, "Filetype", data.table::fcase(grepl("/QC/", filepath), "QC",
                                                         grepl("/DATERT/csv/", filepath), "ALLVIS",
@@ -137,6 +121,28 @@ read_cube <- function(filepath, type = c("New", "Old")){
 
   return(dt)
 }
+
+do_read_parquet <- function(filepath, charcols){
+  file <- arrow::open_dataset(filepath)
+  readschema <- arrow::schema(lapply(names(file), function(x){
+    if(x %in% charcols){
+      arrow::Field$create(name = x, type = arrow::string())
+      } else {
+        arrow::Field$create(name = x, type = arrow::float64())
+      }
+    }))
+  file <- try(data.table::as.data.table(arrow::open_dataset(filepath, schema = readschema)))
+  if("try-error" %in% class(file)) stop("Error when reading file: ", filepath)
+  return(file)
+}
+
+do_read_csv <- function(filepath, charcols){
+  file <- data.table::fread(filepath, encoding = "UTF-8", colClasses = "character")
+  numcols <- names(file)[!names(file) %in% charcols]
+  file[, (numcols) := lapply(.SD, as.numeric), .SDcols = numcols]
+  return(file)
+}
+
 
 #' @keywords internal
 #' @noRd
