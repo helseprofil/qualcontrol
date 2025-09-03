@@ -1,3 +1,8 @@
+# qualcontrol (development version)
+
+## New features
+1. `check_befvekst` added, performing a special check of population growth cube vs the population cube. 
+
 # qualcontrol 1.3.3
 
 ## New features
