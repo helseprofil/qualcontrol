@@ -2,9 +2,12 @@
 
 ## New features
 1. `check_befvekst` added, performing a special check of population growth cube vs the population cube. 
+2. Added function `add_totals_for_missing_dims` which adds missing new or expired dimension columns when merging new and old cube to comparecube. 
+3. Added function `exclude_lks_for_compare` which exclude data for GEOniv == "V" when creating comparecube
 
 ## Other changes
-1. Updated internal data, including population weights. 
+1. Updated internal data, including population weights including LKS. 
+2. When flagging outliers, setting 0 as default instead of NA_integer_
 
 # qualcontrol 1.3.3
 

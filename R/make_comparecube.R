@@ -17,6 +17,12 @@ make_comparecube <- function(cube.new = newcube,
   colinfo <- identify_coltypes(cube.new, cube.old)
   if(outliers) outlierval <- select_outlier_pri(cube.new, cube.old, colinfo)
 
+  cube.new <- exclude_lks_for_compare(cube.new)
+  cube.old <- exclude_lks_for_compare(cube.old)
+  add_totals_for_missing_dims(dt = cube.new, ref = cube.old, dimlist = colinfo$expdims)
+  add_totals_for_missing_dims(dt = cube.old, ref = cube.new, dimlist = colinfo$newdims)
+  colinfo <- identify_coltypes(cube.new, cube.old) # update after adding missing dims
+
   newcube_flag <- flag_rows(cube.new, cube.old, colinfo, "newrow")
   if(outliers && !is.na(outlierval)){
     newcube_flag <- flag_outliers(newcube_flag, outlierval)
@@ -77,6 +83,15 @@ select_outlier_pri <- function(cube.new,
                                "MALTALL" %in% valuecolumns, "MALTALL",
                                default = NA)
   return(outlier)
+}
+
+exclude_lks_for_compare <- function(dt){
+  if(is.null(dt)) return(invisible(NULL))
+  if("V" %in% unique(dt$GEOniv)){
+    dt <- dt[GEOniv != "V"]
+    dt[, GEOniv := droplevels(GEOniv)]
+  }
+  return(dt)
 }
 
 #' @title flag_rows
@@ -200,14 +215,13 @@ add_changeval <- function(dt,
 #' @param by All dimensions except AAR
 #' @param change TRUE/FALSE, should outliers be detected based on the original or the change value
 #' @return dt
-add_outlier <- function(dt,
-                        val,
-                        by,
-                        change = FALSE){
+add_outlier <- function(dt, val, by, change = FALSE){
 
   if(isTRUE(change) && length(unique(dt$AAR)) < 2) return(dt)
-
   if(isTRUE(change)) val <- paste0("change_", val)
+
+  missgeoniv <- dt[is.na(GEOniv)]
+  dt <- dt[!is.na(GEOniv)]
 
   by <- sub("^GEO$", "GEOniv", by)
   g <- collapse::GRP(dt, by)
@@ -223,7 +237,7 @@ add_outlier <- function(dt,
     MAX = collapse::fmax(dt[[val]], g = g),
     LOW = wq25 - 1.5*(wq75-wq25),
     HIGH = wq75 + 1.5*(wq75-wq25),
-    OUTLIER = NA_integer_
+    OUTLIER = 0
   )
 
   lowcutoff <- "LOW"
@@ -241,7 +255,7 @@ add_outlier <- function(dt,
   dt <- collapse::join(dt, cutoffs, on = by, verbose = 0, overid = 2)
   dt[get(val) > get(highcutoff), (outliercol) := 1]
   dt[get(val) < get(lowcutoff), (outliercol) := 1]
-  dt[get(val) > get(lowcutoff) & get(val) < get(highcutoff), (outliercol) := 0]
+  # dt[get(val) > get(lowcutoff) & get(val) < get(highcutoff), (outliercol) := 0]
 
   return(dt)
 }
@@ -282,12 +296,11 @@ add_prev_outlier <- function(newcube_flag,
 #' @param colinfo list generated with [qualcontrol::identify_coltypes(cube.new, cube.old)]
 #'
 #' @return comparecube
-combine_cubes <- function(newcube_flag,
-                          oldcube_flag,
-                          colinfo){
+combine_cubes <- function(newcube_flag, oldcube_flag, colinfo){
 
   d_new <- data.table::copy(newcube_flag)
   d_old <- data.table::copy(oldcube_flag)[exprow == 0]
+
   commonvals <- colinfo$commonvals
   valuecolumns <- c("TELLER", "NEVNER", "sumTELLER", "sumNEVNER", "RATE.n")
 
@@ -323,6 +336,17 @@ combine_cubes <- function(newcube_flag,
   data.table::setcolorder(compare, colorder)
   add_diffcolumns(compare, commonvals)
   return(compare)
+}
+
+add_totals_for_missing_dims <- function(dt, ref, dimlist){
+  if(is.null(dt) || is.null(ref) || length(dimlist) == 0) return(invisible(NULL))
+
+  for(dim in dimlist){
+    totalvalue <- find_total(ref, dim)
+    if(is.na(totalvalue)) stop(paste0("\nFor ny eller utgått dimensjon ", dim, " finnes det ikke en totalverdi i den andre kuben. Kan derfor ikke sette inn en totalverdi.\n",
+                                      "For å kunne matche må filene leses på nytt med comparecube = FALSE, og denne kolonnen legges til manuelt."))
+    dt[, (dim) := totalvalue]
+  }
 }
 
 #' @title add_diffcolumns
