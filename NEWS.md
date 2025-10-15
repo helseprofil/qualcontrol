@@ -8,6 +8,8 @@
 ## Other changes
 1. Updated internal data, including population weights including LKS. 
 2. When flagging outliers, setting 0 as default instead of NA_integer_
+3. `add_geoparams` now uses collapse::join, and only manually fill in geoniv if any missing values.
+4. `plot_timeseries_bydel` and `plot_timeseries_country` exits if only 1 year in file
 
 # qualcontrol 1.3.3
 
