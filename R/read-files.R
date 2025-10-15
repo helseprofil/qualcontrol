@@ -25,13 +25,13 @@ readfiles <- function(cube.new = NULL,
   path.new <- find_cube(cube.new)
   newcube <- read_cube(path.new, type = "New")
   newcube <- recode_geo(newcube, recode.new)
-  add_geoparams(newcube)
+  newcube <- add_geoparams(newcube)
 
   if(!is.null(cube.old)){
     path.old <- find_cube(cube.old)
     oldcube <- read_cube(path.old, type = "Old")
     oldcube <- recode_geo(oldcube, recode.old)
-    add_geoparams(oldcube)
+    oldcube <- add_geoparams(oldcube)
   }
 
   newcube <<- newcube
@@ -193,12 +193,14 @@ recode_geo <- function(dt, recode){
 #' @examples
 #' # add_geoparams(dt)
 add_geoparams <- function(dt){
-  dt[.popinfo, let(GEOniv = i.GEOniv, WEIGHTS = i.WEIGHTS), on = "GEO"]
-  dt[is.na(GEOniv) & grepl("99$", GEO), GEOniv := data.table::fcase(nchar(GEO) == 2, "F",
-                                                                    nchar(GEO) == 4, "K",
-                                                                    nchar(GEO) == 6, "B",
-                                                                    nchar(GEO) == 8, "V")]
-  dt[, GEOniv := forcats::fct_drop(GEOniv)]
+  dt <- collapse::join(dt, .popinfo, on = "GEO", verbose = 0)
+  if(any(is.na(collapse::funique(dt$GEOniv)))){
+    dt[is.na(GEOniv), GEOniv := data.table::fcase(nchar(GEO) %in% c(1,2), "F",
+                                                  nchar(GEO) %in% c(3,4), "K",
+                                                  nchar(GEO) %in% c(5,6), "B",
+                                                  nchar(GEO) %in% c(9,10), "V")]
+  }
+  dt[, GEOniv := droplevels(GEOniv)]
   dt[is.na(WEIGHTS), let(WEIGHTS = 0)]
   return(dt)
 }
