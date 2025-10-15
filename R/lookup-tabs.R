@@ -42,19 +42,25 @@ update_georecode <- function(year, overwrite = TRUE){
 update_popinfo <- function(popfile, overwrite = TRUE){
 
   # DEV: Last inn full .parquet-kube, bare nødvendige kolonner og filtrer ut siste år med dplyr::filter.
-  tab <- data.table::fread(popfile)
-  tab <- tab[KJONN == 0 & ALDER == "0_120" & AAR == max(AAR), .(GEO, TELLER)]
-  data.table::setnames(tab, "TELLER", "WEIGHTS")
-  tab[, GEOniv := data.table::fcase(GEO == 0, "L",
-                                    GEO <= 99, "F",
-                                    GEO < 10000, "K",
-                                    GEO < 1000000, "B",
-                                    GEO > 1000000, "V")]
+  if(grepl(".parquet$", popfile)){
+    d <- arrow::open_dataset(popfile)
+    tab <- d |> dplyr::filter(ALDERl == 0 & ALDERh == 120 & KJONN == 0) |>
+      dplyr::select(GEOniv, GEO, WEIGHTS = TELLER, AAR) |>
+      dplyr::collect() |>
+      dplyr::filter(AAR == max(AAR)) |>
+      dplyr::select(-AAR) |>
+      data.table::setDT()
+  } else {
+    tab <- data.table::fread(popfile)
+    tab <- tab[KJONN == 0 & ALDER == "0_120" & AAR == max(AAR), .(GEOniv, GEO, TELLER)]
+    data.table::setnames(tab, "TELLER", "WEIGHTS")
+  }
   hreg <- data.table::data.table(GEO = 81:84,
                                  WEIGHTS = 0,
                                  GEOniv = "H")
-  tab <- data.table::rbindlist(list(tab, hreg))
-  tab[, GEOniv := factor(GEOniv, levels = c("L", "H", "F", "K", "B", "V"))]
+  tab <- data.table::rbindlist(list(tab, hreg), use.names = TRUE)
+  tab[, let(GEOniv = factor(GEOniv, levels = c("L", "H", "F", "K", "B", "V")),
+            GEO = as.numeric(GEO))]
   data.table::setattr(tab, "popfile", basename(popfile))
 
   path <- file.path(system.file("data", package = "qualcontrol"), "popinfo.rds")
