@@ -18,7 +18,7 @@ test_that("update_georecode works", {
 })
 
 test_that("update_popinfo works", {
-  invisible(capture.output(expect_no_error(update_popinfo("O:/Prosjekt/FHP/PRODUKSJON/PRODUKTER/KUBER/KOMMUNEHELSA/DATERT/csv/BEFOLK_GK_2025-03-03-15-59.csv",
+  invisible(capture.output(expect_no_error(update_popinfo("O:/Prosjekt/FHP/PRODUKSJON/PRODUKTER/KUBER/STATBANK/STATBANK_2026/BEFOLK_GK_2025-10-21-10-34.csv",
                                                           overwrite = F))))
 })
 

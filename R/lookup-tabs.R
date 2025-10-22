@@ -40,21 +40,19 @@ update_georecode <- function(year, overwrite = TRUE){
 #' overwrite = TRUE)
 #'
 update_popinfo <- function(popfile, overwrite = TRUE){
-
-  # DEV: Last inn full .parquet-kube, bare nødvendige kolonner og filtrer ut siste år med dplyr::filter.
-  if(grepl(".parquet$", popfile)){
-    d <- arrow::open_dataset(popfile)
-    tab <- d |> dplyr::filter(ALDERl == 0 & ALDERh == 120 & KJONN == 0) |>
-      dplyr::select(GEOniv, GEO, WEIGHTS = TELLER, AAR) |>
-      dplyr::collect() |>
-      dplyr::filter(AAR == max(AAR)) |>
-      dplyr::select(-AAR) |>
-      data.table::setDT()
-  } else {
-    tab <- data.table::fread(popfile)
-    tab <- tab[KJONN == 0 & ALDER == "0_120" & AAR == max(AAR), .(GEOniv, GEO, TELLER)]
-    data.table::setnames(tab, "TELLER", "WEIGHTS")
+  if(grepl(".csv$", popfile)){
+    popfile <- sub("STATBANK/.*?/", "STATBANK/DATERT/R/", popfile)
+    popfile <- sub(".csv$", ".parquet", popfile)
   }
+
+  d <- arrow::open_dataset(popfile)
+  tab <- d |> dplyr::filter(ALDERl == 0 & ALDERh == 120 & KJONN == 0) |>
+    dplyr::select(GEOniv, GEO, WEIGHTS = TELLER, AAR) |>
+    dplyr::collect() |>
+    dplyr::filter(AAR == max(AAR)) |>
+    dplyr::select(-AAR) |>
+    data.table::setDT()
+
   hreg <- data.table::data.table(GEO = 81:84,
                                  WEIGHTS = 0,
                                  GEOniv = "H")
