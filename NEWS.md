@@ -1,4 +1,4 @@
-# qualcontrol (development version)
+# qualcontrol 1.3.4 (2025-10-22)
 
 ## New features
 1. Added function `check_befvekst`, performing a special check of population growth cube vs the population cube. 
@@ -11,7 +11,8 @@
 2. When flagging outliers, setting 0 as default instead of NA_integer_
 3. `add_geoparams` now uses collapse::join, and only manually fill in geoniv if any missing values.
 4. `plot_timeseries_bydel` and `plot_timeseries_country` exits if only 1 year in file
-5. Deprecated KH/NH from Friskvik-checks, replaced with STATBANK. 
+5. Deprecated KH/NH from Friskvik-checks, replaced with STATBANK.
+6. Fixed bug in `find_cube` which was not looking in DATERT if QC file not existing (relevant when manually copying files)
 
 # qualcontrol 1.3.3
 

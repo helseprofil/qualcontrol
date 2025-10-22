@@ -36,9 +36,8 @@ test_that("readfiles_checkargs", {
 test_that("find_cube works", {
   expect_null(find_cube(cubename = NULL))
   expect_error(find_cube(cubename = "NOFILE_1234-12-34-56-78"))
-  expect_no_error(find_cube("LUFT_2_5_PWC_2024-02-28-20-41.csv", force_datert = F))
-  expect_no_error(find_cube("LUFT_2_5_PWC_2024-02-28-20-41.csv", force_datert = T))
-  expect_error(find_cube("IKKESLETT_9999-99-99-99-99.csv", cubemodus = "KH", force_datert = T)) # 2 files
+  expect_no_error(find_cube("LUFT_2_5_PWC_2024-02-28-20-41.csv"))
+  expect_error(find_cube("IKKESLETT_9999-99-99-99-99.csv")) # 2 files
 })
 
 test_that("read_cube renames columns", {

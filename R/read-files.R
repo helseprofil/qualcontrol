@@ -68,24 +68,23 @@ readfiles_checkargs <- function(cube.new, cube.old, recode.new, recode.old, comp
 
 #' @keywords internal
 #' @noRd
-find_cube <- function(cubename, force_datert = FALSE){
+find_cube <- function(cubename){
 
   if(is.null(cubename)) return(NULL)
   path <- file.path(getOption("qualcontrol.root"), getOption("qualcontrol.cubefiles"))
 
-  if(!force_datert){
-    qc_files <- list.files(file.path(path, "QC"), pattern = cubename, full.names = T)
-    if(length(qc_files) == 1 && file.exists(qc_files)) return(qc_files)
-    if(length(qc_files) > 1){
-      parquet_file <- qc_files[grep(".parquet$", qc_files)]
-      if(length(parquet_file) == 1 && file.exists(parquet_file)) return(parquet_file)
-    }
-  } else {
+  qc_files <- list.files(file.path(path, "QC"), pattern = cubename, full.names = T)
+  if(length(qc_files) == 1 && file.exists(qc_files)) return(qc_files)
+  if(length(qc_files) > 1){
+    parquet_file <- qc_files[grep(".parquet$", qc_files)]
+    if(length(parquet_file) == 1 && file.exists(parquet_file)) return(parquet_file)
+  }
+  if(length(qc_files) == 0){
     qc_files <- list.files(file.path(path, "DATERT/csv"), pattern = cubename, full.names = T)
     if(length(qc_files) == 1 && file.exists(qc_files)) return(qc_files)
   }
 
-  if(length(qc_files) > 1) stop("> 1 file with the same name found: ", qc_files)
+  if(length(qc_files) > 1) stop("> 1 file with the same name found:\n", paste0("- ", qc_files, collapse = "\n"))
   if(length(qc_files) == 0) stop(cubename, " not found in QC or DATERT, check spelling")
 }
 
