@@ -15,6 +15,15 @@ opt.qualcontrol <- orgdata:::is_globs("qualcontrol")
     }
   }
 
+  alldims <- update_dimlist()
+  currentdimlist <- getOption("qualcontrol.alldimensions")
+  missingdims <- alldims[!alldims %in% currentdimlist]
+  if(length(missingdims) > 0){
+    warning(paste0("\nDimensions missing from dimlist in options: ", paste(missingdims, collapse = ", "),
+                   "\nUpdating options for now, but the list should be updated in `backend::config-qualcontrol.yml`\n"))
+    options(qualcontrol.alldimensions = c(currentdimlist, missingdims))
+  }
+
   invisible()
 }
 

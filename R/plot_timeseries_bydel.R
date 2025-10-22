@@ -3,10 +3,13 @@
 #' Generate timeseries plots for bydel, with weighted
 #' @param dt flagged data file, default to newcube_flag
 #' @export
-plot_timeseries_bydel <- function(dt = newcube_flag,
-                                  save = TRUE){
+plot_timeseries_bydel <- function(dt = newcube_flag, save = TRUE){
   if(nrow(dt[GEOniv == "B"]) == 0){
     cat("No data on bydel, no check performed")
+    return(invisible(NULL))
+  }
+  if(length(unique(dt$AAR)) < 2){
+    cat("Only one unique year in the file, time series not plotted")
     return(invisible(NULL))
   }
   d <- data.table::copy(dt)

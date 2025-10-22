@@ -9,6 +9,10 @@
 #' @export
 plot_timeseries_country <- function(dt = newcube,
                                     save = TRUE){
+  if(length(unique(dt$AAR)) < 2){
+    cat("Only one unique year in the file, time series not plotted")
+    return(invisible(NULL))
+  }
   d <- data.table::copy(dt[GEO == 0])
   colinfo <- identify_coltypes(d)
   cubename <- get_cubename(d)

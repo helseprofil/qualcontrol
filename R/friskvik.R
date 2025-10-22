@@ -36,7 +36,7 @@ check_friskvik <- function(profile = c("FHP", "OVP"),
     if(!("try-error" %in% class(tryload))){
       indikatornavn <- sub("(.*)(_\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}.*)", "\\1", file)
       newline[["Kube"]] <- attributes(KUBE)$Filename
-      newline[["File_in_NESSTAR"]] <- friskvik_is_nesstar(KUBE, profileyear)
+      newline[["File_in_NESSTAR"]] <- friskvik_in_publication(KUBE, profileyear)
       newline[["FRISKVIK_ETAB"]] <- friskvik_unique_level(FRISKVIK, "ETAB")
       newline[["KUBE_KJONN"]] <- friskvik_unique_level(KUBE, "KJONN")
       newline[["KUBE_ALDER"]] <- friskvik_unique_level(KUBE, "ALDER")
@@ -86,13 +86,11 @@ check_friskvik <- function(profile = c("FHP", "OVP"),
 #' @param geolevel One of "B", "K", or "F"
 #' @param profileyear 4-digit profileyear
 #' @param friskvikpath can provide full path, defaults to NULL
-#' @param kubefile Exact path to kube, starting with "KOMMUNEHELSA/" or "NORGESHELSA/"
 friskvik_read_file <- function(filename = NULL,
                                profile = NULL,
                                geolevel = NULL,
                                profileyear = NULL,
                                friskvikpath = NULL,
-                               cubefile = NULL,
                                con = NULL){
   clean_friskvik_environment()
   if(is.null(filename)) stop("file not selected")
@@ -117,8 +115,8 @@ friskvik_read_file <- function(filename = NULL,
   FRISKVIK <<- read_friskvik(path = friskvikfilepath)
 
   correctcube <- friskvik_read_access(con, "KUBE_NAVN", "FRISKVIK", friskvikindikator, profile, geolevel, profileyear)
-  cubefilepath <- get_cube_path(cubefile = cubefile, basepath = basepath, datetag = friskvikdatetag, correctcube = correctcube)
-  specfilepath <- get_specfile_path(cubefile = cubefile, basepath = basepath, datetag = friskvikdatetag, correctcube = correctcube)
+  cubefilepath <- get_cube_path(basepath = basepath, datetag = friskvikdatetag, correctcube = correctcube)
+  specfilepath <- get_specfile_path(basepath = basepath, datetag = friskvikdatetag, correctcube = correctcube)
 
   KUBE <- read_friskvik_cube(path = cubefilepath)
   SPEC <<- data.table::fread(specfilepath)
@@ -157,27 +155,20 @@ read_friskvik_cube <- function(path){
   return(KUBE)
 }
 
-get_cube_path <- function(cubefile, basepath, datetag, correctcube){
-  if(!is.null(cubefile)) return(file.path(basepath, cubefile))
-
-  kubepath_kh <- file.path(basepath, "KOMMUNEHELSA", "DATERT", "csv")
-  kubepath_nh <- file.path(basepath, "NORGESHELSA", "DATERT", "csv")
-
-  path <- c(list.files(kubepath_kh, pattern = datetag, full.names = T),
-            list.files(kubepath_nh, pattern = datetag, full.names = T))
+get_cube_path <- function(basepath, datetag, correctcube){
+  kubepath <- file.path(basepath, "STATBANK", "DATERT", "csv")
+  path <- c(list.files(kubepath, pattern = datetag, full.names = T))
 
   if(length(path) > 1) path <- grep(correctcube, path, value = TRUE)
   return(path)
 }
 
 get_specfile_path <- function(cubefile, basepath, datetag, correctcube){
-  specpath_kh <- file.path(basepath, "KOMMUNEHELSA", "SPECS")
-  specpath_nh <- file.path(basepath, "NORGESHELSA", "SPECS")
+  specpath <- file.path(basepath, "STATBANK", "SPECS")
 
   if(!is.null(cubefile)) datetag <- basename(cubefile)
 
-  path <- c(list.files(specpath_kh, pattern = datetag, full.names = T),
-            list.files(specpath_nh, pattern = datetag, full.names = T))
+  path <- c(list.files(specpath, pattern = datetag, full.names = T))
 
   if(length(path) > 1) path <- grep(correctcube, path, value = TRUE)
   return(path)
@@ -316,18 +307,17 @@ friskvik_create_path <- function(profile, geolevel, profileyear, test = FALSE){
               save = savename))
 }
 
-#' @title friskvik_is_nesstar
+#' @title friskvik_in_publication
 #' @keywords internal
 #' @noRd
 #' @description
 #' Checks wether the KUBE corresponding to FRISKVIK exists in NESSTAR-folder
 #' @param KUBE kube
 #' @param profile profile
-friskvik_is_nesstar <- function(file, year){
-  nesstar <- data.table::fcase(grepl("KOMMUNEHELSA", attributes(KUBE)$Kubepath), paste0("KOMMUNEHELSA/KH", year, "NESSTAR"),
-                               grepl("NORGESHELSA", attributes(KUBE)$Kubepath), paste0("NORGESHELSA/NH", year, "NESSTAR"))
-  nesstarpath <- file.path(getOption("qualcontrol.root"),getOption("qualcontrol.files"), nesstar)
-  attributes(KUBE)$Filename %in% list.files(nesstarpath, pattern = ".csv")
+friskvik_in_publication <- function(file, year){
+  pub_folder <- paste0("STATBANK/STATBANK_", year)
+  pub_folder <- file.path(getOption("qualcontrol.root"),getOption("qualcontrol.files"), pub_folder)
+  attributes(KUBE)$Filename %in% list.files(pub_folder, pattern = ".csv")
 }
 
 #' @title friskvik_unique_level

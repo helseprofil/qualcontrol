@@ -1,3 +1,19 @@
+# qualcontrol 1.3.4 (2025-10-22)
+
+## New features
+1. Added function `check_befvekst`, performing a special check of population growth cube vs the population cube. 
+2. Added function `add_totals_for_missing_dims` which adds missing new or expired dimension columns when merging new and old cube to comparecube. 
+3. Added function `exclude_lks_for_compare` which exclude data for GEOniv == "V" when creating comparecube
+4. When loading the package, fetch an updated dimlist from access and compare towards the one in options. Update if not matching and give a warning that the list in config should be updated. 
+
+## Other changes
+1. Updated internal data, including population weights including LKS. 
+2. When flagging outliers, setting 0 as default instead of NA_integer_
+3. `add_geoparams` now uses collapse::join, and only manually fill in geoniv if any missing values.
+4. `plot_timeseries_bydel` and `plot_timeseries_country` exits if only 1 year in file
+5. Deprecated KH/NH from Friskvik-checks, replaced with STATBANK.
+6. Fixed bug in `find_cube` which was not looking in DATERT if QC file not existing (relevant when manually copying files)
+
 # qualcontrol 1.3.3
 
 ## New features

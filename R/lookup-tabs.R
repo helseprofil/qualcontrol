@@ -36,25 +36,29 @@ update_georecode <- function(year, overwrite = TRUE){
 #' @param year referring to NESSTAR-folder
 #' @param overwrite should the file be overwritten?
 #' @examples
-#' # update_popinfo("O:/Prosjekt/FHP/PRODUKSJON/PRODUKTER/KUBER/KOMMUNEHELSA/KH2025NESSTAR/BEFOLK_GK_2024-06-17-14-13.csv",
+#' # update_popinfo("O:/Prosjekt/FHP/PRODUKSJON/PRODUKTER/KUBER/STATBANK/STATBANK_2026/BEFOLK_GK_2025-08-07-12-50.csv",
 #' overwrite = TRUE)
 #'
 update_popinfo <- function(popfile, overwrite = TRUE){
+  if(grepl(".csv$", popfile)){
+    popfile <- sub("STATBANK/.*?/", "STATBANK/DATERT/R/", popfile)
+    popfile <- sub(".csv$", ".parquet", popfile)
+  }
 
-  # DEV: Last inn full .parquet-kube, bare nødvendige kolonner og filtrer ut siste år med dplyr::filter.
-  tab <- data.table::fread(popfile)
-  tab <- tab[KJONN == 0 & ALDER == "0_120" & AAR == max(AAR), .(GEO, TELLER)]
-  data.table::setnames(tab, "TELLER", "WEIGHTS")
-  tab[, GEOniv := data.table::fcase(GEO == 0, "L",
-                                    GEO <= 99, "F",
-                                    GEO < 10000, "K",
-                                    GEO < 1000000, "B",
-                                    GEO > 1000000, "V")]
+  d <- arrow::open_dataset(popfile)
+  tab <- d |> dplyr::filter(ALDERl == 0 & ALDERh == 120 & KJONN == 0) |>
+    dplyr::select(GEOniv, GEO, WEIGHTS = TELLER, AAR) |>
+    dplyr::collect() |>
+    dplyr::filter(AAR == max(AAR)) |>
+    dplyr::select(-AAR) |>
+    data.table::setDT()
+
   hreg <- data.table::data.table(GEO = 81:84,
                                  WEIGHTS = 0,
                                  GEOniv = "H")
-  tab <- data.table::rbindlist(list(tab, hreg))
-  tab[, GEOniv := factor(GEOniv, levels = c("L", "H", "F", "K", "B", "V"))]
+  tab <- data.table::rbindlist(list(tab, hreg), use.names = TRUE)
+  tab[, let(GEOniv = factor(GEOniv, levels = c("L", "H", "F", "K", "B", "V")),
+            GEO = as.numeric(GEO))]
   data.table::setattr(tab, "popfile", basename(popfile))
 
   path <- file.path(system.file("data", package = "qualcontrol"), "popinfo.rds")
