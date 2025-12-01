@@ -1,3 +1,8 @@
+# qualcontrol (development version)
+
+## Other changes
+- `identify_coltypes` does not identify censor-columns as values
+
 # qualcontrol 1.3.4 (2025-10-22)
 
 ## New features
