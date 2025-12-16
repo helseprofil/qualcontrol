@@ -75,11 +75,14 @@ compare_geolevels <- function(dt = newcube,
 #'
 #' @param dt data file, defaults to newcube
 #' @param crop Should the output table ble cropped to show a maximum of `maxrows`observations?
+#' @param type Should complete strata be identified by missing values or by censoring (SPVFLAGG == 0)
 #' @param maxrows Max observations to show if `crop` = TRUE. Default = 4000. Will be divided equally between strata
+#' @param save Save output table as csv
 #'
 #' @return DT
 #' @export
 unknown_bydel <- function(dt = newcube,
+                          type = c("missing", "censored"),
                           crop = TRUE,
                           maxrows = 4000,
                           save = TRUE){
@@ -113,7 +116,7 @@ unknown_bydel <- function(dt = newcube,
   add_kommune(d)
   d <- d[, mget(c("KOMMUNE", "GEOniv", colinfo$dims.new, targets, "SPVFLAGG"))]
   d <- data.table::melt(d, measure.vars = targets, variable.name = "TARGET")
-  d <- get_complete_strata(d, c("KOMMUNE", "TARGET", bydims), "missing", "value")
+  d <- get_complete_strata(d, c("KOMMUNE", "TARGET", bydims), type = type, "value")
 
   if(nrow(d) < 1){
     cat("No complete strata, not possible to estimate unspecified bydel. Was bydelstart set to the correct year?\n")
