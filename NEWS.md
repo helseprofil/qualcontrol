@@ -1,7 +1,13 @@
-# qualcontrol (development version)
+# qualcontrol 1.3.5 (2025-12-15)
 
-## Other changes
+## New features
+- Added argument type to `unknown_bydel`, to facilitate identification of complete strata either by missing values or non-censored observations.
+- Complete rewrite of `plot_timeseries` for faster plotting. Reduced size of input data, plotting all pages in one device, limit to 10 most recent years, limit file size/resolution.
+
+# Other changes
 - `identify_coltypes` does not identify censor-columns as values
+- Updated package dependencies
+- Fixed bug in `plot_timeseries` where duplicated filenames led to overwrite. Now (2), (3) is added to the filename to make them unique. 
 
 # qualcontrol 1.3.4 (2025-10-22)
 

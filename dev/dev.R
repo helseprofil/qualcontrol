@@ -2,13 +2,11 @@
 
 # Read test files
 
-readfiles(cube.new = "TRANGBODDHET_2023-11-20-11-05",
-          modus.new = "KH",
-          cube.old = "TRANGBODDHET_2023-01-03-14-38",
-          modus.old = "KH",
+readfiles(cube.new = "UFORE_1_UTDANN_2025-12-11-11-25",
+          cube.old = "UFORE_1_2025-02-24-13-32",
           recode.old = T,
-          comparecube = F,
-          outliers = F,
+          comparecube = T,
+          outliers = T,
           dumps = NULL)
 
 # dt <- data.table::copy(comparecube)

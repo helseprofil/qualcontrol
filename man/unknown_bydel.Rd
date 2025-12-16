@@ -4,14 +4,24 @@
 \alias{unknown_bydel}
 \title{unknown_bydel}
 \usage{
-unknown_bydel(dt = newcube, crop = TRUE, maxrows = 4000, save = TRUE)
+unknown_bydel(
+  dt = newcube,
+  type = c("missing", "censored"),
+  crop = TRUE,
+  maxrows = 4000,
+  save = TRUE
+)
 }
 \arguments{
 \item{dt}{data file, defaults to newcube}
 
+\item{type}{Should complete strata be identified by missing values or by censoring (SPVFLAGG == 0)}
+
 \item{crop}{Should the output table ble cropped to show a maximum of \code{maxrows}observations?}
 
 \item{maxrows}{Max observations to show if \code{crop} = TRUE. Default = 4000. Will be divided equally between strata}
+
+\item{save}{Save output table as csv}
 }
 \value{
 DT

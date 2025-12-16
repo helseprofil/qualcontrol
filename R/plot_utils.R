@@ -96,15 +96,12 @@ get_plot_subset <- function(dt,
 #' This function generates the actual filtering strings to be used.
 #' @param dt plotdata
 #' @param by Character vector of columns to filter by
-get_plot_filter <- function(dt,
-                            by = NULL){
-  if(length(by) == 0){
-    return("TRUE")
-  }
+get_plot_filter <- function(dt, by = NULL){
+  if(length(by) == 0) return("TRUE")
 
   subsets <- collapse::GRP(dt, by)[["groups"]]
   for(i in names(subsets)){
-    subsets[, (i) := paste0(i, "=='", get(i), "'")]
+    subsets[, (i) := paste0(i, "=='", .SD[[i]], "'"), .SDcols = i]
   }
   subsets[, filter := do.call(paste, c(.SD, sep = " & "))]
 
