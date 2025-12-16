@@ -4,12 +4,16 @@
 #' @param dt flagged data file, default to newcube_flag
 #' @param onlynew should only new outliers be plotted? Default = TRUE
 #' @param change Should year-to-year changes be plotted? Default = FALSE
+#' @param show_change_low minimum decrease you want to plot, default = -10 (%)
+#' @param show_change_high minimum increase you want to plot, default = 20 (%)
 #' @param save Should plots be saved to the default folder? Default = T
 #' @return saved plots
 #' @export
 plot_timeseries <- function(dt = newcube_flag,
                             onlynew = TRUE,
                             change = FALSE,
+                            show_change_low = -10,
+                            show_change_high = 20,
                             save = TRUE){
 
   if(length(unique(dt$AAR)) < 2){
@@ -55,12 +59,12 @@ plot_timeseries <- function(dt = newcube_flag,
                               n_outlier = n_outlier,
                               n_obs = n_obs,
                               y_middle = y_middle)
-  # if(change){
-  #   min_plotvalue <- collapse::fmin(d[[plotvalue]], g = g)
-  #   max_plotvalue <- collapse::fmax(d[[plotvalue]], g = g)
-  #   strata[, let(min_plotvalue = min_plotvalue, max_plotvalue = max_plotvalue)]
-  #   strata <- strata[min_plotvalue < -10 & max_plotvalue > 20]
-  # }
+  if(change){
+    min_plotvalue <- collapse::fmin(d[[plotvalue]], g = g)
+    max_plotvalue <- collapse::fmax(d[[plotvalue]], g = g)
+    strata[, let(min_plotvalue = min_plotvalue, max_plotvalue = max_plotvalue)]
+    strata <- strata[min_plotvalue < show_change_low | max_plotvalue > show_change_high]
+  }
 
   strata <- strata[n_outlier > 0L & n_obs > 0L]
 
@@ -98,16 +102,17 @@ plot_timeseries <- function(dt = newcube_flag,
   if(onlynew) plotargs$caption <- paste0(plotargs$caption, "\nOnly strata with new outliers. Comparison file: ", attributes(dt)$comparison)
 
   dpi = 170
-  size <- compute_device_size_px(plot_timeseries_plotfun(datasets = collect_plotdata(plotdata, 1), plotargs = plotargs),
+  size <- compute_device_size_px(plot_timeseries_plotfun(datasets = collect_timeseries_plotdata(plotdata, 1), plotargs = plotargs),
                                  dpi = dpi)
 
-  pb <- progress::progress_bar$new(format = "Plotter :total filer. [:bar] :percent. Estimert ferdig om: :eta",
+  pb <- progress::progress_bar$new(format = "Plotter :current / :total filer. [:bar] Estimert ferdig om: :eta",
                                    total = n_plot, clear = FALSE)
   if(save){
     ragg::agg_png(filename = file.path(savepath, "plot-%04d.png"), res = dpi, width = size$width_px, height = size$height_px, units = "px")
   }
   for(i in seq_len(n_plot)){
-    print(plot_timeseries_plotfun(datasets = collect_plotdata(plotdata, page = i), plotargs = plotargs))
+    plot <- plot_timeseries_plotfun(datasets = collect_timeseries_plotdata(plotdata, page = i), plotargs = plotargs)
+    if(save) print(plot)
     pb$tick()
   }
   if(save){
@@ -138,7 +143,7 @@ compute_device_size_px <- function(p, dpi = 160) {
 
 #' @keywords internal
 #' @noRd
-collect_plotdata <- function(plotdata, page){
+collect_timeseries_plotdata <- function(plotdata, page){
   plot_d <- list()
   plot_d[["base"]] <- plotdata[[page]]
   plot_d[["ol"]] <- plot_d[["base"]][ol == 1]
