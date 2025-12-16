@@ -86,6 +86,7 @@ unknown_bydel <- function(dt = newcube,
                           crop = TRUE,
                           maxrows = 4000,
                           save = TRUE){
+  type <- match.arg(type)
   d <- data.table::copy(dt)
   if(nrow(d[GEOniv == "B"]) == 0){
     cat("No data on bydel, no check performed")

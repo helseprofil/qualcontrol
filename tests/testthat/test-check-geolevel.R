@@ -15,7 +15,7 @@ test_that("compare_geolevels works", {
 })
 
 test_that("unknown_bydel works", {
-  invisible(capture.output(expect_no_error(unknown_bydel(newcube))))
+  invisible(capture.output(expect_no_error(unknown_bydel(newcube, type = "missing"))))
   invisible(capture.output(expect_no_error(unknown_bydel(newcube, crop = F))))
   invisible(capture.output(expect_no_error(unknown_bydel(newcube, crop = T, maxrows = 100))))
   invisible(capture.output(expect_equal(unknown_bydel(newcube), unknown_bydel(newcube, crop = F))))

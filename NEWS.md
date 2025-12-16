@@ -1,8 +1,12 @@
-# qualcontrol 1.3.5 (2025-12-15)
+# qualcontrol 1.3.5 (2025-12-16)
 
 ## New features
 - Added argument type to `unknown_bydel`, to facilitate identification of complete strata either by missing values or non-censored observations.
-- Complete rewrite of `plot_timeseries` for faster plotting. Reduced size of input data, plotting all pages in one device, limit to 10 most recent years, limit file size/resolution.
+- Complete rewrite of `plot_timeseries` and `plot_boxplot` for faster plotting. 
+    - Changed plotting device to ragg::agg_png, plotting all files in one device and rename after
+    - Reduced file size/resolution
+    - Adding progress bar
+    - For timeseries: Reduced size of input data, limit to 10 most recent years.
 
 # Other changes
 - `identify_coltypes` does not identify censor-columns as values
