@@ -95,7 +95,7 @@ unknown_bydel <- function(dt = newcube,
 
   cubefile <- get_cubefilename(dt)
   savepath <- get_table_savefolder(get_cubename(dt))
-  suffix <- paste0("unknown_bydel")
+  suffix <- paste0("unknown_bydel_", type)
 
   colinfo <- identify_coltypes(d)
   tellerval <- select_teller_pri(colinfo$vals.new)
