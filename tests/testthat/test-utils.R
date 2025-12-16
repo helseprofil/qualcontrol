@@ -10,8 +10,8 @@ test_that("identify_coltypes works", {
                regexp = "cube.new must be provided")
 
   expect_type(identify_coltypes(cube1, cube2), "list")
-  expect_length(identify_coltypes(cube1, cube2), 13)
-  expect_length(identify_coltypes(cube1, NULL), 3)
+  expect_length(identify_coltypes(cube1, cube2), 11)
+  expect_length(identify_coltypes(cube1, NULL), 2)
 })
 
 test_that("get_cubename and cubedatetag works", {

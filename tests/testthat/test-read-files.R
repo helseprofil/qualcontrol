@@ -1,5 +1,4 @@
 test_that("readfiles_works", {
-  # When file deleted from DATERT, change to an existing file (small size for speed".
   suppressWarnings(invisible(capture.output(expect_no_error(readfiles(cube.new = "LUFT_2_5_PWC_2024-02-28-20-41",
                                                      cube.old = "LUFT_2_5_PWC_2024-02-28-20-41",
                                                      recode.old = T)))))
@@ -37,12 +36,13 @@ test_that("find_cube works", {
   expect_null(find_cube(cubename = NULL))
   expect_error(find_cube(cubename = "NOFILE_1234-12-34-56-78"))
   expect_no_error(find_cube("LUFT_2_5_PWC_2024-02-28-20-41.csv"))
+  expect_no_error(find_cube("LUFT_2_5_PWC_2025-08-20-10-26.parquet"))
   expect_error(find_cube("IKKESLETT_9999-99-99-99-99.csv")) # 2 files
 })
 
 test_that("read_cube renames columns", {
-  invisible(capture.output(rename <- read_cube(system.file("testdata", "rename.csv", package = "qualcontrol"), type = "New")))
-  invisible(capture.output(rename2 <- read_cube(system.file("testdata", "rename2.csv", package = "qualcontrol"), type = "Old")))
+  withr::with_locale(c("LC_CTYPE" = "nb-NO.UTF-8"), invisible(capture.output(rename <- read_cube(system.file("testdata", "rename.csv", package = "qualcontrol"), type = "New"))))
+  withr::with_locale(c("LC_CTYPE" = "nb-NO.UTF-8"), invisible(capture.output(rename2 <- read_cube(system.file("testdata", "rename2.csv", package = "qualcontrol"), type = "Old"))))
   correctnames = c("TELLER", "RATE", "MEIS", "sumTELLER", "sumNEVNER", "SMR", "UTDANN")
 
   expect_identical(names(rename), correctnames)
@@ -64,8 +64,8 @@ test_that("recode_geo works", {
 test_that("add_geoparams works", {
   d1 <- data.table::data.table(GEO = c(0,3,1101,1111,110301, 99))
   d2 <- data.table:::copy(d1)[, .SD[c(1,3,5)]]
-  add_geoparams(d1)
-  add_geoparams(d2)
+  d1 <- add_geoparams(d1)
+  d2 <- add_geoparams(d2)
 
   expect_equal(levels(d1$GEOniv), c("L", "F", "K", "B"))
   expect_equal(d1[GEO == 99]$WEIGHTS, 0)
