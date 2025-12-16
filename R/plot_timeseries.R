@@ -16,76 +16,134 @@ plot_timeseries <- function(dt = newcube_flag,
     cat("Only one unique year in the file, time series not plotted")
     return(invisible(NULL))
   }
-  d <- data.table::copy(dt)[!is.na(GEOniv)]
-  colinfo <- identify_coltypes(d)
-  cubename <- get_cubename(d)
-  cubefile <- get_cubefilename(d)
+  colinfo <- identify_coltypes(dt)
+  cubename <- get_cubename(dt)
+  cubefile <- get_cubefilename(dt)
   folder <- ifelse(change, "TimeSeries_change", "TimeSeries")
   savepath <- get_plotsavefolder(cubename, folder)
-  if(save) archive_old_files(savepath, ".png")
+  if(save){
+    archive_old_files(savepath, ".png")
+    on.exit(try(dev.off(), silent = T), add = TRUE)
+  }
 
-  tscols <- get_plot_cols(d, change = change, colinfo = colinfo, plot = "ts")
-    plotvalue <- tscols$plotvalue
-    outlier <- tscols$outlier
-    newoutlier <- tscols$newoutlier
-    teller <- select_teller_pri(names(d))
-  if(plotvalue %notin% names(d)) stop(plotvalue, " not found in data, plot not generated")
-  isnewoutlier <- newoutlier %in% names(d)
+  tscols <- get_plot_cols(dt, change = change, colinfo = colinfo, plot = "ts")
+  plotvalue <- tscols$plotvalue
+  outlier <- tscols$outlier
+  newoutlier <- tscols$newoutlier
+  teller <- select_teller_pri(names(dt))
+  if(plotvalue %notin% names(dt)) stop(plotvalue, " not found in data, plot not generated")
+  isnewoutlier <- newoutlier %in% names(dt)
   if(onlynew & !isnewoutlier) onlynew <- FALSE
 
-  # Only keep strata with > 1 (new)outlier
-  bycols <- grep("^AAR$", colinfo$dims.new, invert = T, value = T)
-  outlierfilter <- ifelse(onlynew, newoutlier, outlier)
-  d[, let(n_outlier = sum(get(outlierfilter), na.rm = T),
-          n_obs = sum(!is.na(get(plotvalue)))),
-    by = bycols]
-  d <- d[!is.na(get(plotvalue)) & n_outlier > 0]
+  keepcols <- intersect(unique(c(colinfo$dims.new, unlist(tscols, use.names = F), teller)), names(dt))
+  complete <- dt[, !is.na(GEOniv) & !is.na(x), env = list(x = as.name(plotvalue))]
+  d <- dt[complete, .SD, .SDcols = keepcols]
+  d[, AARh := sub("\\d{4}_(\\d{4})", "\\1", AAR)]
+  incl_aar <- (max(as.numeric(d$AARh)) - 9):max(as.numeric(d$AARh))
+  d <- d[AARh %in% incl_aar]
 
-  if(nrow(d) == 0){
+  bycols <- c("GEO", setdiff(colinfo$dims.new, c("GEO", "AAR")))
+  data.table::setkeyv(d, c(bycols, "AARh"))
+
+  outlierfilter <- ifelse(onlynew, newoutlier, outlier)
+  g <- collapse::GRP(d, by = bycols)
+  n_outlier <- collapse::fsum(d[[outlierfilter]], g = g)
+  n_obs <- collapse::fsum(!is.na(d[[plotvalue]]), g = g)
+  y_middle <- 0.5*(collapse::fmax(d[[plotvalue]], g = g) + collapse::fmin(d[[plotvalue]], g = g))
+
+  strata <- collapse::fmutate(g[["groups"]],
+                              n_outlier = n_outlier,
+                              n_obs = n_obs,
+                              y_middle = y_middle)
+  # if(change){
+  #   min_plotvalue <- collapse::fmin(d[[plotvalue]], g = g)
+  #   max_plotvalue <- collapse::fmax(d[[plotvalue]], g = g)
+  #   strata[, let(min_plotvalue = min_plotvalue, max_plotvalue = max_plotvalue)]
+  #   strata <- strata[min_plotvalue < -10 & max_plotvalue > 20]
+  # }
+
+  strata <- strata[n_outlier > 0L & n_obs > 0L]
+
+  if(nrow(strata) == 0){
     cat("No strata with", outlierfilter, "= 1, plots not generated")
     return(invisible(NULL))
   }
 
-  d[, let(y_middle = 0.5*(max(get(plotvalue), na.rm = T) + min(get(plotvalue), na.rm = T))),
-    by = bycols]
-
-  # Split into multiple files with max 25 panels per file
-  pageinfo <- plot_timeseries_filesplit(d, bycols)
-  d <- collapse::join(d, pageinfo, on = bycols, how = "left", multiple = T, verbose = 0, overid = 2)
-  outlierdata <- d[get(outlier) == 1]
+  strata[, let(page = ((.I - 1L) %/% 25) + 1L, # max 25 paneler per side
+               panels = interaction(.SD, drop = TRUE, sep = ",", lex.order = T)), .SDcols = bycols]
+  plotdata <- collapse::join(strata, d, on = bycols, how = "left", multiple = TRUE, verbose = 0, overid = 2)
+  plotdata[, let(yval = x, tv = round(y,0), ol = z), env=list(x = plotvalue, y = teller, z = outlier)]
+  plotdata[ol == 1, let(ollabel = "New outlier")]
   if(isnewoutlier){
-    outlierdata[, label := factor(data.table::fcase(get(newoutlier) == 0, "Previous outlier",
-                                                    get(newoutlier) == 1, "New outlier"),
-                                  levels = c("Previous outlier", "New outlier"))]
+    plotdata[ol == 1, ollabel := data.table::fcase(x == 0, "Previous outlier", default = ollabel), env = list(x = newoutlier)]
   }
-  linedata <- d[n_obs > 1]
+  plotdata[ol == 0, ollabel := "Normal"]
+  plotdata[, ollabel := factor(ollabel, levels = c("Normal", "Previous outlier", "New outlier"))]
 
-  # Create general plot parameters
-  plotargs <- list(plotvalue = plotvalue,
-                   outlier = outlier,
-                   newoutlier = newoutlier,
-                   teller = teller,
-                   isnewoutlier = isnewoutlier,
-                   bycols = bycols)
-  plotargs$title <- paste0("File: ", attributes(dt)$Filename, ", Plotting date: ", Sys.Date())
+  metadata <- plotdata[, .(geosuffix = paste0(min(GEO), "-", max(GEO))), by = page][, let(filename = paste0(cubefile,"_GEO_", geosuffix))]
+  metadata[, let(dup_idx = seq_len(.N)), by = filename]
+  metadata[dup_idx > 1, let(filename = paste0(filename, "(", dup_idx, ")"))][, let(tmp_name = sprintf("plot-%04d.png", page),
+                                                                                   filename = paste0(filename, ".png"),
+                                                                                   dup_idx = NULL)]
+
+  plotdata <- plotdata[, .SD, .SDcols = c("AARh", "yval", "y_middle", "tv", "ol", "ollabel", "n_obs", "panels", "page")]
+  plotdata <- split(plotdata, by =  "page")
+
+  n_plot <- metadata[, .N]
+
+  plotargs <- list(teller = teller,
+                   title = paste0(attributes(dt)$Filename, ", Plotted: ", Sys.Date()))
   plotargs$caption <- paste0("Tellervariabel: ", teller, "\nPlots grouped by: ", paste0(bycols, collapse = ", "))
   plotargs$ylab <- ifelse(change, paste0(sub("change_", "", plotvalue), ", (% change)"), plotvalue)
-  plotargs$subtitle <- paste0("Variable plotted: ", plotargs$ylab)
-  if(onlynew) plotargs$subtitle <- paste0(plotargs$subtitle, "\nOnly strata with new outliers. Comparison file: ", attributes(dt)$comparison)
-  n_pages <- max(d$page)
+  if(onlynew) plotargs$caption <- paste0(plotargs$caption, "\nOnly strata with new outliers. Comparison file: ", attributes(dt)$comparison)
 
+  dpi = 170
+  size <- compute_device_size_px(plot_timeseries_plotfun(datasets = collect_plotdata(plotdata, 1), plotargs = plotargs),
+                                 dpi = dpi)
 
-  for(i in 1:n_pages){
-    cat("\nSaving file", i, "/", n_pages)
-    d_plot <- d[page == i]
-    d_outlier <- outlierdata[page == i]
-    d_line <- linedata[page == i]
-    if(nrow(d_plot) > 0){
-      geosuffix <- paste0(min(d_plot$GEO), "-", max(d_plot$GEO))
-      plot <- plot_timeseries_plotfun(d_plot, d_outlier, d_line, plotargs, geosuffix)
-      if(save) plot_timeseries_savefun(plot, savepath, cubefile, geosuffix)
-    }
+  pb <- progress::progress_bar$new(format = "Plotter :total filer. [:bar] :percent. Estimert ferdig om: :eta",
+                                   total = n_plot, clear = FALSE)
+  if(save){
+    ragg::agg_png(filename = file.path(savepath, "plot-%04d.png"), res = dpi, width = size$width_px, height = size$height_px, units = "px")
   }
+  for(i in seq_len(n_plot)){
+    print(plot_timeseries_plotfun(datasets = collect_plotdata(plotdata, page = i), plotargs = plotargs))
+    pb$tick()
+  }
+  if(save){
+    dev.off()
+    for (k in 1:30) {
+      if (all(file.exists(file.path(savepath, metadata$tmp_name)))) break
+      Sys.sleep(0.1)
+    }
+    file.rename(file.path(savepath, metadata$tmp_name),
+                file.path(savepath, metadata$filename))
+  }
+}
+
+#' @keywords internal
+#' @noRd
+compute_device_size_px <- function(p, dpi = 160) {
+
+  g <- ggplot2::ggplotGrob(p)
+
+  total_w_cm <- as.numeric(grid::convertWidth(sum(g$widths), "cm", valueOnly = TRUE))
+  total_h_cm <- as.numeric(grid::convertHeight(sum(g$heights), "cm", valueOnly = TRUE))
+
+  width_px  <- ceiling(total_w_cm * dpi / 2.54)
+  height_px <- ceiling(total_h_cm * dpi / 2.54)
+
+  list(width_px = width_px, height_px = height_px)
+}
+
+#' @keywords internal
+#' @noRd
+collect_plotdata <- function(plotdata, page){
+  plot_d <- list()
+  plot_d[["base"]] <- plotdata[[page]]
+  plot_d[["ol"]] <- plot_d[["base"]][ol == 1]
+  plot_d[["line"]] <- plot_d[["base"]][n_obs > 1]
+  return(plot_d)
 }
 
 #' @title plot_timeseries_plotfun
@@ -93,94 +151,35 @@ plot_timeseries <- function(dt = newcube_flag,
 #' Save function for [qualcontrol::plot_timeseries()]
 #' @keywords internal
 #' @noRd
-plot_timeseries_plotfun <- function(d_plot,
-                                    d_outlier,
-                                    d_line,
-                                    plotargs,
-                                    geosuffix){
+plot_timeseries_plotfun <- function(datasets, plotargs){
 
-  plot <- ggplot2::ggplot(d_plot,
-                          ggplot2::aes(x = AAR, y = get(plotargs$plotvalue))) +
-    ggplot2::facet_wrap(facets = plotargs$bycols,
-                        scales = "free_y",
-                        ncol = 5,
-                        labeller = ggplot2::labeller(.multi_line = F)) +
+  plot <- ggplot2::ggplot(datasets$base, ggplot2::aes(x = AARh, y = yval)) +
+    ggplot2::facet_wrap(facets = ggplot2::vars(panels), scales = "free_y", ncol = 5) +
+    ggplot2::geom_point(data = datasets$ol, ggplot2::aes(color = ollabel), size = 1.5, show.legend = TRUE) +
+    ggplot2::scale_color_manual(values = c("Normal" = "grey40", "Previous outlier" = "blue", "New outlier" = "red"),
+                                limits = c("Normal", "Previous outlier", "New outlier"),
+                                breaks = c("Previous outlier", "New outlier"),
+                                drop = FALSE)  +
+    ggplot2::guides(color = ggplot2::guide_legend(title = NULL)) +
+    ggplot2::geom_line(data = datasets$line, ggplot2::aes(group = panels), linewidth = 0.3, na.rm = T) +
     theme_qc()
 
-  # add outliers
-  if(plotargs$isnewoutlier){
-    plot <- plot +
-      ggplot2::geom_point(data = d_outlier,
-                          ggplot2::aes(color = label), size = 3) +
-      ggplot2::scale_color_manual(values = c("Previous outlier" = "blue", "New outlier" = "red")) +
-      ggplot2::guides(color = ggplot2::guide_legend(title = NULL)) +
-      ggplot2::geom_point()
-  } else {
-    plot <- plot +
-      ggplot2::geom_point(data = d_outlier, color = "red", size = 3) +
-      ggplot2::geom_point()
-  }
-
-  # add line
-  if(nrow(d_line) > 0){
-    plot <- plot +
-      ggplot2::geom_line(data = d_line,
-                         ggplot2::aes(y = get(plotargs$plotvalue), group = 1))
-  }
-
-  # add teller
   if(!is.na(plotargs$teller)){
     plot <- plot +
-      ggtext::geom_richtext(ggplot2::aes(label = round(get(plotargs$teller),0), y = y_middle),
-                            hjust = 0.5, angle = 90, alpha = 0.8, size = 8/ggplot2::.pt)
+      ggplot2::geom_text(ggplot2::aes(label = tv, y = y_middle), hjust = 0.5, angle = 90, size = 9/ggplot2::.pt)
   }
 
   plot <- plot +
-    ggh4x::force_panelsizes(cols = ggplot2::unit(8, "cm"),
-                            rows = ggplot2::unit(5, "cm")) +
+    ggh4x::force_panelsizes(cols = ggplot2::unit(5, "cm"),
+                            rows = ggplot2::unit(3.6, "cm")) +
     ggplot2::labs(title = plotargs$title,
                   y = plotargs$ylab,
-                  caption = plotargs$caption,
-                  subtitle = paste0(plotargs$subtitle, "\nGEO codes: ", geosuffix)) +
-    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5))
-
+                  caption = plotargs$caption) +
+    ggplot2::theme(text = ggplot2::element_text(family = "sans"),
+                   plot.title = ggplot2::element_text(size = 20),
+                   axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, size = 8),
+                   strip.text = ggplot2::element_text(hjust = 0, size = 9))
 
   return(plot)
 }
 
-#' @title plot_timeseries_savefun
-#' @description
-#' Save function for [qualcontrol::plot_timeseries()]
-#' @keywords internal
-#' @noRd
-plot_timeseries_savefun <- function(plot,
-                                    savepath,
-                                    cubefile,
-                                    geosuffix){
-
-  savename <- paste0(cubefile, "_GEO_", geosuffix, ".png")
-
-  ggplot2::ggsave(file.path(savepath, savename),
-                  plot,
-                  width = 53,
-                  height = 42,
-                  units = "cm")
-}
-
-# ---- HELPER FUNCTIONS ----
-
-#' @keywords internal
-#' @noRd
-plot_timeseries_filesplit <- function(dt,
-                                      bycols,
-                                      maxpanels = 25){
-
-  strata <- collapse::GRP(dt, bycols)
-  n_strata <- strata[["N.groups"]]
-  pages <- rep(1:ceiling(n_strata/maxpanels), each = maxpanels)[1:n_strata]
-
-  out <- strata[["groups"]]
-  out[, let(strata = 1:n_strata,
-            page = pages)]
-  return(out)
-}
