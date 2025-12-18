@@ -1,17 +1,24 @@
+# qualcontrol 1.3.6
+
+## Changes
+1. Added argument `show_years` to plot_timeseries, to be able to alter the length of the time series plotted. 
+2. Changed a confusing message when 
+2. Reimplemented points for non-outliers in `plot_timeseries`
+
 # qualcontrol 1.3.5 (2025-12-16)
 
 ## New features
-- Added argument type to `unknown_bydel`, to facilitate identification of complete strata either by missing values or non-censored observations.
-- Complete rewrite of `plot_timeseries` and `plot_boxplot` for faster plotting. 
+1. Added argument type to `unknown_bydel`, to facilitate identification of complete strata either by missing values or non-censored observations.
+2. Complete rewrite of `plot_timeseries` and `plot_boxplot` for faster plotting. 
     - Changed plotting device to ragg::agg_png, plotting all files in one device and rename after
     - Reduced file size/resolution
     - Adding progress bar
     - For timeseries: Reduced size of input data, limit to 10 most recent years.
 
-# Other changes
-- `identify_coltypes` does not identify censor-columns as values
-- Updated package dependencies
-- Fixed bug in `plot_timeseries` where duplicated filenames led to overwrite. Now (2), (3) is added to the filename to make them unique. 
+## Other changes
+1.`identify_coltypes` does not identify censor-columns as values
+2. Updated package dependencies
+3. Fixed bug in `plot_timeseries` where duplicated filenames led to overwrite. Now (2), (3) is added to the filename to make them unique. 
 
 # qualcontrol 1.3.4 (2025-10-22)
 

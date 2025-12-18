@@ -64,7 +64,7 @@ aggregate_cube_multi <- function(cube, dimensions){
 #' @keywords internal
 #' @noRd
 archive_old_files <- function(savepath, pattern){
-  cat("Moving existing files (if any) to archive")
+  # cat("Moving existing files (if any) to archive")
   files <- list.files(savepath, pattern = pattern)
   archive <- file.path(savepath, "arkiv")
   for(file in files){

@@ -2,6 +2,7 @@
 #' @description
 #' Generate timeseries plots indicating outliers (values outside q25-1.5IQR, q75+1.5IQR).
 #' @param dt flagged data file, default to newcube_flag
+#' @param show_n_years Only show x most recent years in the plots, deafalts to 10. To show all, set value to NULL.
 #' @param onlynew should only new outliers be plotted? Default = TRUE
 #' @param change Should year-to-year changes be plotted? Default = FALSE
 #' @param show_change_low minimum decrease you want to plot, default = -10 (%)
@@ -9,12 +10,13 @@
 #' @param save Should plots be saved to the default folder? Default = T
 #' @return saved plots
 #' @export
-plot_timeseries <- function(dt = newcube_flag,
-                            onlynew = TRUE,
-                            change = FALSE,
-                            show_change_low = -10,
-                            show_change_high = 20,
-                            save = TRUE){
+  plot_timeseries <- function(dt = newcube_flag,
+                              show_n_years = 10,
+                              onlynew = TRUE,
+                              change = FALSE,
+                              show_change_low = -10,
+                              show_change_high = 20,
+                              save = TRUE){
 
   if(length(unique(dt$AAR)) < 2){
     cat("Only one unique year in the file, time series not plotted")
@@ -43,8 +45,11 @@ plot_timeseries <- function(dt = newcube_flag,
   complete <- dt[, !is.na(GEOniv) & !is.na(x), env = list(x = as.name(plotvalue))]
   d <- dt[complete, .SD, .SDcols = keepcols]
   d[, AARh := sub("\\d{4}_(\\d{4})", "\\1", AAR)]
-  incl_aar <- (max(as.numeric(d$AARh)) - 9):max(as.numeric(d$AARh))
-  d <- d[AARh %in% incl_aar]
+
+  if(!is.null(show_n_years)){
+    incl_aar <- (max(as.numeric(d$AARh)) - show_n_years - 1):max(as.numeric(d$AARh))
+    d <- d[AARh %in% incl_aar]
+  }
 
   bycols <- c("GEO", setdiff(colinfo$dims.new, c("GEO", "AAR")))
   data.table::setkeyv(d, c(bycols, "AARh"))
@@ -69,7 +74,8 @@ plot_timeseries <- function(dt = newcube_flag,
   strata <- strata[n_outlier > 0L & n_obs > 0L]
 
   if(nrow(strata) == 0){
-    cat("No strata with", outlierfilter, "= 1, plots not generated")
+    cat("No strata with", outlierfilter, "= 1 found in the data, plots not generated.")
+    if(!is.null(show_years)) cat(" (Only tried to plot", show_years, "most recent years)")
     return(invisible(NULL))
   }
 
@@ -121,8 +127,7 @@ plot_timeseries <- function(dt = newcube_flag,
       if (all(file.exists(file.path(savepath, metadata$tmp_name)))) break
       Sys.sleep(0.1)
     }
-    file.rename(file.path(savepath, metadata$tmp_name),
-                file.path(savepath, metadata$filename))
+    invisible(file.rename(file.path(savepath, metadata$tmp_name),file.path(savepath, metadata$filename)))
   }
 }
 
@@ -146,7 +151,7 @@ compute_device_size_px <- function(p, dpi = 160) {
 collect_timeseries_plotdata <- function(plotdata, page){
   plot_d <- list()
   plot_d[["base"]] <- plotdata[[page]]
-  plot_d[["ol"]] <- plot_d[["base"]][ol == 1]
+  # plot_d[["ol"]] <- plot_d[["base"]][ol == 1]
   plot_d[["line"]] <- plot_d[["base"]][n_obs > 1]
   return(plot_d)
 }
@@ -160,7 +165,7 @@ plot_timeseries_plotfun <- function(datasets, plotargs){
 
   plot <- ggplot2::ggplot(datasets$base, ggplot2::aes(x = AARh, y = yval)) +
     ggplot2::facet_wrap(facets = ggplot2::vars(panels), scales = "free_y", ncol = 5) +
-    ggplot2::geom_point(data = datasets$ol, ggplot2::aes(color = ollabel), size = 1.5, show.legend = TRUE) +
+    ggplot2::geom_point(ggplot2::aes(color = ollabel), size = 1.5, show.legend = TRUE) +
     ggplot2::scale_color_manual(values = c("Normal" = "grey40", "Previous outlier" = "blue", "New outlier" = "red"),
                                 limits = c("Normal", "Previous outlier", "New outlier"),
                                 breaks = c("Previous outlier", "New outlier"),
