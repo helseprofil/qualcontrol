@@ -1,4 +1,4 @@
-# qualcontrol 1.3.6
+# qualcontrol 1.3.6 (2025-12-18)
 
 ## Changes
 1. Added argument `show_years` to plot_timeseries, to be able to alter the length of the time series plotted. 

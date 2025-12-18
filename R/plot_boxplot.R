@@ -96,8 +96,7 @@ plot_boxplot <- function(dt = newcube_flag, onlynew = TRUE, change = FALSE, save
       if (all(file.exists(file.path(savepath, metadata$tmp_name)))) break
       Sys.sleep(0.1)
     }
-    file.rename(file.path(savepath, metadata$tmp_name),
-                file.path(savepath, metadata$filename))
+    invisible(file.rename(file.path(savepath, metadata$tmp_name),file.path(savepath, metadata$filename)))
   }
 }
 
