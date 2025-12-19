@@ -46,6 +46,8 @@ plot_boxplot <- function(dt = newcube_flag, onlynew = TRUE, change = FALSE, save
   allcombinations <- get_all_combinations(bpdata, plotby)
   allcombinations[,  panels := interaction(.SD, drop = TRUE, lex.order = T, sep = ","), .SDcols = panels]
   bpdata <- collapse::join(allcombinations, bpdata, multiple = T, overid = 2, verbose = 0)[, names(.SD) := NULL, .SDcols = panels]
+  bpdata[, GEOniv := droplevels(GEOniv)]
+  bpdata[, GEOniv := factor(GEOniv, levels = rev(levels(GEOniv)))]
 
   if(onlynew){
     oldata <- d[x == 1, env = list(x = newoutlier)]
@@ -122,18 +124,12 @@ plot_boxplot_plotfun <- function(plotdata, plotargs){
     ggplot2::facet_wrap(ggplot2::vars(panels),
                         scales = "free_x",
                         ncol = 5) +
-    ggplot2:: scale_x_discrete(limits = rev(levels(ggplot2::vars(GEOniv))),
-                               drop = T) +
     ggplot2::labs(y = plotargs$ylab,
                   x = NULL,
                   title = plotargs$title,
                   subtitle = plotargs$subtitle,
                   caption = plotargs$caption) +
     ggplot2::coord_flip() +
-    ggplot2::geom_text(data = plotdata$ol,
-                       ggplot2::aes(y = yval, label = label),
-                       angle = 90,
-                       size = 6/ggplot2::.pt) +
     ggplot2::geom_boxplot(data = plotdata$bp,
                           ggplot2::aes(ymin = MINABOVELOW,
                                        lower = get(plotargs$quantiles[1]),
@@ -141,6 +137,10 @@ plot_boxplot_plotfun <- function(plotdata, plotargs){
                                        upper = get(plotargs$quantiles[3]),
                                        ymax = MAXBELOWHIGH),
                           stat = "identity") +
+    ggplot2::geom_text(data = plotdata$ol,
+                       ggplot2::aes(y = yval, label = label),
+                       angle = 90,
+                       size = 6/ggplot2::.pt) +
     ggh4x::force_panelsizes(cols = ggplot2::unit(7, "cm"),
                             rows = ggplot2::unit(5, "cm")) +
     theme_qc() +

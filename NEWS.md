@@ -1,3 +1,8 @@
+# qualcontrol (development version)
+
+## Changes
+1. Fixed small bug in `plot_boxplot()` where y-axis was not in correct order. Specifically reverse factor levels in plotdata. 
+
 # qualcontrol 1.3.6 (2025-12-18)
 
 ## Changes
