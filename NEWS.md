@@ -1,3 +1,9 @@
+# qualcontrol 1.3.7 (2025-01-05)
+
+## Changes
+1. Fixed small bug in `plot_boxplot()` where y-axis was not in correct order. Specifically reverse factor levels in plotdata. 
+2. Removed circular dependencies hindering installation
+
 # qualcontrol 1.3.6 (2025-12-18)
 
 ## Changes

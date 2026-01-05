@@ -2,7 +2,7 @@
 
 # Read test files
 
-readfiles(cube.new = "UFORE_1_UTDANN_2025-12-11-11-25",
+readfiles(cube.new = "AAP_1_UTDANN_2025-12-17-13-53",
           cube.old = "UFORE_1_2025-02-24-13-32",
           recode.old = T,
           comparecube = T,
