@@ -139,6 +139,7 @@ plot_boxplot_plotfun <- function(plotdata, plotargs){
                           stat = "identity") +
     ggplot2::geom_text(data = plotdata$ol,
                        ggplot2::aes(y = yval, label = label),
+                       na.rm = T,
                        angle = 90,
                        size = 6/ggplot2::.pt) +
     ggh4x::force_panelsizes(cols = ggplot2::unit(7, "cm"),
