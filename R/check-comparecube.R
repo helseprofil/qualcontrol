@@ -78,8 +78,8 @@ diffvals_summary <- function(dt = comparecube,
     out <- list(AAR = "TOTAL")
     for(val in diffvals){
       diff <- paste0(val, "_diff")
-      out[[paste0(val, "_ndiff")]] <- d[get(diff) != 0, .N]
-      out[[paste0(val, "_sumdiff")]] <- d[, sum(get(diff), na.rm = T)]
+      out[[paste0(val, "_ndiff")]] <- d[round(x,1) != 0, .N, env = list(x = diff)]
+      out[[paste0(val, "_sumdiff")]] <- d[round(x,1) != 0, sum(x, na.rm = T), env = list(x = diff)]
     }
     data.table::setDT(out)
     if(save) save_table_output(table = out, savepath = savepath, cubefile = cubefile, suffix = suffix)
@@ -89,9 +89,9 @@ diffvals_summary <- function(dt = comparecube,
   out <- data.table::data.table(AAR = unique(d$AAR))
   for(val in diffvals){
     diff <- paste0(val, "_diff")
-    dd <- d[, .(ndiff = sum(get(diff) != 0, na.rm =T),
-              sumdiff = sum(get(diff), na.rm = T)),
-          by = AAR]
+    dd <- d[round(x,1) != 0, .(ndiff = .N,
+                               sumdiff = sum(x, na.rm = T)),
+          by = AAR, env = list(x = diff)]
     data.table::setnames(dd,
                          old = 2:3,
                          new = function(x) paste0(val, "_", x))

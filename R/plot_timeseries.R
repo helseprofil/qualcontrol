@@ -75,7 +75,7 @@
 
   if(nrow(strata) == 0){
     cat("No strata with", outlierfilter, "= 1 found in the data, plots not generated.")
-    if(!is.null(show_years)) cat(" (Only tried to plot", show_years, "most recent years)")
+    if(!is.null(show_n_years)) cat(" (Only tried to plot", show_n_years, "most recent years)")
     return(invisible(NULL))
   }
 
