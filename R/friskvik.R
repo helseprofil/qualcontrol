@@ -156,6 +156,7 @@ read_friskvik_cube <- function(path){
 
   if(grepl(".parquet$", path)){
     KUBE <- data.table::setDT(arrow::read_parquet(path))
+    KUBE[, GEO := as.integer(GEO)]
   } else if (grepl(".csv$", path)){
     KUBE <- data.table::fread(path)
   }
