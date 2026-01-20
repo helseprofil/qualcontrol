@@ -1,4 +1,4 @@
-# qualcontrol (development version)
+# qualcontrol 1.3.8 (2026-01-20)
 
 ## Changes
 1. In `plot_boxplot`, added na.rm = T to remove warning when there are no outliers
