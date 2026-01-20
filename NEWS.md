@@ -1,8 +1,10 @@
 # qualcontrol (development version)
 
 ## Changes
-1. In plot_boxplot, added na.rm = T to remove warning when there are no outliers
-2. In plot_timseriers, fixed typo resulting in error in a message when no outliers existed. 
+1. In `plot_boxplot`, added na.rm = T to remove warning when there are no outliers
+2. In `plot_timseries`, fixed typo resulting in error in a message when no outliers existed. 
+3. `check_friskvik` reads cube files as parquet if existing
+4. `check_friskvik` gains "ALT_OK"-column, to filter out files with potential problems
 
 # qualcontrol 1.3.7 (2025-01-05)
 
