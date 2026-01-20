@@ -80,10 +80,9 @@ check_friskvik <- function(profile = c("FHP", "OVP"),
 
   assign(paste("FRISKVIKSJEKK",profile,geolevel, sep = "_"), out, envir = .GlobalEnv)
 
-  cat("\nOutput generated")
   if(save){
     data.table::fwrite(out, file = paths$save, sep = ";")
-    cat(paste("\nOutput written to", paths$save))
+    cat(paste("\nFriskviksjekk skrevet til", paths$save))
   }
 }
 
@@ -127,7 +126,7 @@ friskvik_read_file <- function(filename = NULL,
 
   KUBE <- read_friskvik_cube(path = cubefilepath)
   SPEC <<- data.table::fread(specfilepath)
-  cat(paste0("SPEC loaded: ", basename(specfilepath), "\n"))
+  cat(paste0("\nSPEC loaded: ", basename(specfilepath)))
 
   colinfo <- identify_coltypes(FRISKVIK, KUBE)
   KUBE <- filter_cube_to_friskvik(cube = KUBE, friskvik = FRISKVIK, colinfo = colinfo, friskvikindikator = friskvikindikator)
@@ -147,7 +146,7 @@ clean_friskvik_environment <- function(){
 read_friskvik <- function(path){
   file <- data.table::fread(path)
   data.table::setattr(file, "Filename", basename(path))
-  cat(paste0("FRISKVIK loaded: ", sub("(.*KUBER/)(.*)", "\\2", path), "\n"))
+  cat(paste0("\nFRISKVIK loaded: ", sub("(.*KUBER/)(.*)", "\\2", path)))
   return(file)
 }
 
@@ -162,7 +161,7 @@ read_friskvik_cube <- function(path){
   }
   data.table::setattr(KUBE, "Filename", basename(path))
   data.table::setattr(KUBE, "Kubepath", path)
-  cat(paste0("KUBE loaded: ", basename(path), "\n"))
+  cat(paste0("\nKUBE loaded: ", basename(path)))
   return(KUBE)
 }
 
