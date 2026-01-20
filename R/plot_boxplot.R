@@ -54,7 +54,7 @@ plot_boxplot <- function(dt = newcube_flag, onlynew = TRUE, change = FALSE, save
   } else {
     oldata <- d[x == 1, env = list(x = outlier)]
   }
-  oldata[, let(label = paste0(GEO, "'", sub(".*(\\d{2}$)", "\\1", AAR)),
+  oldata[, let(label = paste0(GEO, "'", sub(".*(\\d{2}$)", "\\1", AAR),"'(", round(x, 0), ")"),
                yval = x), env = list(x = plotvalue)]
   oldata <- oldata[, .SD, .SDcols = c(bycols, "label", "yval")]
   oldata <- collapse::join(allcombinations, oldata, on = plotby, multiple = T, overid = 2, verbose = 0)[, names(.SD) := NULL, .SDcols = panels]
@@ -142,8 +142,8 @@ plot_boxplot_plotfun <- function(plotdata, plotargs){
                        na.rm = T,
                        angle = 90,
                        size = 6/ggplot2::.pt) +
-    ggh4x::force_panelsizes(cols = ggplot2::unit(7, "cm"),
-                            rows = ggplot2::unit(5, "cm")) +
+    ggh4x::force_panelsizes(cols = ggplot2::unit(8, "cm"),
+                            rows = ggplot2::unit(6, "cm")) +
     theme_qc() +
     ggplot2::theme(plot.subtitle = ggplot2::element_text(size = 12),
                    plot.caption = ggplot2::element_text(size = 12),
