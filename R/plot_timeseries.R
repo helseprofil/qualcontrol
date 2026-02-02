@@ -41,15 +41,16 @@
   isnewoutlier <- newoutlier %in% names(dt)
   if(onlynew & !isnewoutlier) onlynew <- FALSE
 
-  keepcols <- intersect(unique(c(colinfo$dims.new, unlist(tscols, use.names = F), teller)), names(dt))
+  dt[, AARh := sub("\\d{4}_(\\d{4})", "\\1", AAR)]
+  keepcols <- sub("AAR", "AARh", intersect(unique(c(colinfo$dims.new, unlist(tscols, use.names = F), teller)), names(dt)))
   complete <- dt[, !is.na(GEOniv) & !is.na(x), env = list(x = as.name(plotvalue))]
   d <- dt[complete, .SD, .SDcols = keepcols]
-  d[, AARh := sub("\\d{4}_(\\d{4})", "\\1", AAR)]
 
   if(!is.null(show_n_years)){
-    incl_aar <- (max(as.numeric(d$AARh)) - show_n_years - 1):max(as.numeric(d$AARh))
+    incl_aar <- (max(as.numeric(d$AARh)) - show_n_years + 1):max(as.numeric(d$AARh))
     d <- d[AARh %in% incl_aar]
   }
+  allyears <- d[, unique(AARh)]
 
   bycols <- c("GEO", setdiff(colinfo$dims.new, c("GEO", "AAR")))
   data.table::setkeyv(d, c(bycols, "AARh"))
@@ -81,7 +82,8 @@
 
   strata[, let(page = ((.I - 1L) %/% 25) + 1L, # max 25 paneler per side
                panels = interaction(.SD, drop = TRUE, sep = ",", lex.order = T)), .SDcols = bycols]
-  plotdata <- collapse::join(strata, d, on = bycols, how = "left", multiple = TRUE, verbose = 0, overid = 2)
+  strata <- strata[, .(AARh = allyears), by = names(strata)]
+  plotdata <- collapse::join(strata, d, on = c(bycols, "AARh"), how = "left", multiple = TRUE, verbose = 0, overid = 2)
   plotdata[, let(yval = x, tv = round(y,0), ol = z), env=list(x = plotvalue, y = teller, z = outlier)]
   plotdata[ol == 1, let(ollabel = "New outlier")]
   if(isnewoutlier){
@@ -151,8 +153,7 @@ compute_device_size_px <- function(p, dpi = 160) {
 collect_timeseries_plotdata <- function(plotdata, page){
   plot_d <- list()
   plot_d[["base"]] <- plotdata[[page]]
-  # plot_d[["ol"]] <- plot_d[["base"]][ol == 1]
-  plot_d[["line"]] <- plot_d[["base"]][n_obs > 1]
+  plot_d[["line"]] <- plot_d[["base"]][n_obs > 1 & !is.na(yval)]
   return(plot_d)
 }
 
@@ -165,18 +166,18 @@ plot_timeseries_plotfun <- function(datasets, plotargs){
 
   plot <- ggplot2::ggplot(datasets$base, ggplot2::aes(x = AARh, y = yval)) +
     ggplot2::facet_wrap(facets = ggplot2::vars(panels), scales = "free_y", ncol = 5) +
-    ggplot2::geom_point(ggplot2::aes(color = ollabel), size = 1.5, show.legend = TRUE) +
+    ggplot2::geom_point(ggplot2::aes(color = ollabel), size = 1.5, show.legend = TRUE, na.rm = T) +
     ggplot2::scale_color_manual(values = c("Normal" = "grey40", "Previous outlier" = "blue", "New outlier" = "red"),
                                 limits = c("Normal", "Previous outlier", "New outlier"),
                                 breaks = c("Previous outlier", "New outlier"),
                                 drop = FALSE)  +
     ggplot2::guides(color = ggplot2::guide_legend(title = NULL)) +
-    ggplot2::geom_line(data = datasets$line, ggplot2::aes(group = panels), linewidth = 0.3, na.rm = T) +
+    ggplot2::geom_line(data = datasets$line, ggplot2::aes(group = panels), linewidth = 0.3) +
     theme_qc()
 
   if(!is.na(plotargs$teller)){
     plot <- plot +
-      ggplot2::geom_text(ggplot2::aes(label = tv, y = y_middle), hjust = 0.5, angle = 90, size = 9/ggplot2::.pt)
+      ggplot2::geom_text(ggplot2::aes(label = tv, y = y_middle), hjust = 0.5, angle = 90, size = 9/ggplot2::.pt, na.rm = T)
   }
 
   plot <- plot +
