@@ -51,6 +51,7 @@
     d <- d[AARh %in% incl_aar]
   }
   allyears <- d[, unique(AARh)]
+  allyears <- min(allyears):max(allyears)
 
   bycols <- c("GEO", setdiff(colinfo$dims.new, c("GEO", "AAR")))
   data.table::setkeyv(d, c(bycols, "AARh"))
