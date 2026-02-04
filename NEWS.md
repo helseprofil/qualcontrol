@@ -4,6 +4,11 @@
 1. In `plot_timeseries()`, the input data is limited to rows with actual data, which was causing a bug if all geo was missing data on specific years. These years was omitted from the plots. 
     - Now the data is rectangularized on year to ensure all years are included. 
     - The mechanism to limit number of years plotted filtered out 2 more years than requested, which is now fixed.
+2. `check_friskvik()` changes
+    - gains a comment column
+    - Implemented `fix_case_insensitive_match` to fix case-insensitive matching of column names (e.g. aar vs AAR)
+    - Implemented `read_friskvik_spec()` to read spec file if it exists
+    - When checking if cube file is in publication folder, ignore file extension. 
 
 # qualcontrol 1.3.8 (2026-01-20)
 
