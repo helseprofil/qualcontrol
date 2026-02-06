@@ -54,8 +54,6 @@ plot_boxplot <- function(dt = newcube_flag, onlynew = TRUE, change = FALSE, save
   } else {
     oldata <- d[x == 1, env = list(x = outlier)]
   }
-  # oldata[, let(label = paste0(GEO, "'", sub(".*(\\d{2}$)", "\\1", AAR),"'(", round(x, 0), ")"),
-  #              yval = x), env = list(x = plotvalue)]
   oldata[, let(label = paste0(GEO, "'", sub(".*(\\d{2}$)", "\\1", AAR)),
                yval = x), env = list(x = plotvalue)]
   oldata <- oldata[, .SD, .SDcols = c(bycols, "label", "yval")]
@@ -68,7 +66,15 @@ plot_boxplot <- function(dt = newcube_flag, onlynew = TRUE, change = FALSE, save
   plotargs[["ylab"]] <- ifelse(change, paste0(sub("change_", "", plotvalue), ", (% change)"), plotvalue)
 
   dpi = 220
-  size <- compute_device_size_px(plot_boxplot_plotfun(collect_boxplot_plotdata(bpdata, oldata, filter, 1), plotargs), dpi = dpi)
+  maxpanelsfile <- 1
+  if(length(filter) > 1){
+    n_panels <- integer()
+    for(i in seq_along(filter)){
+      n_panels <- c(n_panels, bpdata[x, env = list(x = str2lang(filter[[i]]))][N_obs > 2, length(unique(panels))])
+    }
+    maxpanelsfile <- which.max(n_panels)
+  }
+  size <- compute_device_size_px(plot_boxplot_plotfun(collect_boxplot_plotdata(bpdata, oldata, filter, maxpanelsfile), plotargs), dpi = dpi)
 
   metadata <- data.table::data.table(file = seq_len(length(filter)), filter = filter)
   suffix <- character()
