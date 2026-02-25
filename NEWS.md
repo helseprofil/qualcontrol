@@ -9,6 +9,7 @@
     - Implemented `fix_case_insensitive_match` to fix case-insensitive matching of column names (e.g. aar vs AAR)
     - Implemented `read_friskvik_spec()` to read spec file if it exists
     - When checking if cube file is in publication folder, ignore file extension. 
+    - Include a check of whether the indicator is included on page 4 of the profiles
 3. `plot_boxplot` now calculates device size based on file with max number of panels, insted of always using the first file (issue #53)
 4. Options are now checked (and updated) when the package is attached, not just when loaded (issue #51)
 

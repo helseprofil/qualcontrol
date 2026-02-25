@@ -22,7 +22,7 @@ check_friskvik <- function(profile = c("FHP", "OVP"),
   on.exit(RODBC::odbcClose(con), add = TRUE)
   paths <- friskvik_create_path(profile = profile, geolevel = geolevel, profileyear = profileyear, test = test)
   friskvikfiles <- list.files(paths$godkjent, pattern = ".csv")
-  outcols <- c("Friskvik", "Kube", "ALT_OK", "FIL_I_STATBANK", "FRISKVIK_ETAB", "KUBE_KJONN", "KUBE_ALDER", "KUBE_UTDANN", "KUBE_INNVKAT", "KUBE_LANDBAK",
+  outcols <- c("Friskvik", "Kube", "ALT_OK", "FIL_I_STATBANK", "SIDE 1", "SIDE 4", "FRISKVIK_ETAB", "KUBE_KJONN", "KUBE_ALDER", "KUBE_UTDANN", "KUBE_INNVKAT", "KUBE_LANDBAK",
                "FRISKVIK_AAR", "SISTE_AAR", "Periode_bm", "Periode_nn", "IDENTISK_PRIKKING", "MATCHER_KOLONNE", "Different_kubecol", "Enhet", "REFVERDI_VP", "VALID_standardisering_kombo", "Kommentar")
   out_format <- data.table::setDT(as.list(setNames(rep(NA_character_, length(outcols)), outcols)))
   out <- data.table::copy(out_format[0, ])
@@ -41,6 +41,8 @@ check_friskvik <- function(profile = c("FHP", "OVP"),
       indikatornavn <- sub("(.*)(_\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}.*)", "\\1", file)
       newline[["Kube"]] <- attributes(KUBE)$Filename
       newline[["FIL_I_STATBANK"]] <- friskvik_in_publication(KUBE, profileyear)
+      newline[["SIDE 1"]] <- friskvik_read_access(con, "Side1", "FRISKVIK", indikatornavn, profile, geolevel, profileyear)
+      newline[["SIDE 4"]] <- friskvik_read_access(con, "Side4", "FRISKVIK", indikatornavn, profile, geolevel, profileyear)
       newline[["FRISKVIK_ETAB"]] <- friskvik_unique_level(FRISKVIK, "ETAB")
       newline[["FRISKVIK_AAR"]] <- friskvik_unique_level(FRISKVIK, "AAR")
       Periode_bm <- friskvik_read_access(con, "Periode_bm", "FRISKVIK", indikatornavn, profile, geolevel, profileyear)
