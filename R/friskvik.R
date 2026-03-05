@@ -46,9 +46,11 @@ check_friskvik <- function(profile = c("FHP", "OVP"),
       newline[["FRISKVIK_ETAB"]] <- friskvik_unique_level(FRISKVIK, "ETAB")
       newline[["FRISKVIK_AAR"]] <- friskvik_unique_level(FRISKVIK, "AAR")
       Periode_bm <- friskvik_read_access(con, "Periode_bm", "FRISKVIK", indikatornavn, profile, geolevel, profileyear)
-      newline[["Periode_bm"]] <- ifelse(length(Periode_bm) == 0 || is.na(Periode_bm), "!! empty", Periode_bm)
       Periode_nn <- friskvik_read_access(con, "Periode_nn", "FRISKVIK", indikatornavn, profile, geolevel, profileyear)
+      newline[["Periode_bm"]] <- ifelse(length(Periode_bm) == 0 || is.na(Periode_bm), "!! empty", Periode_bm)
       newline[["Periode_nn"]] <- ifelse(length(Periode_nn) == 0 || is.na(Periode_nn), "!! empty", Periode_nn)
+      isungdata <- grepl("UNGDATA", newline[["Kube"]])
+      if(isungdata) newline[["Periode_bm"]] <- newline[["Periode_nn"]] <- "-"
       ENHET <- friskvik_read_access(con, "Enhet", "FRISKVIK", indikatornavn, profile, geolevel, profileyear)
       newline[["Enhet"]] <- ifelse(length(ENHET) == 0 || is.na(ENHET), "!!MISSING", ENHET)
 
