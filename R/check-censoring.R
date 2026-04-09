@@ -40,7 +40,7 @@ check_censoring <- function(dt = newcube){
   } else {
     cat(paste0("\nTELLER variable controlled: ", tellerval))
     cat(paste0("\nCriteria: No values <= ", lim_teller))
-    notcensored_teller <- dt[SPVFLAGG == 0 & get(tellerval) <= lim_teller]
+    notcensored_teller <- dt[SPVFLAGG == 0 & x <= lim_teller, env = list(x = tellerval)]
   }
 
   if(!is.null(notcensored_teller)){
@@ -61,7 +61,7 @@ check_censoring <- function(dt = newcube){
   } else {
     cat(paste0("\nNEVNER variable controlled: ", nevnerval))
     cat(paste0("\nCriteria: No values <= ", lim_nevner))
-    notcensored_nevner <- dt[SPVFLAGG == 0 & get(nevnerval) <= lim_nevner]
+    notcensored_nevner <- dt[SPVFLAGG == 0 & x <= lim_nevner, env = list(x = nevnerval)]
   }
 
   if(!is.null(notcensored_nevner)){
@@ -168,8 +168,8 @@ compare_censoring_timeseries <- function(cube.new = newcube,
   }
 
   if(!is.null(cube.old)){
-    d <- data.table::rbindlist(list(data.table::copy(cube.new)[!grepl("99$", GEO), mget(colinfo$commoncols)][, cube := "New"],
-                                    data.table::copy(cube.old)[!grepl("99$", GEO), mget(colinfo$commoncols)][, cube := "Old"]))
+    d <- data.table::rbindlist(list(data.table::copy(cube.new)[!grepl("99$", GEO), .SD, .SDcols = colinfo$commoncols][, cube := "New"],
+                                    data.table::copy(cube.old)[!grepl("99$", GEO), .SD, .SDcols = colinfo$commoncols][, cube := "Old"]))
 
     groupdims <- grep("^AAR$", c(colinfo$commondims), invert = T, value = T)
     d <- d[, .(N_censored = sum(SPVFLAGG != 0, na.rm = T)), by = c("cube", groupdims)]
