@@ -129,8 +129,7 @@ plot_diff_timetrends <- function(dt = comparecube,
   d <- data.table::copy(dt[newrow == 0 & SPVFLAGG_new == 0 & SPVFLAGG_old == 0]) |>
     translate_geoniv()
 
-  d[, let(Absolute = get(diffval),
-          Relative = get(reldiffval))]
+  d[, let(Absolute = x, Relative = y), env = list(x = diffval, y = reldiffval)]
   d <- data.table::melt(d, measure.vars = c("Absolute", "Relative"))[, .(GEOniv, AAR, variable, value)]
   allyears <- get_all_combinations(d, c("GEOniv", "AAR", "variable"))
   d <- d[!(variable == "Absolute" & value == 0 | variable == "Relative" & value == 1)]
@@ -169,10 +168,15 @@ summarise_diffvals <- function(out,
     reldiff <- paste0(value, "_reldiff")
     calculate_reldiff <- reldiff %in% names(subset)
 
-    identical <- subset[get(diff) == 0, .N]
-    different <- subset[get(diff) != 0, .N]
-    newprikk <- subset[is.na(get(new)) & !is.na(get(old)), .N]
-    expprikk <- subset[!is.na(get(new)) & is.na(get(old)), .N]
+    identical <- subset[x == 0, .N, env = list(x = diff)]
+    different <- subset[x != 0, .N, env = list(x = diff)]
+
+    newprikk <- expprikk <- NA_real_
+    if(value == "SPVFLAGG"){
+      newprikk <- subset[x > 0 & y == 0, .N, env = list(x = new, y = old)]
+      expprikk <- subset[x == 0 & y > 0, .N, env = list(x = new, y = old)]
+    }
+
 
     out[GEOniv == geolevel & Value == value, let(Identical = identical,
                                               Different = different,
@@ -180,7 +184,7 @@ summarise_diffvals <- function(out,
                                               Expired_prikk = expprikk)]
 
     if(different > 0){
-      diffdata <- subset[get(diff) != 0 & !is.na(get(new)) & !is.na(get(old))]
+      diffdata <- subset[x != 0 & !is.na(y) & !is.na(z), env = list(x = diff, y = new, z = old)]
       out[GEOniv == geolevel & Value == value, let(Mean_diff = round(mean(diffdata[[diff]], na.rm = T), 3),
                                                    Min_diff = round(min(diffdata[[diff]], na.rm = T), 3),
                                                    Max_diff = round(max(diffdata[[diff]], na.rm = T), 3))]

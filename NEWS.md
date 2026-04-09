@@ -13,6 +13,7 @@
     - UNGDATA-indicators excluded from periode_bm/nn-check 
 3. `plot_boxplot` now calculates device size based on file with max number of panels, insted of always using the first file ([issue #53](https://github.com/helseprofil/qualcontrol/issues/53))
 4. Options are now checked (and updated) when the package is attached, not just when loaded ([issue #51](https://github.com/helseprofil/qualcontrol/issues/51))
+5. In `comparecube_summary`, new_prikk and expired_prikk are now only reported for SPVFLAGG, and based on 0 vs non-0 ([issue #41](https://github.com/helseprofil/qualcontrol/issues/41))
 
 # qualcontrol 1.3.8 (2026-01-20)
 
