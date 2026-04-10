@@ -136,21 +136,6 @@
 
 #' @keywords internal
 #' @noRd
-compute_device_size_px <- function(p, dpi = 160) {
-
-  g <- ggplot2::ggplotGrob(p)
-
-  total_w_cm <- as.numeric(grid::convertWidth(sum(g$widths), "cm", valueOnly = TRUE))
-  total_h_cm <- as.numeric(grid::convertHeight(sum(g$heights), "cm", valueOnly = TRUE))
-
-  width_px  <- ceiling(total_w_cm * dpi / 2.54)
-  height_px <- ceiling(total_h_cm * dpi / 2.54)
-
-  list(width_px = width_px, height_px = height_px)
-}
-
-#' @keywords internal
-#' @noRd
 collect_timeseries_plotdata <- function(plotdata, page){
   plot_d <- list()
   plot_d[["base"]] <- plotdata[[page]]
@@ -188,7 +173,7 @@ plot_timeseries_plotfun <- function(datasets, plotargs){
                   y = plotargs$ylab,
                   caption = plotargs$caption) +
     ggplot2::theme(text = ggplot2::element_text(family = "sans"),
-                   plot.title = ggplot2::element_text(size = 20),
+                   plot.title = ggplot2::element_text(size = 12, family = "sans", hjust = 1),
                    axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5, size = 8),
                    strip.text = ggplot2::element_text(hjust = 0, size = 9))
 

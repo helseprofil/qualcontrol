@@ -156,3 +156,17 @@ get_multifile_plot_suffix <- function(dt, files = files){
   return(suffix)
 }
 
+#' @keywords internal
+#' @noRd
+compute_device_size_px <- function(p, dpi = 160) {
+
+  g <- ggplot2::ggplotGrob(p)
+
+  total_w_cm <- as.numeric(grid::convertWidth(sum(g$widths), "cm", valueOnly = TRUE))
+  total_h_cm <- as.numeric(grid::convertHeight(sum(g$heights), "cm", valueOnly = TRUE))
+
+  width_px  <- ceiling(total_w_cm * dpi / 2.54)
+  height_px <- ceiling(total_h_cm * dpi / 2.54)
+
+  list(width_px = width_px, height_px = height_px)
+}

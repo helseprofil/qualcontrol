@@ -92,7 +92,7 @@ plot_boxplot <- function(dt = newcube_flag, onlynew = TRUE, change = FALSE, save
   }
 
   for(i in metadata$file){
-    plotdata = collect_boxplot_plotdata(bpdata, oldata, filter, i)
+    plotdata <- collect_boxplot_plotdata(bpdata, oldata, filter, i)
     plotargs[["subtitle"]] <- character()
     for(dim in filedims) plotargs$subtitle <- c(plotargs$subtitle, paste0("\n", dim, ": ", unique(plotdata$bp[[dim]])))
     plot <- plot_boxplot_plotfun(plotdata, plotargs = plotargs)
@@ -110,6 +110,9 @@ plot_boxplot <- function(dt = newcube_flag, onlynew = TRUE, change = FALSE, save
   }
 }
 
+#' @title collect_boxplot_plotdata
+#' @keywords internal
+#' @noRd
 collect_boxplot_plotdata <- function(bpdata, oldata, filter, file){
   data <- list()
   data[["bp"]] <- bpdata[x, env = list(x = str2lang(filter[[file]]))][N_obs > 2]
@@ -155,7 +158,8 @@ plot_boxplot_plotfun <- function(plotdata, plotargs){
     ggh4x::force_panelsizes(cols = ggplot2::unit(7, "cm"),
                             rows = ggplot2::unit(5, "cm")) +
     theme_qc() +
-    ggplot2::theme(plot.subtitle = ggplot2::element_text(size = 12),
+    ggplot2::theme(plot.title = ggplot2::element_text(size = 12, family = "sans", hjust = 1),
+                   plot.subtitle = ggplot2::element_text(size = 12),
                    plot.caption = ggplot2::element_text(size = 12),
                    axis.title = ggplot2::element_text(size = 12),
                    axis.text = ggplot2::element_text(size = 8),
