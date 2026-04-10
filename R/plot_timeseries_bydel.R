@@ -27,6 +27,7 @@ plot_timeseries_bydel <- function(dt = newcube_flag, save = TRUE){
          env = list(x = plotvalue)]
   add_kommune(d)
   bycols <- c("KOMMUNE", grep("^GEO$", colinfo$dims.new, invert = T, value = T))
+  d[, N_obs := .N, by = c("GEO", setdiff(bycols, c("KOMMUNE", "AAR")))]
 
   panels <- grep("^KOMMUNE$|^AAR$", bycols, invert = T, value = T)
   filedims <- get_plot_subset(d, panels, maxpanels = 5)
@@ -110,7 +111,7 @@ plot_timeseries_bydel <- function(dt = newcube_flag, save = TRUE){
 #' @noRd
 collect_tsb_plotdata <- function(plotdata, trenddata, filter, file){
   data <- list()
-  data[["pd"]] <- plotdata[x, env = list(x = str2lang(filter[[file]]))]
+  data[["pd"]] <- plotdata[x, env = list(x = str2lang(filter[[file]]))][N_obs > 1]
   data[["td"]] <- trenddata[x, env = list(x = str2lang(filter[[file]]))]
   return(data)
 }
