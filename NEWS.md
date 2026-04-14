@@ -17,6 +17,7 @@
 6. `plot_timeseries_bydel`
     - Optimized using the same strategy as other plotting functions. Unneccessary panel text is removed and caption added ([issue #47](https://github.com/helseprofil/qualcontrol/issues/47)).
     - Strata with only 1 observations is filtered out ([issue #52](https://github.com/helseprofil/qualcontrol/issues/52))
+7. `aggregate_cube` now uses collapse, and keeps unique and max values of columns that cannot be aggregated. 
 
 # qualcontrol 1.3.8 (2026-01-20)
 

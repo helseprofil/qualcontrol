@@ -22,21 +22,29 @@ aggregate_cube <- function(cube, dim){
 
   if(is.na(total)){
     colinfo <- identify_coltypes(cube)
-    vals <- colinfo$vals.new
-    vals <- grep("SPVFLAGG", vals, value = T, invert = T)
+    vals <- grep("SPVFLAGG", colinfo$vals.new, value = T, invert = T)
     cube[, (vals) := lapply(.SD, as.numeric), .SDcols = vals]
     sumvals <- grep("TELLER", vals, value = T)
-    avgvals <- grep("TELLER", vals, value = T, invert = T)
-    groupdims <- grep(dim, colinfo$dims.new, value = T, invert = T)
-    data.table::setkeyv(cube, groupdims)
+    avgvals <- setdiff(vals, sumvals)
+    groupdims <- setdiff(colinfo$dims.new, dim)
+    uniquevals <- intersect(names(cube), c("GEOniv", "WEIGHTS"))
+    maxvals <- setdiff(names(cube), c(sumvals, avgvals, groupdims, uniquevals, dim))
 
-    cube[, (avgvals) := lapply(.SD, mean, na.rm = T), .SDcols = avgvals, by = groupdims]
-    cube[, (sumvals) := lapply(.SD, sum, na.rm = T), .SDcols = sumvals, by = groupdims]
-    for(i in avgvals){cube[is.nan(get(i)), (i) := NA_real_]}
-    cube[, (dim) := "Total"]
-    cube <- cube[, .SD[1], by = groupdims]
-    data.table::setcolorder(cube, colorder)
-    return(cube)
+
+    g <- collapse::GRP(cube, groupdims)
+
+    agg <- collapse::add_vars(
+      g[["groups"]],
+      collapse::fsum(collapse::get_vars(cube, sumvals), g = g),
+      collapse::fmean(collapse::get_vars(cube, avgvals), g = g),
+      collapse::fmax(collapse::get_vars(cube, maxvals), g = g),
+      collapse::ffirst(collapse::get_vars(cube, uniquevals), g = g)
+    )
+
+    for(j in avgvals) data.table::set(agg, i = which(is.nan(agg[[j]])), j = j, value = NA_real_)
+    agg[, (dim) := "Total"]
+    data.table::setcolorder(agg, colorder)
+    return(agg)
   }
 }
 
