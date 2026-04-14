@@ -11,13 +11,18 @@
     - When checking if cube file is in publication folder, ignore file extension. 
     - Include a check of whether the indicator is included on page 4 of the profiles ([issue #54](https://github.com/helseprofil/qualcontrol/issues/54))
     - UNGDATA-indicators excluded from periode_bm/nn-check 
-3. `plot_boxplot` now calculates device size based on file with max number of panels, insted of always using the first file ([issue #53](https://github.com/helseprofil/qualcontrol/issues/53))
+3. `plot_boxplot` 
+    - More effective calculation of baseplotdata using collapse
+    - Calculates device size based on file with max number of panels, insted of always using the first file ([issue #53](https://github.com/helseprofil/qualcontrol/issues/53))
 4. Options are now checked (and updated) when the package is attached, not just when loaded ([issue #51](https://github.com/helseprofil/qualcontrol/issues/51))
 5. In `comparecube_summary`, new_prikk and expired_prikk are now only reported for SPVFLAGG, and based on 0 vs non-0 ([issue #41](https://github.com/helseprofil/qualcontrol/issues/41))
 6. `plot_timeseries_bydel`
     - Optimized using the same strategy as other plotting functions. Unneccessary panel text is removed and caption added ([issue #47](https://github.com/helseprofil/qualcontrol/issues/47)).
     - Strata with only 1 observations is filtered out ([issue #52](https://github.com/helseprofil/qualcontrol/issues/52))
 7. `aggregate_cube` now uses collapse, and keeps unique and max values of columns that cannot be aggregated. 
+8. Code cleaning
+    - Removed all use of get/mget
+    - Implemented the env-argument in data.table for cleaner syntax
 
 # qualcontrol 1.3.8 (2026-01-20)
 

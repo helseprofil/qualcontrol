@@ -23,7 +23,7 @@ check_befvekst <- function(statusfolder = NULL){
   befolk <- .GlobalEnv$oldcube
   dims <- identify_coltypes(befvekst, befolk)$commondims
   for(dim in dims){
-    befolk <- befolk[get(dim) %in% unique(befvekst[[dim]])]
+    befolk <- befolk[x %in% unique(befvekst[[dim]]), env = list(x = dim)]
   }
   data.table::setkeyv(befvekst, dims)
   data.table::setkeyv(befolk, dims)

@@ -5,8 +5,7 @@
 #'
 #' @param dt cube file
 #' @export
-check_nevner_change <- function(dt = newcube,
-                                save = TRUE){
+check_nevner_change <- function(dt = newcube, save = TRUE){
 
   cubefile <- get_cubefilename(dt)
   savepath <- get_table_savefolder(get_cubename(dt))
@@ -18,9 +17,9 @@ check_nevner_change <- function(dt = newcube,
   d <- aggregate_cube_multi(d, aggdims)
   nevnercol <- select_nevner_pri(colinfo$vals.new)
   if(is.na(nevnercol)) return("no nevner in file")
-  d <- d[!is.na(get(nevnercol))]
+  d <- d[!is.na(x), env = list(x = nevnercol)]
   bycols <- grep("AAR", colinfo$dims.new, invert = T, value = T)
-  d <- d[, mget(c("AAR", bycols, nevnercol))]
+  d <- d[, .SD, .SDcols = c("AAR", bycols, nevnercol)]
 
   data.table::setkeyv(d, c(bycols, "AAR"))
   g <- collapse::GRP(d, bycols)
@@ -28,13 +27,13 @@ check_nevner_change <- function(dt = newcube,
   d[, sumNEVNER_last := collapse::flag(d[[nevnercol]], g = g)]
   d[, sumNEVNER_last := zoo::na.locf(sumNEVNER_last, na.rm = F), by = bycols]
   d[, sumNEVNER_max := collapse::fmax(d[[nevnercol]], g = g, TRA = 1)]
-  d[, sumNEVNER_vs_last := round(get(nevnercol)/sumNEVNER_last, 2)]
-  d[, sumNEVNER_vs_max := round(get(nevnercol)/sumNEVNER_max, 2)]
+  d[, sumNEVNER_vs_last := round(x/sumNEVNER_last, 2), env = list(x = nevnercol)]
+  d[, sumNEVNER_vs_max := round(x/sumNEVNER_max, 2), env = list(x = nevnercol)]
 
   dims <- c("GEO", "AAR")
   if("ALDER" %in% names(d)) dims <- c(dims, "ALDER")
 
-  d <- d[, mget(c(dims, nevnercol, "sumNEVNER_max", "sumNEVNER_last", "sumNEVNER_vs_last", "sumNEVNER_vs_max"))]
+  d <- d[, .SD, .SDcols = c(dims, nevnercol, "sumNEVNER_max", "sumNEVNER_last", "sumNEVNER_vs_last", "sumNEVNER_vs_max")]
   convert_coltype(d, dims, "factor")
 
   if(save) save_table_output(table = d, savepath = savepath, cubefile = cubefile, suffix = suffix)

@@ -27,14 +27,17 @@ plot_boxplot <- function(dt = newcube_flag, onlynew = TRUE, change = FALSE, save
 
   # Extract baseplotdata
   bycols <- c("GEOniv", grep("^GEO$|^AAR$", colinfo$dims.new, invert = T, value = T))
-  g <- collapse::GRP(d, c(bycols, quantiles, limits))
 
-  bpdata <- collapse::join(g[["groups"]],
-                                 d[, .(N_obs = collapse::fsum(!is.na(get(plotvalue))),
-                                       MINABOVELOW = collapse::fmin(get(plotvalue)[get(plotvalue) >= get(limits[1])]),
-                                       MAXBELOWHIGH = collapse::fmax(get(plotvalue)[get(plotvalue) <= get(limits[2])])),
-                                   by = bycols],
-                                 verbose = 0, overid = 2)
+  g <- collapse::GRP(d, bycols)
+  val <- d[[plotvalue]]
+  lowlim <- d[[limits[1]]]
+  highlim <- d[[limits[2]]]
+
+  bpdata <- collapse::add_vars(g[["groups"]],
+                               collapse::ffirst(collapse::get_vars(d, c(quantiles, limits)), g = g),
+                               N_obs = collapse::fnobs(d[[plotvalue]], g = g),
+                               MINABOVELOW = collapse::fmin(ifelse(val > lowlim, val, NA_real_), g = g),
+                               MAXBELOWHIGH = collapse::fmax(ifelse(val < highlim, val, NA_real_), g = g))
   bpdata[, (limits) := NULL]
 
   panels <- grep("^GEOniv$", bycols, invert = T, value = T)
@@ -95,7 +98,7 @@ plot_boxplot <- function(dt = newcube_flag, onlynew = TRUE, change = FALSE, save
     plotdata <- collect_boxplot_plotdata(bpdata, oldata, filter, i)
     plotargs[["subtitle"]] <- character()
     for(dim in filedims) plotargs$subtitle <- c(plotargs$subtitle, paste0("\n", dim, ": ", unique(plotdata$bp[[dim]])))
-    plot <- plot_boxplot_plotfun(plotdata, plotargs = plotargs)
+    plot <- plot_boxplot_plotfun(plotdata = plotdata, plotargs = plotargs)
     if(save) print(plot)
     pb$tick()
   }
@@ -143,9 +146,9 @@ plot_boxplot_plotfun <- function(plotdata, plotargs){
     ggplot2::coord_flip() +
     ggplot2::geom_boxplot(data = plotdata$bp,
                           ggplot2::aes(ymin = MINABOVELOW,
-                                       lower = get(plotargs$quantiles[1]),
-                                       middle = get(plotargs$quantiles[2]),
-                                       upper = get(plotargs$quantiles[3]),
+                                       lower = .data[[plotargs$quantiles[1]]],
+                                       middle = .data[[plotargs$quantiles[2]]],
+                                       upper = .data[[plotargs$quantiles[3]]],
                                        ymax = MAXBELOWHIGH),
                           stat = "identity") +
     ggplot2::geom_text(data = plotdata$ol,
