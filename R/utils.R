@@ -17,7 +17,7 @@ aggregate_cube <- function(cube, dim){
   total <- find_total(cube, dim)
 
   if(!is.na(total)){
-    return(cube[get(dim) == total])
+    return(cube[x == total, env = list(x = dim)])
   }
 
   if(is.na(total)){
@@ -160,10 +160,7 @@ find_total <- function(cube, dim){
 #' @param cube.old old file
 #' @param dimtable table generated with [qualcontrol::compare_dimensions()]
 #' @param filter "new" or "old", indicating whether the file to filter is the new or old file
-filter_cube <- function(cube.new,
-                        cube.old,
-                        dimtable,
-                        filter = c("new", "old")){
+filter_cube <- function(cube.new, cube.old, dimtable, filter = c("new", "old")){
   filter <- match.arg(filter)
   filteron <- switch(filter,
                      new = "New levels",
@@ -174,11 +171,11 @@ filter_cube <- function(cube.new,
   refcube <- switch(filter,
                     new = data.table::copy(cube.old),
                     old = data.table::copy(cube.new))
-  filterdims <- data.table::copy(dimtable)[get(filteron) != ""]$Dimension
+  filterdims <- data.table::copy(dimtable)[x != "", env = list(x = filteron)][["Dimension"]]
 
   if(length(filterdims) > 0){
     for(dim in filterdims){
-      filtercube <- filtercube[get(dim) %in% unique(refcube[[dim]])]
+      filtercube <- filtercube[x %in% unique(refcube[[dim]]), env = list(x = dim)]
     }
   }
 
@@ -275,10 +272,7 @@ get_all_combinations <- function(dt,
 #' # get_complete_strata(data, by = bycols, type = "censored")
 #' # Actually filter data
 #' # data <- get_complete_strata(data, by = bycols, type = "censored")
-get_complete_strata <- function(data,
-                                by,
-                                type = c("censored", "missing"),
-                                valuecolumn = NULL){
+get_complete_strata <- function(data, by, type = c("censored", "missing"), valuecolumn = NULL){
   if("GEO" %in% by) by <- grep("^GEO$", by, invert = T, value = T)
 
   if(type == "missing" && (is.null(valuecolumn) || valuecolumn %notin% names(data))){
@@ -287,7 +281,7 @@ get_complete_strata <- function(data,
 
   switch(type,
          censored = data[, let(n_censored = sum(SPVFLAGG != 0)), by = by],
-         missing = data[, let(n_censored = sum(is.na(get(valuecolumn)))), by = by])
+         missing = data[, let(n_censored = sum(is.na(x))), by = by, env = list(x = valuecolumn)])
   data <- data[n_censored == 0]
   data[, let(n_censored = NULL)]
   return(data)

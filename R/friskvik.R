@@ -383,7 +383,7 @@ friskvik_in_publication <- function(file, year){
 #' @noRd
 friskvik_unique_level <- function(data, dim = NULL){
   if(!dim %in% names(data)) return(NA_character_)
-  paste(data[, unique(get(dim))], collapse = ", ")
+  paste(unique(data[[dim]]), collapse = ", ")
 }
 
 #' @title friskvik_read_access

@@ -107,10 +107,7 @@ exclude_lks_for_compare <- function(dt){
 #' @examples
 #' # flag_rows(cube.new, cube.old, colinfo, "newrow")
 #' # flag_rows(cube.new, cube.old, colinfo, "exprow")
-flag_rows <- function(cube.new,
-                      cube.old = NULL,
-                      colinfo,
-                      flag = c("newrow", "exprow")){
+flag_rows <- function(cube.new, cube.old = NULL, colinfo, flag = c("newrow", "exprow")){
 
   flag <- match.arg(flag)
   if(flag == "newrow" & is.null(cube.new)) stop("cube.new cannot be NULL when flag = 'newrow'")
@@ -123,24 +120,12 @@ flag_rows <- function(cube.new,
   ref <- switch(flag,
                 newrow = data.table::copy(cube.old),
                 exprow = data.table::copy(cube.new))
-  new <- switch(flag,
-                newrow = colinfo$newdims,
-                exprow = colinfo$expdims)
 
   dt[, (flag) := 0L]
 
   for(dim in colinfo$commondims){
     flaglevels <- unique(ref[[dim]])
-    dt[get(dim) %notin% flaglevels, (flag) := 1L]
-  }
-
-  for(dim in new){
-    total <- find_total(dt, dim)
-    if(!is.na(total)){
-      dt[get(dim) != total & get(flag) == 0, (flag) := 1L]
-    } else {
-      dt[get(flag) == 0, (flag) := 1L]
-    }
+    dt[x %notin% flaglevels, (flag) := 1L, env = list(x = dim)]
   }
 
   return(dt)
@@ -156,11 +141,10 @@ flag_rows <- function(cube.new,
 #' @param cube data file
 #' @param outlierval Which value is used to detect outliers? Selected with [qualcontrol::select_outlier_pri()]
 #' @return cube with outlier information
-flag_outliers <- function(cube,
-                          outlierval){
+flag_outliers <- function(cube, outlierval){
   dt <- data.table::copy(cube)
   split_kommuneniv(dt)
-  dims <- grep("^AAR$", names(dt)[names(dt) %in% getOption("qualcontrol.alldimensions")], invert = T, value = T)
+  dims <- setdiff(names(dt)[names(dt) %in% getOption("qualcontrol.alldimensions")], "AAR")
   keyvars <- c(dims, "AAR")
   data.table::setkeyv(dt, keyvars)
 
@@ -187,19 +171,17 @@ flag_outliers <- function(cube,
 #' @param dt data file ordered by
 #' @param val value column to calculate change from
 #' @param by dimensions to group the change value by
-add_changeval <- function(dt,
-                          val,
-                          by){
+add_changeval <- function(dt, val, by){
   if(length(unique(dt$AAR)) < 2) return(dt)
   if(!all.equal(data.table::key(dt), c(by, "AAR"))) data.table::setkeyv(dt, c(by, "AAR"))
   changevalue <- paste0("change_", val)
-  min_nonzeroval <- dt[get(val) != 0, collapse::fmin(get(val))]
+  min_nonzeroval <- collapse::fmin(data.table::fifelse(dt[[val]] != 0, dt[[val]], NA_real_))
   g <- collapse::GRP(dt, by)
 
   dt[, (changevalue) := collapse::flag(dt[[val]], g = g)]
-  dt[, (changevalue) := zoo::na.locf(get(changevalue), na.rm = F), by = by]
-  dt[get(changevalue) == 0, (changevalue) := min_nonzeroval/2]
-  dt[, (changevalue) := 100*(get(val)/get(changevalue)-1)]
+  dt[, (changevalue) := zoo::na.locf(x, na.rm = F), by = by, env = list(x = changevalue)]
+  dt[x == 0, x := min_nonzeroval/2, env = list(x = changevalue)]
+  dt[, y := 100*(x/y-1), env = list(x = val, y = changevalue)]
   return(dt)
 }
 
@@ -220,7 +202,6 @@ add_outlier <- function(dt, val, by, change = FALSE){
   if(isTRUE(change) && length(unique(dt$AAR)) < 2) return(dt)
   if(isTRUE(change)) val <- paste0("change_", val)
 
-  missgeoniv <- dt[is.na(GEOniv)]
   dt <- dt[!is.na(GEOniv)]
 
   by <- sub("^GEO$", "GEOniv", by)
@@ -253,9 +234,8 @@ add_outlier <- function(dt, val, by, change = FALSE){
   }
 
   dt <- collapse::join(dt, cutoffs, on = by, verbose = 0, overid = 2)
-  dt[get(val) > get(highcutoff), (outliercol) := 1]
-  dt[get(val) < get(lowcutoff), (outliercol) := 1]
-  # dt[get(val) > get(lowcutoff) & get(val) < get(highcutoff), (outliercol) := 0]
+  dt[x > y, (outliercol) := 1, env = list(x = val, y = highcutoff)]
+  dt[x < y, (outliercol) := 1, env = list(x = val, y = lowcutoff)]
 
   return(dt)
 }
@@ -305,25 +285,25 @@ combine_cubes <- function(newcube_flag, oldcube_flag, colinfo){
   valuecolumns <- c("TELLER", "NEVNER", "sumTELLER", "sumNEVNER", "RATE.n")
 
   for(col in valuecolumns){
-    if(col %in% names(d_old) & !(col %in% names(d_new)) & paste0(col, "_uprikk") %in% names(d_new)){
-      d_new[, (col) := get(paste0(col, "_uprikk"))]
+    if(col %in% names(d_old) && !(col %in% names(d_new)) && paste0(col, "_uprikk") %in% names(d_new)){
+      data.table::set(d_new, j = col, value = d_new[[paste0(col, "_uprikk")]])
       d_new[SPVFLAGG != 0, (col) := NA_real_]
       commonvals <- c(commonvals, col)
     }
   }
 
-  d_new <- d_new[, c(..colinfo[["commondims"]], ..commonvals, "newrow", "GEOniv")]
+  d_new <- d_new[, .SD, .SDcols = c(colinfo[["commondims"]], commonvals, "newrow", "GEOniv")]
   data.table::setnames(d_new, commonvals, paste0(commonvals, "_new"))
 
-  # Handle new (add total to d_old) and expired (aggregate d_old) dimensions
-  if(length(colinfo$expdims) > 0) aggregate_cube_multi(d_old, colinfo$expdims)
-  if(length(colinfo$newdims) > 0) {
-    for(dim in colinfo$newdims){
-      d_old[, (dim) := find_total(d_new, dim)]
-    }
-  }
+  # # Handle new (add total to d_old) and expired (aggregate d_old) dimensions
+  # if(length(colinfo$expdims) > 0) aggregate_cube_multi(d_old, colinfo$expdims)
+  # if(length(colinfo$newdims) > 0) {
+  #   for(dim in colinfo$newdims){
+  #     d_old[, (dim) := find_total(d_new, dim)]
+  #   }
+  # }
 
-  d_old <- d_old[, c(..colinfo[["commondims"]], ..commonvals)]
+  d_old <- d_old[, .SD, .SDcols = c(colinfo[["commondims"]], commonvals)]
   data.table::setnames(d_old, commonvals, paste0(commonvals, "_old"))
 
   compare <- collapse::join(d_new, d_old, on = colinfo[["commondims"]], how = "full", verbose = 0, overid = 2)
@@ -358,22 +338,25 @@ add_totals_for_missing_dims <- function(dt, ref, dimlist){
 #' @param comparecube combined new and old cube with _new and _old valuecolumns, created by [qualcontrol::combine_cubes]
 #' @param valuecolumns vector containing value columns to calculate diff columns
 #' @return comparecube with diff columns
-add_diffcolumns <- function(comparecube,
-                            valuecolumns){
+add_diffcolumns <- function(comparecube, valuecolumns){
 
   for(val in valuecolumns){
     new <- paste0(val, "_new")
     old <- paste0(val, "_old")
     diff <- paste0(val, "_diff")
     reldiff <- paste0(val, "_reldiff")
-    comparecube[, (diff) := get(new) - get(old)]
-    comparecube[, (reldiff) := get(new) / get(old)]
+    data.table::set(comparecube, j = diff, value = comparecube[[new]] - comparecube[[old]])
+    data.table::set(comparecube, j = reldiff, value = comparecube[[new]] / comparecube[[old]])
+
     # For rows with missing new or old values, set _diff and _reldiff to NA
-    comparecube[is.na(get(new)) + is.na(get(old)) == 1, (diff) := NA_real_]
-    comparecube[is.na(get(new)) + is.na(get(old)) == 1, (reldiff) := NA_real_]
+    idx_one_na <- which(is.na(comparecube[[new]]) + is.na(comparecube[[old]]) == 1L)
+    data.table::set(comparecube, i = idx_one_na, j = diff,    value = NA_real_)
+    data.table::set(comparecube, i = idx_one_na, j = reldiff, value = NA_real_)
+
     # For rows with missing old AND new, set _diff = 0, and _reldiff = 1
-    comparecube[is.na(get(new)) & is.na(get(old)), (diff) := 0]
-    comparecube[is.na(get(new)) & is.na(get(old)), (reldiff) := 1]
+    idx_both_na <- which(is.na(comparecube[[new]]) & is.na(comparecube[[old]]))
+    data.table::set(comparecube, i = idx_both_na, j = diff,    value = 0)
+    data.table::set(comparecube, i = idx_both_na, j = reldiff, value = 1)
   }
 
   for(val in c("SPVFLAGG", "RATE.n")){
@@ -385,7 +368,7 @@ add_diffcolumns <- function(comparecube,
 
   diffcolumns <- grep("_diff$", names(comparecube), value = T)
   comparecube[, let(any_diffs = 0L)]
-  comparecube[rowSums(abs(comparecube[, ..diffcolumns]) > 0.1, na.rm = T) > 0, let(any_diffs = 1L)]
+  comparecube[rowSums(abs(comparecube[, .SD, .SDcols = diffcolumns]) > 0.1, na.rm = T) > 0, let(any_diffs = 1L)]
 }
 
 #' @title get_dump_folder
@@ -464,9 +447,9 @@ qc_round <- function(dt){
   round1 <- values[grepl("TELLER|NEVNER", values) & !grepl("_reldiff", values)]
   round2 <- values[grepl("RATE|SMR|MEIS|MIN$|MAX$|LOW$|HIGH$|.*wq\\d{2}$", values, perl = T) | grepl("_reldiff", values)]
 
-  for(val in round0){ dt[, (val) := round(get(val), 0)] }
-  for(val in round1){ dt[, (val) := round(get(val), 1)] }
-  for(val in round2){ dt[, (val) := round(get(val), 2)] }
+  for(val in round0) data.table::set(dt, j = val, value = round(dt[[val]], 0))
+  for(val in round1) data.table::set(dt, j = val, value = round(dt[[val]], 1))
+  for(val in round2) data.table::set(dt, j = val, value = round(dt[[val]], 2))
 
   return(dt)
 }

@@ -54,11 +54,11 @@ compare_geolevels <- function(dt = newcube,
   by <- c("GEOniv", groupdims)
 
   # Estimate sum and diffs
-  d <- d[, .("sum" = collapse::fsum(get(teller_val))), keyby = by]
+  d <- d[, .("sum" = sum(x)), by = by, env = list(x = teller_val)]
   d <- data.table::dcast(d, ... ~ GEOniv, value.var = "sum")
   data.table::setcolorder(d, c(groupdims, outcols[1], outcols[2]))
-  d[, let(Absolute = get(outcols[1])-get(outcols[2]),
-          Relative = round(get(outcols[1])/get(outcols[2]), 3))]
+  d[, let(Absolute = GEOh-GEOl, Relative = round(GEOh/GEOl, 3)),
+    env = list(GEOh = outcols[[1]], GEOl = outcols[[2]])]
 
   # Format output
   d[, (groupdims) := lapply(.SD, as.factor), .SDcols = groupdims]
@@ -93,6 +93,11 @@ unknown_bydel <- function(dt = newcube,
     return(invisible(NULL))
   }
 
+  # Filter relevant rows
+  d <- d[GEO %in% c(301, 1103, 4601, 5001) | GEOniv == "B"]
+  contains_bydel <- d[GEOniv == "B" & SPVFLAGG == 0, unique(AAR)]
+  d <- d[AAR %in% contains_bydel]
+
   cubefile <- get_cubefilename(dt)
   savepath <- get_table_savefolder(get_cubename(dt))
   suffix <- paste0("unknown_bydel_", type)
@@ -110,12 +115,9 @@ unknown_bydel <- function(dt = newcube,
     return(invisible(NULL))
   }
 
-  # Filter and format data
-  d <- d[GEO %in% c(301, 1103, 4601, 5001) | GEOniv == "B"]
-  contains_bydel <- d[GEOniv == "B" & SPVFLAGG == 0, unique(AAR)]
-  d <- d[AAR %in% contains_bydel]
+  # Format data
   add_kommune(d)
-  d <- d[, mget(c("KOMMUNE", "GEOniv", colinfo$dims.new, targets, "SPVFLAGG"))]
+  d <- d[, .SD, .SDcols = c("KOMMUNE", "GEOniv", colinfo$dims.new, targets, "SPVFLAGG")]
   d <- data.table::melt(d, measure.vars = targets, variable.name = "TARGET")
   d <- get_complete_strata(d, c("KOMMUNE", "TARGET", bydims), type = type, "value")
 
@@ -129,7 +131,7 @@ unknown_bydel <- function(dt = newcube,
   d <- data.table::dcast(d, ... ~ GEOniv, value.var = "sum")
   d[, UNKNOWN := round(100*(1 - B/K), 2)]
   d[B == 0 & K == 0, UNKNOWN := NA_real_]
-  d <- d[order(-UNKNOWN)]
+  data.table::setorder(d, -UNKNOWN, na.last = T)
   data.table::setcolorder(d, c("KOMMUNE", bydims, "TARGET", "K", "B", "UNKNOWN"))
   data.table::setnames(d, c("K", "B", "UNKNOWN"), c("Kommune", "Bydel", "UNKNOWN, %"))
 
