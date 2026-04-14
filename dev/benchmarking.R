@@ -9,5 +9,3 @@
 #     fun1(d, bycols, quantiles, limits)
 #     },
 #   times = 25)
-#
-#
