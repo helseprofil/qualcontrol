@@ -335,7 +335,7 @@ identify_coltypes <- function(cube.new = NULL,
 
   if(is.null(cube.new)) stop("cube.new must be provided")
 
-  misc_cols <- c("origgeo", "GEOniv", "KOMMUNE", "WEIGHTS")
+  misc_cols <- c("origgeo", "GEOniv", "KOMMUNE", "WEIGHTS", "any_diffs", "newrow", "exprow")
   censorparams <- "^pvern$|^serieprikket$|^naboprikket"
   out <- list()
 

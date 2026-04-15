@@ -9,8 +9,7 @@
 #'
 #' @return a DT output table
 #' @export
-comparecube_summary <- function(dt = comparecube,
-                                save = TRUE){
+comparecube_summary <- function(dt = comparecube, save = TRUE){
   if(is.null(dt)){
     cat("comparecube is NULL, no check performed")
     return(invisible(NULL))
@@ -144,6 +143,28 @@ plot_diff_timetrends <- function(dt = comparecube,
     plot_diff_timetrends_savefun(plot, savepath, cubefile, geoniv, save = save)
     print(plot)
   }
+}
+
+#' @title diffvals_which_levels
+#' @description Prints a list of unique values of a dimensions with diffs of a specified value
+#' @param dt comparecube
+#' @param dim dimension to list levels with diffs
+#' @param val value column to identify diffs
+#' @export
+diffvals_which_levels <- function(dt = comparecube, dim = "GEO", val = "sumTELLER_uprikk"){
+  if(is.null(dt)){
+    cat("comparecube is NULL, no check performed")
+    return(invisible(NULL))
+  }
+  colinfo <- identify_coltypes(comparecube)
+  available_vals <- unique(sub("_new$|_old$", "", grep("_diff$|_reldiff$", colinfo$vals.new, invert = T, value = T)))
+
+  if(dim %notin% colinfo$dims.new) stop("dim må være en dimensjon i filen: ", paste(colinfo$dims.new, collapse = ", "))
+  if(val %notin% available_vals) stop("val må være en verdikolonne i filen: ", paste(available_vals, collapse = ", "))
+
+  diffval <- paste0(val, "_diff")
+  cat("Unike verdier for ", dim, " som har differ for ", val, ":\n")
+  qc_round(dt)[any_diffs == 1 & x != 0, unique(y), env = list(x = diffval, y = dim)]
 }
 
 ## ---- HELPER FUNCTIONS ----

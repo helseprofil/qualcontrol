@@ -21,8 +21,9 @@
     - Strata with only 1 observations is filtered out ([issue #52](https://github.com/helseprofil/qualcontrol/issues/52))
 7. `aggregate_cube` now uses collapse, and keeps unique and max values of columns that cannot be aggregated. 
 8. `read_files` now collects naboprikk-columns into one 0|1-column, and adds missing censor-columns
-9. `identify_coltypes` now collects censor-columns
+9. `identify_coltypes` now collects censor-columns, and does not include `any_diffs`/`newrow`/`exprow` as values
 10. New function `explore_different_censoring`, filtering out strata with differing censoring across the new and old file. 
+11. New function `diffvals_which_levels`, which identify the levels of a dimension which are different on a specific value column. Used to e.g. identify GEO-codes with TELLER/NEVNER-diffs. 
 
 X. Code cleaning
     - Removed all use of get/mget

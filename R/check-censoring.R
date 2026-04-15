@@ -75,6 +75,12 @@ check_censoring <- function(dt = newcube){
   }
 }
 
+#' @title explore_different_censoring
+#' @description filters out strata with different censoring and prints out censor-info columns to identify the reason for differences.
+#' @param compare comparecube
+#' @param dt_new newcube
+#' @param dt_old oldcube
+#' @export
 explore_different_censoring <- function(compare = comparecube, dt_new = newcube, dt_old = oldcube){
   if(is.null(dt_old)){
     message("No old cube, check not possible")
