@@ -75,6 +75,31 @@ check_censoring <- function(dt = newcube){
   }
 }
 
+explore_different_censoring <- function(compare = comparecube, dt_new = newcube, dt_old = oldcube){
+  if(is.null(dt_old)){
+    message("No old cube, check not possible")
+    return(invisible(NULL))
+  }
+  colinfo <- identify_coltypes(dt_new, dt_old)
+  dims <- colinfo$commondims
+  diffs <- compare[(SPVFLAGG_new == 0 & SPVFLAGG_old > 0) | (SPVFLAGG_new > 0 & SPVFLAGG_old == 0), .SD, .SDcols = c(dims, "SPVFLAGG_new", "SPVFLAGG_old")]
+  colorder <- names(diffs)
+  censor_new <- colinfo$censor.new
+
+  diffs <- collapse::join(diffs, dt_new, on = dims, overid = 2, verbose = 0)[, .SD, .SDcols = c(names(diffs), censor_new)]
+  data.table::setnames(diffs, censor_new, paste0(censor_new, "_new"))
+
+  censor_old <- colinfo$censor.old
+  if(length(censor_old) > 0){
+    diffs <- collapse::join(diffs, dt_old, on = dims, overid = 2, verbose = 0)[, .SD, .SDcols = c(names(diffs), censor_old)]
+    data.table::setnames(diffs, censor_old, paste0(censor_old, "_old"))
+    for(col in intersect(censor_new, censor_old))  colorder <- c(colorder, paste0(col, c("_new", "_old")))
+  }
+
+  data.table::setcolorder(diffs, colorder)
+  return(diffs)
+}
+
 #' @@title compare_censoring
 #' @description
 #' Calculate number of censored observations and calculate absolute and relative difference

@@ -42,34 +42,6 @@ readfiles <- function(cube.new = NULL,
   if(comparecube) make_comparecube(cube.new = newcube, cube.old = oldcube, outliers = outliers, dumps = dumps)
 }
 
-#' @title collect_censor_information
-#' @description
-#' If information on secondary censoring is only provided splitted into naboprikketIOmgX-columns,
-#' collect them into column naboprikket (0|1). If naboprikket exists, only keep this column. If no
-#' secondary censoring column exist, add naboprikket = NA_real_
-#' @param dt
-#' @keywords internal
-#' @noRd
-collect_censor_information <- function(dt){
-  naboprikkcols <- grep("^naboprikketIomg", names(dt), value = T)
-  if("naboprikket" %in% names(dt)){ # Future standard from khfunctions
-    dt[, naboprikket := as.integer(naboprikket)]
-    if(length(naboprikkcols) > 0) dt[, (naboprikkcols) := NULL]
-    return(invisible(NULL))
-  }
-
-  if(length(naboprikkcols) > 0){
-    dt[, naboprikket := 0L]
-    idx <- which(rowSums(dt[, .SD, .SDcols = naboprikkcols]) > 0)
-    data.table::set(dt, i = idx, j = "naboprikket", value = 1L)
-    dt[, (naboprikkcols) := NULL]
-    return(invisible(NULL))
-  }
-
-  dt[, naboprikket := NA_integer_]
-  return(invisible(NULL))
-}
-
 #' @keywords internal
 #' @noRd
 readfiles_checkargs <- function(cube.new, cube.old, recode.new, recode.old, comparecube, outliers){
@@ -232,6 +204,42 @@ add_geoparams <- function(dt){
   dt[, GEOniv := droplevels(GEOniv)]
   dt[is.na(WEIGHTS), let(WEIGHTS = 0)]
   return(dt)
+}
+
+#' @title collect_censor_information
+#' @description
+#' If information on secondary censoring is only provided splitted into naboprikketIOmgX-columns,
+#' collect them into column naboprikket (0|1). If naboprikket exists, only keep this column. If no
+#' secondary censoring column exist, add naboprikket = NA_real_
+#' @param dt
+#' @keywords internal
+#' @noRd
+collect_censor_information <- function(dt){
+  for(col in c("pvern", "serieprikket")){
+    if(col %in% names(dt)){
+      dt[, (col) := as.integer(x), env = list(x = col)]
+    } else {
+      dt[, (col) := NA_integer_]
+    }
+  }
+
+  naboprikkcols <- grep("^naboprikketIomg", names(dt), value = T)
+  if("naboprikket" %in% names(dt)){ # Future standard from khfunctions
+    dt[, naboprikket := as.integer(naboprikket)]
+    if(length(naboprikkcols) > 0) dt[, (naboprikkcols) := NULL]
+    return(invisible(NULL))
+  }
+
+  if(length(naboprikkcols) > 0){
+    dt[, naboprikket := 0L]
+    idx <- which(rowSums(dt[, .SD, .SDcols = naboprikkcols]) > 0)
+    data.table::set(dt, i = idx, j = "naboprikket", value = 1L)
+    dt[, (naboprikkcols) := NULL]
+    return(invisible(NULL))
+  }
+
+  dt[, naboprikket := NA_integer_]
+  return(invisible(NULL))
 }
 
 #' @keywords internal
