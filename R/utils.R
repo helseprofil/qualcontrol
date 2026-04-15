@@ -336,17 +336,19 @@ identify_coltypes <- function(cube.new = NULL,
   if(is.null(cube.new)) stop("cube.new must be provided")
 
   misc_cols <- c("origgeo", "GEOniv", "KOMMUNE", "WEIGHTS")
-  prikkeparams <- "^pvern$|^serieprikket$|^naboprikket"
+  censorparams <- "^pvern$|^serieprikket$|^naboprikket"
   out <- list()
 
   allcolsnew <- names(cube.new)
   out[["dims.new"]] <- intersect(allcolsnew, getOption("qualcontrol.alldimensions"))
-  out[["vals.new"]] <- setdiff(allcolsnew, c(out$dims.new, misc_cols, grep(prikkeparams, allcolsnew, value = T)))
+  out[["vals.new"]] <- setdiff(allcolsnew, c(out$dims.new, misc_cols, grep(censorparams, allcolsnew, value = T)))
+  out[["censor.new"]] <- grep(censorparams, allcolsnew, value = T)
 
   if(!is.null(cube.old)){
     allcolsold <- names(cube.old)
     out[["dims.old"]] <- intersect(allcolsold, getOption("qualcontrol.alldimensions"))
-    out[["vals.old"]] <- setdiff(allcolsold, c(out$dims.old, misc_cols, grep(prikkeparams, allcolsold, value = T)))
+    out[["vals.old"]] <- setdiff(allcolsold, c(out$dims.old, misc_cols, grep(censorparams, allcolsold, value = T)))
+    out[["censor.old"]] <- grep(censorparams, allcolsold, value = T)
     out[["commondims"]] <- intersect(out$dims.new, out$dims.old)
     out[["commonvals"]] <- intersect(out$vals.new, out$vals.old)
     out[["commoncols"]] <- c(out$commondims, out$commonvals)

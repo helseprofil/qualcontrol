@@ -26,18 +26,48 @@ readfiles <- function(cube.new = NULL,
   newcube <- read_cube(path.new, type = "New")
   newcube <- recode_geo(newcube, recode.new)
   newcube <- add_geoparams(newcube)
+  collect_censor_information(dt = newcube)
 
   if(!is.null(cube.old)){
     path.old <- find_cube(cube.old)
     oldcube <- read_cube(path.old, type = "Old")
     oldcube <- recode_geo(oldcube, recode.old)
     oldcube <- add_geoparams(oldcube)
+    collect_censor_information(dt = oldcube)
   }
 
   newcube <<- newcube
   oldcube <<- oldcube
 
   if(comparecube) make_comparecube(cube.new = newcube, cube.old = oldcube, outliers = outliers, dumps = dumps)
+}
+
+#' @title collect_censor_information
+#' @description
+#' If information on secondary censoring is only provided splitted into naboprikketIOmgX-columns,
+#' collect them into column naboprikket (0|1). If naboprikket exists, only keep this column. If no
+#' secondary censoring column exist, add naboprikket = NA_real_
+#' @param dt
+#' @keywords internal
+#' @noRd
+collect_censor_information <- function(dt){
+  naboprikkcols <- grep("^naboprikketIomg", names(dt), value = T)
+  if("naboprikket" %in% names(dt)){ # Future standard from khfunctions
+    dt[, naboprikket := as.integer(naboprikket)]
+    if(length(naboprikkcols) > 0) dt[, (naboprikkcols) := NULL]
+    return(invisible(NULL))
+  }
+
+  if(length(naboprikkcols) > 0){
+    dt[, naboprikket := 0L]
+    idx <- which(rowSums(dt[, .SD, .SDcols = naboprikkcols]) > 0)
+    data.table::set(dt, i = idx, j = "naboprikket", value = 1L)
+    dt[, (naboprikkcols) := NULL]
+    return(invisible(NULL))
+  }
+
+  dt[, naboprikket := NA_integer_]
+  return(invisible(NULL))
 }
 
 #' @keywords internal
