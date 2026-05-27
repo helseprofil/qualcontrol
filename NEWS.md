@@ -24,6 +24,7 @@
 9. `identify_coltypes` now collects censor-columns, and does not include `any_diffs`/`newrow`/`exprow` as values
 10. New function `explore_different_censoring`, filtering out strata with differing censoring across the new and old file. 
 11. New function `diffvals_which_levels`, which identify the levels of a dimension which are different on a specific value column. Used to e.g. identify GEO-codes with TELLER/NEVNER-diffs. 
+12. Updated internal data (georecode, popinfo)
 
 X. Code cleaning
     - Removed all use of get/mget
