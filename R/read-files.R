@@ -211,11 +211,11 @@ add_geoparams <- function(dt){
 #' If information on secondary censoring is only provided splitted into naboprikketIOmgX-columns,
 #' collect them into column naboprikket (0|1). If naboprikket exists, only keep this column. If no
 #' secondary censoring column exist, add naboprikket = NA_real_
-#' @param dt
+#' @param dt data
 #' @keywords internal
 #' @noRd
 collect_censor_information <- function(dt){
-  for(col in c("pvern", "serieprikket")){
+  for(col in c("pvern", "serieprikket", "orgprikket", "dekningprikket")){
     if(col %in% names(dt)){
       dt[, (col) := as.integer(x), env = list(x = col)]
     } else {

@@ -11,5 +11,10 @@ Quality control of publication-ready files.
 \author{
 \strong{Maintainer}: Vegard Lysne \email{vegard.lysne@helsedir.no} (\href{https://orcid.org/0000-0002-0816-5075}{ORCID})
 
+Authors:
+\itemize{
+  \item Vegard Lysne \email{vegard.lysne@helsedir.no} (\href{https://orcid.org/0000-0002-0816-5075}{ORCID})
+}
+
 }
 \keyword{internal}
