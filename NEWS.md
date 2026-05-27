@@ -11,6 +11,7 @@
     - When checking if cube file is in publication folder, ignore file extension. 
     - Include a check of whether the indicator is included on page 4 of the profiles ([issue #54](https://github.com/helseprofil/qualcontrol/issues/54))
     - UNGDATA-indicators excluded from periode_bm/nn-check 
+    - Output is Viewed for inspection ([issue #30](https://github.com/helseprofil/qualcontrol/issues/30))
 3. `plot_boxplot` 
     - More effective calculation of baseplotdata using collapse
     - Calculates device size based on file with max number of panels, insted of always using the first file ([issue #53](https://github.com/helseprofil/qualcontrol/issues/53))
@@ -22,8 +23,8 @@
 7. `aggregate_cube` now uses collapse, and keeps unique and max values of columns that cannot be aggregated. 
 8. `read_files` now collects naboprikk-columns into one 0|1-column, and adds missing censor-columns
 9. `identify_coltypes` now collects censor-columns, and does not include `any_diffs`/`newrow`/`exprow` as values
-10. New function `explore_different_censoring`, filtering out strata with differing censoring across the new and old file. 
-11. New function `diffvals_which_levels`, which identify the levels of a dimension which are different on a specific value column. Used to e.g. identify GEO-codes with TELLER/NEVNER-diffs. 
+10. New function `explore_different_censoring`, filtering out strata with differing censoring across the new and old file. ([issue #50](https://github.com/helseprofil/qualcontrol/issues/50))
+11. New function `diffvals_which_levels`, which identify the levels of a dimension which are different on a specific value column. Used to e.g. identify GEO-codes with TELLER/NEVNER-diffs. ([issue #42](https://github.com/helseprofil/qualcontrol/issues/42)) 
 12. Updated internal data (georecode, popinfo)
 
 X. Code cleaning
