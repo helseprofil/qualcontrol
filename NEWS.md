@@ -1,3 +1,5 @@
+# qualcontrol (development version)
+
 # qualcontrol 1.4.0 (2026-05-28)
 
 ## Bugfix and other changes
