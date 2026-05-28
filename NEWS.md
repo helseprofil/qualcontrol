@@ -1,4 +1,4 @@
-# qualcontrol 1.4.0
+# qualcontrol 1.4.0 (2026-05-28)
 
 ## Bugfix and other changes
 1. In `plot_timeseries()`, the input data is limited to rows with actual data, which was causing a bug if all geo was missing data on specific years. These years was omitted from the plots. 
