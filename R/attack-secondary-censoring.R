@@ -8,14 +8,14 @@ attack_naboprikk <- function(cubefile = NULL, cubepath = NULL){
   naboprikkdims <- grep("nabopr", names(specs), value = T)
   naboprikkdims <- setNames(naboprikkdims, toupper(gsub("Stata_nabopr([^_]+).*$", "\\1", naboprikkdims)))
 
-  out_pvern1 <- data.table::copy(d[0, ..dims])
+  out_pvern1 <- data.table::copy(d[0, .SD, .SDcols = dims])
 
   for(dim in names(naboprikkdims)){
     restdims <- setdiff(dims, dim)
     triangles <- decode_triangles(dim = dim, naboprikkdims = naboprikkdims, specs = specs)
 
     for(i in 1:length(triangles)){
-      d_subset <- d[get(dim) %in% triangles[[i]]]
+      d_subset <- d[x %in% triangles[[i]], env = list(x = dim)]
       pvern1 <- d_subset[, .(n_pvern = sum(pvern, na.rm = T), n_prikkok = sum(prikket_ok, na.rm = T)), by = restdims][, (dim) := paste0("{", paste(triangles[[i]], collapse = ","), "}")][n_pvern > 0 & n_prikkok == 1][, let(n_pvern = NULL, n_prikkok = NULL)]
       if(ncol(pvern1) > 0) out_pvern1 <- data.table::rbindlist(list(out_pvern1, pvern1), use.names = T)
     }

@@ -4,14 +4,28 @@
 \alias{plot_timeseries}
 \title{plot_timeseries}
 \usage{
-plot_timeseries(dt = newcube_flag, onlynew = TRUE, change = FALSE, save = TRUE)
+plot_timeseries(
+  dt = newcube_flag,
+  show_n_years = 10,
+  onlynew = TRUE,
+  change = FALSE,
+  show_change_low = -10,
+  show_change_high = 20,
+  save = TRUE
+)
 }
 \arguments{
 \item{dt}{flagged data file, default to newcube_flag}
 
+\item{show_n_years}{Only show x most recent years in the plots, deafalts to 10. To show all, set value to NULL.}
+
 \item{onlynew}{should only new outliers be plotted? Default = TRUE}
 
 \item{change}{Should year-to-year changes be plotted? Default = FALSE}
+
+\item{show_change_low}{minimum decrease you want to plot, default = -10 (\%)}
+
+\item{show_change_high}{minimum increase you want to plot, default = 20 (\%)}
 
 \item{save}{Should plots be saved to the default folder? Default = T}
 }

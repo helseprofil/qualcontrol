@@ -91,10 +91,10 @@ check_barometer <- function(type = c("FHP", "OVP"),
   }
   cat("... \n")
   withVar <- c("Aar", indV1)
-  bar[ind, (withVar) := mget(withVar), on = c(stedskode_string = "Sted_kode", LPnr = "LPnr")]
+  bar <- collapse::join(bar, ind, on = c(stedskode_string = "Sted_kode", LPnr = "LPnr"), verbose = 0, overid = 2)[, .SD, .SDcols = c(names(bar), withVar)]
 
   verdiCol <- ifelse(geo == "fylke", "Verdi_mellomGeonivaa", "Verdi_lavesteGeonivaa")
-  outDT <- bar[get(verdiCol) == Verdi_referansenivaa, ][
+  outDT <- bar[x == Verdi_referansenivaa, env = list(x = verdiCol)][
     !is.na(roede) | !is.na(groenne) | !is.na(hvitMprikk)]
 
   return(outDT)

@@ -17,26 +17,34 @@ aggregate_cube <- function(cube, dim){
   total <- find_total(cube, dim)
 
   if(!is.na(total)){
-    return(cube[get(dim) == total])
+    return(cube[x == total, env = list(x = dim)])
   }
 
   if(is.na(total)){
     colinfo <- identify_coltypes(cube)
-    vals <- colinfo$vals.new
-    vals <- grep("SPVFLAGG", vals, value = T, invert = T)
+    vals <- grep("SPVFLAGG", colinfo$vals.new, value = T, invert = T)
     cube[, (vals) := lapply(.SD, as.numeric), .SDcols = vals]
     sumvals <- grep("TELLER", vals, value = T)
-    avgvals <- grep("TELLER", vals, value = T, invert = T)
-    groupdims <- grep(dim, colinfo$dims.new, value = T, invert = T)
-    data.table::setkeyv(cube, groupdims)
+    avgvals <- setdiff(vals, sumvals)
+    groupdims <- setdiff(colinfo$dims.new, dim)
+    uniquevals <- intersect(names(cube), c("GEOniv", "WEIGHTS"))
+    maxvals <- setdiff(names(cube), c(sumvals, avgvals, groupdims, uniquevals, dim))
 
-    cube[, (avgvals) := lapply(.SD, mean, na.rm = T), .SDcols = avgvals, by = groupdims]
-    cube[, (sumvals) := lapply(.SD, sum, na.rm = T), .SDcols = sumvals, by = groupdims]
-    for(i in avgvals){cube[is.nan(get(i)), (i) := NA_real_]}
-    cube[, (dim) := "Total"]
-    cube <- cube[, .SD[1], by = groupdims]
-    data.table::setcolorder(cube, colorder)
-    return(cube)
+
+    g <- collapse::GRP(cube, groupdims)
+
+    agg <- collapse::add_vars(
+      g[["groups"]],
+      collapse::fsum(collapse::get_vars(cube, sumvals), g = g),
+      collapse::fmean(collapse::get_vars(cube, avgvals), g = g),
+      collapse::fmax(collapse::get_vars(cube, maxvals), g = g),
+      collapse::ffirst(collapse::get_vars(cube, uniquevals), g = g)
+    )
+
+    for(j in avgvals) data.table::set(agg, i = which(is.nan(agg[[j]])), j = j, value = NA_real_)
+    agg[, (dim) := "Total"]
+    data.table::setcolorder(agg, colorder)
+    return(agg)
   }
 }
 
@@ -152,10 +160,7 @@ find_total <- function(cube, dim){
 #' @param cube.old old file
 #' @param dimtable table generated with [qualcontrol::compare_dimensions()]
 #' @param filter "new" or "old", indicating whether the file to filter is the new or old file
-filter_cube <- function(cube.new,
-                        cube.old,
-                        dimtable,
-                        filter = c("new", "old")){
+filter_cube <- function(cube.new, cube.old, dimtable, filter = c("new", "old")){
   filter <- match.arg(filter)
   filteron <- switch(filter,
                      new = "New levels",
@@ -166,11 +171,11 @@ filter_cube <- function(cube.new,
   refcube <- switch(filter,
                     new = data.table::copy(cube.old),
                     old = data.table::copy(cube.new))
-  filterdims <- data.table::copy(dimtable)[get(filteron) != ""]$Dimension
+  filterdims <- data.table::copy(dimtable)[x != "", env = list(x = filteron)][["Dimension"]]
 
   if(length(filterdims) > 0){
     for(dim in filterdims){
-      filtercube <- filtercube[get(dim) %in% unique(refcube[[dim]])]
+      filtercube <- filtercube[x %in% unique(refcube[[dim]]), env = list(x = dim)]
     }
   }
 
@@ -267,10 +272,7 @@ get_all_combinations <- function(dt,
 #' # get_complete_strata(data, by = bycols, type = "censored")
 #' # Actually filter data
 #' # data <- get_complete_strata(data, by = bycols, type = "censored")
-get_complete_strata <- function(data,
-                                by,
-                                type = c("censored", "missing"),
-                                valuecolumn = NULL){
+get_complete_strata <- function(data, by, type = c("censored", "missing"), valuecolumn = NULL){
   if("GEO" %in% by) by <- grep("^GEO$", by, invert = T, value = T)
 
   if(type == "missing" && (is.null(valuecolumn) || valuecolumn %notin% names(data))){
@@ -279,7 +281,7 @@ get_complete_strata <- function(data,
 
   switch(type,
          censored = data[, let(n_censored = sum(SPVFLAGG != 0)), by = by],
-         missing = data[, let(n_censored = sum(is.na(get(valuecolumn)))), by = by])
+         missing = data[, let(n_censored = sum(is.na(x))), by = by, env = list(x = valuecolumn)])
   data <- data[n_censored == 0]
   data[, let(n_censored = NULL)]
   return(data)
@@ -333,18 +335,20 @@ identify_coltypes <- function(cube.new = NULL,
 
   if(is.null(cube.new)) stop("cube.new must be provided")
 
-  misc_cols <- c("origgeo", "GEOniv", "KOMMUNE", "WEIGHTS")
-  prikkeparams <- "^pvern$|^serieprikket$|^naboprikket"
+  misc_cols <- c("origgeo", "GEOniv", "KOMMUNE", "WEIGHTS", "any_diffs", "newrow", "exprow")
+  censorparams <- "^pvern$|^serieprikket$|^naboprikket|^dekningprikket$|^orgprikket$"
   out <- list()
 
   allcolsnew <- names(cube.new)
   out[["dims.new"]] <- intersect(allcolsnew, getOption("qualcontrol.alldimensions"))
-  out[["vals.new"]] <- setdiff(allcolsnew, c(out$dims.new, misc_cols, grep(prikkeparams, allcolsnew, value = T)))
+  out[["vals.new"]] <- setdiff(allcolsnew, c(out$dims.new, misc_cols, grep(censorparams, allcolsnew, value = T)))
+  out[["censor.new"]] <- grep(censorparams, allcolsnew, value = T)
 
   if(!is.null(cube.old)){
     allcolsold <- names(cube.old)
     out[["dims.old"]] <- intersect(allcolsold, getOption("qualcontrol.alldimensions"))
-    out[["vals.old"]] <- setdiff(allcolsold, c(out$dims.old, misc_cols, grep(prikkeparams, allcolsold, value = T)))
+    out[["vals.old"]] <- setdiff(allcolsold, c(out$dims.old, misc_cols, grep(censorparams, allcolsold, value = T)))
+    out[["censor.old"]] <- grep(censorparams, allcolsold, value = T)
     out[["commondims"]] <- intersect(out$dims.new, out$dims.old)
     out[["commonvals"]] <- intersect(out$vals.new, out$vals.old)
     out[["commoncols"]] <- c(out$commondims, out$commonvals)

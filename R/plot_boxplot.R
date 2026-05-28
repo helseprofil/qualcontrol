@@ -27,14 +27,17 @@ plot_boxplot <- function(dt = newcube_flag, onlynew = TRUE, change = FALSE, save
 
   # Extract baseplotdata
   bycols <- c("GEOniv", grep("^GEO$|^AAR$", colinfo$dims.new, invert = T, value = T))
-  g <- collapse::GRP(d, c(bycols, quantiles, limits))
 
-  bpdata <- collapse::join(g[["groups"]],
-                                 d[, .(N_obs = collapse::fsum(!is.na(get(plotvalue))),
-                                       MINABOVELOW = collapse::fmin(get(plotvalue)[get(plotvalue) >= get(limits[1])]),
-                                       MAXBELOWHIGH = collapse::fmax(get(plotvalue)[get(plotvalue) <= get(limits[2])])),
-                                   by = bycols],
-                                 verbose = 0, overid = 2)
+  g <- collapse::GRP(d, bycols)
+  val <- d[[plotvalue]]
+  lowlim <- d[[limits[1]]]
+  highlim <- d[[limits[2]]]
+
+  bpdata <- collapse::add_vars(g[["groups"]],
+                               collapse::ffirst(collapse::get_vars(d, c(quantiles, limits)), g = g),
+                               N_obs = collapse::fnobs(d[[plotvalue]], g = g),
+                               MINABOVELOW = collapse::fmin(ifelse(val > lowlim, val, NA_real_), g = g),
+                               MAXBELOWHIGH = collapse::fmax(ifelse(val < highlim, val, NA_real_), g = g))
   bpdata[, (limits) := NULL]
 
   panels <- grep("^GEOniv$", bycols, invert = T, value = T)
@@ -54,8 +57,6 @@ plot_boxplot <- function(dt = newcube_flag, onlynew = TRUE, change = FALSE, save
   } else {
     oldata <- d[x == 1, env = list(x = outlier)]
   }
-  # oldata[, let(label = paste0(GEO, "'", sub(".*(\\d{2}$)", "\\1", AAR),"'(", round(x, 0), ")"),
-  #              yval = x), env = list(x = plotvalue)]
   oldata[, let(label = paste0(GEO, "'", sub(".*(\\d{2}$)", "\\1", AAR)),
                yval = x), env = list(x = plotvalue)]
   oldata <- oldata[, .SD, .SDcols = c(bycols, "label", "yval")]
@@ -68,7 +69,15 @@ plot_boxplot <- function(dt = newcube_flag, onlynew = TRUE, change = FALSE, save
   plotargs[["ylab"]] <- ifelse(change, paste0(sub("change_", "", plotvalue), ", (% change)"), plotvalue)
 
   dpi = 220
-  size <- compute_device_size_px(plot_boxplot_plotfun(collect_boxplot_plotdata(bpdata, oldata, filter, 1), plotargs), dpi = dpi)
+  maxpanelsfile <- 1
+  if(length(filter) > 1){
+    n_panels <- integer()
+    for(i in seq_along(filter)){
+      n_panels <- c(n_panels, bpdata[x, env = list(x = str2lang(filter[[i]]))][N_obs > 2, length(unique(panels))])
+    }
+    maxpanelsfile <- which.max(n_panels)
+  }
+  size <- compute_device_size_px(plot_boxplot_plotfun(collect_boxplot_plotdata(bpdata, oldata, filter, maxpanelsfile), plotargs), dpi = dpi)
 
   metadata <- data.table::data.table(file = seq_len(length(filter)), filter = filter)
   suffix <- character()
@@ -86,10 +95,10 @@ plot_boxplot <- function(dt = newcube_flag, onlynew = TRUE, change = FALSE, save
   }
 
   for(i in metadata$file){
-    plotdata = collect_boxplot_plotdata(bpdata, oldata, filter, i)
+    plotdata <- collect_boxplot_plotdata(bpdata, oldata, filter, i)
     plotargs[["subtitle"]] <- character()
     for(dim in filedims) plotargs$subtitle <- c(plotargs$subtitle, paste0("\n", dim, ": ", unique(plotdata$bp[[dim]])))
-    plot <- plot_boxplot_plotfun(plotdata, plotargs = plotargs)
+    plot <- plot_boxplot_plotfun(plotdata = plotdata, plotargs = plotargs)
     if(save) print(plot)
     pb$tick()
   }
@@ -104,6 +113,9 @@ plot_boxplot <- function(dt = newcube_flag, onlynew = TRUE, change = FALSE, save
   }
 }
 
+#' @title collect_boxplot_plotdata
+#' @keywords internal
+#' @noRd
 collect_boxplot_plotdata <- function(bpdata, oldata, filter, file){
   data <- list()
   data[["bp"]] <- bpdata[x, env = list(x = str2lang(filter[[file]]))][N_obs > 2]
@@ -134,9 +146,9 @@ plot_boxplot_plotfun <- function(plotdata, plotargs){
     ggplot2::coord_flip() +
     ggplot2::geom_boxplot(data = plotdata$bp,
                           ggplot2::aes(ymin = MINABOVELOW,
-                                       lower = get(plotargs$quantiles[1]),
-                                       middle = get(plotargs$quantiles[2]),
-                                       upper = get(plotargs$quantiles[3]),
+                                       lower = .data[[plotargs$quantiles[1]]],
+                                       middle = .data[[plotargs$quantiles[2]]],
+                                       upper = .data[[plotargs$quantiles[3]]],
                                        ymax = MAXBELOWHIGH),
                           stat = "identity") +
     ggplot2::geom_text(data = plotdata$ol,
@@ -149,7 +161,8 @@ plot_boxplot_plotfun <- function(plotdata, plotargs){
     ggh4x::force_panelsizes(cols = ggplot2::unit(7, "cm"),
                             rows = ggplot2::unit(5, "cm")) +
     theme_qc() +
-    ggplot2::theme(plot.subtitle = ggplot2::element_text(size = 12),
+    ggplot2::theme(plot.title = ggplot2::element_text(size = 12, family = "sans", hjust = 1),
+                   plot.subtitle = ggplot2::element_text(size = 12),
                    plot.caption = ggplot2::element_text(size = 12),
                    axis.title = ggplot2::element_text(size = 12),
                    axis.text = ggplot2::element_text(size = 8),

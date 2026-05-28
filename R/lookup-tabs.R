@@ -36,7 +36,7 @@ update_georecode <- function(year, overwrite = TRUE){
 #' @param year referring to NESSTAR-folder
 #' @param overwrite should the file be overwritten?
 #' @examples
-#' # update_popinfo("O:/Prosjekt/FHP/PRODUKSJON/PRODUKTER/KUBER/STATBANK/STATBANK_2026/BEFOLK_GK_2025-08-07-12-50.csv",
+#' # update_popinfo("O:/Prosjekt/FHP/PRODUKSJON/PRODUKTER/KUBER/STATBANK/DATERT/R/BEFOLK_GK_2026-05-27-12-21.parquet",
 #' overwrite = TRUE)
 #'
 update_popinfo <- function(popfile, overwrite = TRUE){

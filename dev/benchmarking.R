@@ -2,12 +2,10 @@
 #
 # microbenchmark(
 #   Old = {
-#     PlotTimeDiff(comparecube)
+#     fun2(d, bycols, quantiles, limits)
 #     },
 #
 #   New = {
-#     plot_diff_timetrends(comparecube, save = F)
+#     fun1(d, bycols, quantiles, limits)
 #     },
 #   times = 25)
-#
-#

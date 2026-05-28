@@ -22,8 +22,8 @@ check_friskvik <- function(profile = c("FHP", "OVP"),
   on.exit(RODBC::odbcClose(con), add = TRUE)
   paths <- friskvik_create_path(profile = profile, geolevel = geolevel, profileyear = profileyear, test = test)
   friskvikfiles <- list.files(paths$godkjent, pattern = ".csv")
-  outcols <- c("Friskvik", "Kube", "ALT_OK", "FIL_I_STATBANK", "FRISKVIK_ETAB", "KUBE_KJONN", "KUBE_ALDER", "KUBE_UTDANN", "KUBE_INNVKAT", "KUBE_LANDBAK",
-               "FRISKVIK_AAR", "SISTE_AAR", "Periode_bm", "Periode_nn", "IDENTISK_PRIKKING", "MATCHER_KOLONNE", "Different_kubecol", "Enhet", "REFVERDI_VP", "VALID_kombo")
+  outcols <- c("Friskvik", "Kube", "ALT_OK", "FIL_I_STATBANK", "SIDE 1", "SIDE 4", "FRISKVIK_ETAB", "KUBE_KJONN", "KUBE_ALDER", "KUBE_UTDANN", "KUBE_INNVKAT", "KUBE_LANDBAK",
+               "FRISKVIK_AAR", "SISTE_AAR", "Periode_bm", "Periode_nn", "IDENTISK_PRIKKING", "MATCHER_KOLONNE", "Different_kubecol", "Enhet", "REFVERDI_VP", "VALID_standardisering_kombo", "Kommentar")
   out_format <- data.table::setDT(as.list(setNames(rep(NA_character_, length(outcols)), outcols)))
   out <- data.table::copy(out_format[0, ])
 
@@ -34,37 +34,58 @@ check_friskvik <- function(profile = c("FHP", "OVP"),
     tryload <- try(friskvik_read_file(filename = file, geolevel = geolevel, profile = profile, profileyear = profileyear, friskvikpath = paths$godkjent, con = con),
                    silent = T)
     if(!("try-error" %in% class(tryload))){
+      FRISKVIK <- .GlobalEnv$datasets$FRISKVIK
+      KUBE <- .GlobalEnv$datasets$KUBE
+      SPEC <- .GlobalEnv$datasets$SPEC
+
       indikatornavn <- sub("(.*)(_\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}.*)", "\\1", file)
       newline[["Kube"]] <- attributes(KUBE)$Filename
       newline[["FIL_I_STATBANK"]] <- friskvik_in_publication(KUBE, profileyear)
+      newline[["SIDE 1"]] <- friskvik_read_access(con, "Side1", "FRISKVIK", indikatornavn, profile, geolevel, profileyear)
+      newline[["SIDE 4"]] <- friskvik_read_access(con, "Side4", "FRISKVIK", indikatornavn, profile, geolevel, profileyear)
       newline[["FRISKVIK_ETAB"]] <- friskvik_unique_level(FRISKVIK, "ETAB")
-      newline[["KUBE_KJONN"]] <- friskvik_unique_level(KUBE, "KJONN")
-      newline[["KUBE_ALDER"]] <- friskvik_unique_level(KUBE, "ALDER")
-      newline[["KUBE_UTDANN"]] <- friskvik_unique_level(KUBE, "UTDANN")
-      newline[["KUBE_INNVKAT"]] <- friskvik_unique_level(KUBE, "INNVKAT")
-      newline[["KUBE_LANDBAK"]] <- friskvik_unique_level(KUBE, "LANDBAK")
       newline[["FRISKVIK_AAR"]] <- friskvik_unique_level(FRISKVIK, "AAR")
-      newline[["SISTE_AAR"]] <- friskvik_last_year()
-
       Periode_bm <- friskvik_read_access(con, "Periode_bm", "FRISKVIK", indikatornavn, profile, geolevel, profileyear)
-      newline[["Periode_bm"]] <- ifelse(length(Periode_bm) == 0 || is.na(Periode_bm), "!! empty", Periode_bm)
       Periode_nn <- friskvik_read_access(con, "Periode_nn", "FRISKVIK", indikatornavn, profile, geolevel, profileyear)
+      newline[["Periode_bm"]] <- ifelse(length(Periode_bm) == 0 || is.na(Periode_bm), "!! empty", Periode_bm)
       newline[["Periode_nn"]] <- ifelse(length(Periode_nn) == 0 || is.na(Periode_nn), "!! empty", Periode_nn)
-
-      newline[["IDENTISK_PRIKKING"]] <- friskvik_compare_prikk()
-      compvals <- friskvik_compare_val()
-      newline[["MATCHER_KOLONNE"]] <- compvals$matches
-      newline[["Different_kubecol"]] <- compvals$different
-
+      isungdata <- grepl("UNGDATA", newline[["Kube"]])
+      if(isungdata) newline[["Periode_bm"]] <- newline[["Periode_nn"]] <- "-"
       ENHET <- friskvik_read_access(con, "Enhet", "FRISKVIK", indikatornavn, profile, geolevel, profileyear)
       newline[["Enhet"]] <- ifelse(length(ENHET) == 0 || is.na(ENHET), "!!MISSING", ENHET)
-      REFVERDI_VP <- SPEC[Kolonne == "REFVERDI_VP", Innhold]
-      newline[["REFVERDI_VP"]] <- ifelse(length(REFVERDI_VP) == 0 || is.na(REFVERDI_VP), "!! MISSING from SPECS-file", REFVERDI_VP)
-      isAK <- grepl("\\([ak,]+\\)", newline[["Enhet"]])
-      isPD <- newline[["REFVERDI_VP"]] %in% c("P", "D")
-      isMEIS <- "MEIS" %in% newline[["MATCHER_KOLONNE"]]
-      newline[["VALID_kombo"]] <- ifelse(all(isAK, isPD, isMEIS) | !(any(isAK, isPD, isMEIS)), "Yes", "!! No!!")
+
+      if(nrow(KUBE) > 0){
+        newline[["KUBE_KJONN"]] <- friskvik_unique_level(KUBE, "KJONN")
+        newline[["KUBE_ALDER"]] <- friskvik_unique_level(KUBE, "ALDER")
+        newline[["KUBE_UTDANN"]] <- friskvik_unique_level(KUBE, "UTDANN")
+        newline[["KUBE_INNVKAT"]] <- friskvik_unique_level(KUBE, "INNVKAT")
+        newline[["KUBE_LANDBAK"]] <- friskvik_unique_level(KUBE, "LANDBAK")
+        newline[["SISTE_AAR"]] <- friskvik_last_year(data1 = FRISKVIK, data2 = KUBE)
+
+        # Filtrer KUBE til å bare inneholde samme år som i friskvik
+        KUBE <- KUBE[AAR %in% unique(FRISKVIK$AAR)]
+        isequal <- KUBE[,.N] == FRISKVIK[, .N]
+        if(!isequal) newline[["Kommentar"]] <- "Klarer ikke filtrere KUBE til å matche FRISKVIK, kan skyldes 'rare' kolonnenavn. Noen sjekker ikke mulig."
+        newline[["IDENTISK_PRIKKING"]] <- friskvik_compare_prikk(data1 = FRISKVIK, data2 = KUBE)
+        compvals <- friskvik_compare_val(data1 = FRISKVIK, data2 = KUBE)
+        newline[["MATCHER_KOLONNE"]] <- compvals$matches
+        newline[["Different_kubecol"]] <- compvals$different
+        REFVERDI_VP <- ifelse(nrow(SPEC) > 0, SPEC[Kolonne == "REFVERDI_VP", Innhold], "SPEC finnes ikke")
+        newline[["REFVERDI_VP"]] <- ifelse(length(REFVERDI_VP) == 0 || is.na(REFVERDI_VP), "!! MISSING from SPECS-file", REFVERDI_VP)
+
+        if(newline$REFVERDI_VP %in% c("V", "P", "D") && !grepl("!!", newline$MATCHER_KOLONNE)){
+          isAK <- grepl("\\([ak,]+\\)", newline[["Enhet"]])
+          isPD <- newline[["REFVERDI_VP"]] %in% c("P", "D")
+          isMEIS <- "MEIS" %in% newline[["MATCHER_KOLONNE"]]
+          newline[["VALID_standardisering_kombo"]] <- ifelse(all(isAK, isPD, isMEIS) | !(any(isAK, isPD, isMEIS)), "Ja", "!! NEI !!")
+        } else {
+          newline[["VALID_standardisering_kombo"]] <- "Vurdering ikke mulig"
+        }
+      } else{
+        newline[["Kommentar"]] <- "Ingen rader i filtrert KUBE, kan skyldes 'rare' kolonnenavn. Noen sjekker ikke mulig."
+      }
     }
+
     rm(tryload)
     out <- data.table::rbindlist(list(out, newline))
   }
@@ -75,8 +96,9 @@ check_friskvik <- function(profile = c("FHP", "OVP"),
       grepl("!!", Periode_nn) |
       grepl("!!", IDENTISK_PRIKKING) |
       grepl("!!", MATCHER_KOLONNE) |
-      grepl("!!", VALID_kombo),
-      ALT_OK := "!! KANSKJE IKKE !!"]
+      grepl("!!", VALID_standardisering_kombo),
+      ALT_OK := "!! KANSKJE IKKE, utslag på noen tester !!"]
+  out[!is.na(Kommentar), ALT_OK := "!! KANSKJE IKKE, se kommentar !!"]
 
   assign(paste("FRISKVIKSJEKK",profile,geolevel, sep = "_"), out, envir = .GlobalEnv)
 
@@ -94,13 +116,8 @@ check_friskvik <- function(profile = c("FHP", "OVP"),
 #' @param geolevel One of "B", "K", or "F"
 #' @param profileyear 4-digit profileyear
 #' @param friskvikpath can provide full path, defaults to NULL
-friskvik_read_file <- function(filename = NULL,
-                               profile = NULL,
-                               geolevel = NULL,
-                               profileyear = NULL,
-                               friskvikpath = NULL,
-                               con = NULL){
-  clean_friskvik_environment()
+friskvik_read_file <- function(filename = NULL, profile = NULL, geolevel = NULL, profileyear = NULL, friskvikpath = NULL, con = NULL){
+  .GlobalEnv[["datasets"]] <- list()
   if(is.null(filename)) stop("file not selected")
   if(is.null(friskvikpath)){
     if(is.null(profile)) stop("profile must be provided")
@@ -118,15 +135,14 @@ friskvik_read_file <- function(filename = NULL,
   if(length(friskvikfile) > 1) stop("> 1 FRISKVIK files with the same name identified", cat(friskvikfile, sep = "\n"))
   friskvikfilepath <- file.path(friskvikpath, friskvikfile)
   friskvikdatetag <- sub(".*(\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2})(.csv$)", "\\1", friskvikfilepath)
-  FRISKVIK <<- read_friskvik(path = friskvikfilepath)
+  FRISKVIK <- read_friskvik(path = friskvikfilepath)
 
   correctcube <- friskvik_read_access(con, "KUBE_NAVN", "FRISKVIK", friskvikindikator, profile, geolevel, profileyear)
   cubefilepath <- get_cube_path(datetag = friskvikdatetag, correctcube = correctcube)
   specfilepath <- get_specfile_path(datetag = friskvikdatetag, correctcube = correctcube)
 
   KUBE <- read_friskvik_cube(path = cubefilepath)
-  SPEC <<- data.table::fread(specfilepath)
-  cat(paste0("\nSPEC loaded: ", basename(specfilepath)))
+  SPEC <- read_friskvik_spec(path = specfilepath)
 
   colinfo <- identify_coltypes(FRISKVIK, KUBE)
   KUBE <- filter_cube_to_friskvik(cube = KUBE, friskvik = FRISKVIK, colinfo = colinfo, friskvikindikator = friskvikindikator)
@@ -134,20 +150,35 @@ friskvik_read_file <- function(filename = NULL,
   data.table::setkeyv(KUBE, colinfo$commondims)
   data.table::setkeyv(FRISKVIK, colinfo$commondims)
 
-  KUBE <<- KUBE
+  .GlobalEnv[["datasets"]][["FRISKVIK"]] <- FRISKVIK
+  .GlobalEnv[["datasets"]][["KUBE"]] <- KUBE
+  .GlobalEnv[["datasets"]][["SPEC"]] <- SPEC
 }
 
-clean_friskvik_environment <- function(){
-  .GlobalEnv[["FRISKVIK"]] <- NULL
-  .GlobalEnv[["KUBE"]] <- NULL
-  .GlobalEnv[["SPEC"]] <- NULL
-}
+# clean_friskvik_environment <- function(){
+#   .GlobalEnv[["datasets"]] <- NULL
+#   .GlobalEnv[["FRISKVIK"]] <- NULL
+#   .GlobalEnv[["KUBE"]] <- NULL
+#   .GlobalEnv[["SPEC"]] <- NULL
+# }
 
 read_friskvik <- function(path){
   file <- data.table::fread(path)
+  fix_case_insensitive_match(file = file)
   data.table::setattr(file, "Filename", basename(path))
   cat(paste0("\nFRISKVIK loaded: ", sub("(.*KUBER/)(.*)", "\\2", path)))
   return(file)
+}
+
+fix_case_insensitive_match <- function(file){
+  friskvikcols <- getOption("qualcontrol.friskvikcols")
+  wrongnames <- names(file)[!names(file) %in% friskvikcols]
+  if(length(wrongnames) == 0) return(invisible(NULL))
+  ci_idx <- match(toupper(wrongnames), toupper(friskvikcols))
+  ci_match <- wrongnames[!is.na(ci_idx)]
+  if(length(ci_match) == 0) return(invisi)
+  ci_correct <- friskvikcols[ci_idx[!is.na(ci_idx)]]
+  data.table::setnames(file, ci_match, ci_correct)
 }
 
 read_friskvik_cube <- function(path){
@@ -164,6 +195,17 @@ read_friskvik_cube <- function(path){
   data.table::setattr(KUBE, "Kubepath", path)
   cat(paste0("\nKUBE loaded: ", basename(path)))
   return(KUBE)
+}
+
+read_friskvik_spec <- function(path){
+  if(length(path) < 1){
+    SPEC <- data.table::data.table()
+    cat(paste0("\nSPEC not found"))
+  } else {
+    SPEC <- data.table::fread(path)
+    cat(paste0("\nSPEC loaded: ", basename(path)))
+  }
+  return(SPEC)
 }
 
 get_cube_path <- function(datetag, correctcube){
@@ -185,12 +227,17 @@ get_specfile_path <- function(datetag, correctcube){
   return(path)
 }
 
+#' @title filter_cube_to_friskvik
+#' @description
+#' Filters KUBE file to match FRISKVIK on all dimensions except AAR
+#' @noRd
 filter_cube_to_friskvik <- function(cube, friskvik, colinfo, friskvikindikator){
-  friskvikindikator <-
-  ETAB <- friskvik[, unique(ETAB)]
-  if(!is.na(ETAB)) cube <- cube[eval(parse(text = ETAB))]
+  if("ETAB" %in% names(friskvik)){
+    ETAB <- friskvik[, unique(ETAB)]
+    if(!is.na(ETAB)) cube <- cube[eval(parse(text = ETAB))]
+  }
   filtercols <- grep("^AAR$", colinfo$commondims, invert = T, value = T)
-  for(i in filtercols) cube <- cube[get(i) %in% friskvik[, unique(get(i))]]
+  for(i in filtercols) cube <- cube[x %in% unique(friskvik[[i]]), env = list(x = i)]
 
   if("INNVKAT" %in% colinfo$expdims) cube <- cube[INNVKAT == 0]
   if("LANDBAK" %in% colinfo$expdims){
@@ -211,17 +258,16 @@ filter_cube_to_friskvik <- function(cube, friskvik, colinfo, friskvikindikator){
 #' @noRd
 #' @param data1 FRISKVIK
 #' @param data2 KUBE
-friskvik_last_year <- function(data1 = FRISKVIK,
-                             data2 = KUBE){
+friskvik_last_year <- function(data1 = FRISKVIK, data2 = KUBE){
 
   if(length(data1[, unique(AAR)]) > 1){
     lastyear <- max(data1[, unique(AAR)])
-    out <- data.table::fcase(lastyear == max(data2[, unique(AAR)]), "Yes",
-                             default = "!!NO!!")
+    out <- data.table::fcase(lastyear == max(data2[, unique(AAR)]), "Ja",
+                             default = "!! NEI !!")
   } else if(data1[, unique(AAR)] == max(data2[, unique(AAR)])){
-    out <- "Yes"
+    out <- "Ja"
   } else {
-    out <- "!!NO!!"
+    out <- "!! NEI !!"
   }
 
   return(out)
@@ -232,18 +278,15 @@ friskvik_last_year <- function(data1 = FRISKVIK,
 #' @noRd
 #' @param data1 FRISKVIK
 #' @param data2 KUBE
-friskvik_compare_prikk <- function(data1 = FRISKVIK,
-                                   data2 = KUBE){
+friskvik_compare_prikk <- function(data1 = FRISKVIK,data2 = KUBE){
 
-  # Only include years included in FRISKVIK
-  data2 <- data2[AAR %in% data1[, unique(AAR)]]
-
+  if(data2[, .N] != data1[, .N]) return("Kan ikke beregnes")
   # Compare values censored in FRISKVIK with values censored in KUBE
   if(isTRUE(all.equal(is.na(data1$MEIS), data2[, SPVFLAGG > 0]))){
-    "Yes"
+    "Ja"
   } else {
     geodiff <- data1[is.na(data1$MEIS) != data2[, SPVFLAGG > 0], GEO]
-    paste("!!NO!! Diff for GEO:", paste0(geodiff, collapse = ", "))
+    paste("!! NEI !! Diff for GEO:", paste0(geodiff, collapse = ", "))
   }
 }
 
@@ -254,9 +297,6 @@ friskvik_compare_prikk <- function(data1 = FRISKVIK,
 #' @param data2 KUBE
 friskvik_compare_val <- function(data1 = FRISKVIK, data2 = KUBE){
 
-  # Only include years included in FRISKVIK
-  data2 <- data2[AAR %in% data1[, unique(AAR)]]
-
   # Find value columns in KUBE
   colinfo <- identify_coltypes(data1, data2)
   kubevals <- grep("RATE.n|SPVFLAGG", colinfo$vals.old, invert = TRUE, value = T)
@@ -264,9 +304,14 @@ friskvik_compare_val <- function(data1 = FRISKVIK, data2 = KUBE){
   matches <- character()
   different <- character()
 
+  if(data1[,.N] != data2[, .N]){
+    matches <- different <- "Kan ikke beregnes"
+    return(list(matches = matches, different = different))
+  }
+
   # Map over value columns in KUBE, find the column(s) matching FRISKVIK$MEIS
   for(i in kubevals){
-    if(isTRUE(all.equal(data1$MEIS, data2[, get(i)]))){
+    if(isTRUE(all.equal(data1$MEIS, data2[[i]]))){
       matches <- c(matches, i)
     } else {
       different <- c(different, i)
@@ -328,7 +373,9 @@ friskvik_create_path <- function(profile, geolevel, profileyear, test = FALSE){
 friskvik_in_publication <- function(file, year){
   pub_folder <- paste0("STATBANK/STATBANK_", year)
   pub_folder <- file.path(getOption("qualcontrol.root"),getOption("qualcontrol.files"), pub_folder)
-  attributes(KUBE)$Filename %in% list.files(pub_folder, pattern = ".csv")
+  pub_files <- sub(pattern = "\\.csv$|\\.parquet$", "", list.files(pub_folder, pattern = "\\.csv$|\\.parquet$"))
+  cubename <- sub(pattern = "\\.csv$|\\.parquet$", "", attributes(.GlobalEnv[["datasets"]][["KUBE"]])$Filename)
+  cubename %in% pub_files
 }
 
 #' @title friskvik_unique_level
@@ -336,7 +383,7 @@ friskvik_in_publication <- function(file, year){
 #' @noRd
 friskvik_unique_level <- function(data, dim = NULL){
   if(!dim %in% names(data)) return(NA_character_)
-  paste(data[, unique(get(dim))], collapse = ", ")
+  paste(unique(data[[dim]]), collapse = ", ")
 }
 
 #' @title friskvik_read_access
