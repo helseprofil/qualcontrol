@@ -89,6 +89,7 @@ explore_different_censoring <- function(compare = comparecube, dt_new = newcube,
   colinfo <- identify_coltypes(dt_new, dt_old)
   dims <- colinfo$commondims
   diffs <- compare[(SPVFLAGG_new == 0 & SPVFLAGG_old > 0) | (SPVFLAGG_new > 0 & SPVFLAGG_old == 0), .SD, .SDcols = c(dims, "SPVFLAGG_new", "SPVFLAGG_old")]
+  diffs[, SPVFLAGG_DIFF := SPVFLAGG_new - SPVFLAGG_old]
   colorder <- names(diffs)
   censor_new <- colinfo$censor.new
 
