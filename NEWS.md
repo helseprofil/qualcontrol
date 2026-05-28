@@ -26,8 +26,7 @@
 10. New function `explore_different_censoring`, filtering out strata with differing censoring across the new and old file. ([issue #50](https://github.com/helseprofil/qualcontrol/issues/50))
 11. New function `diffvals_which_levels`, which identify the levels of a dimension which are different on a specific value column. Used to e.g. identify GEO-codes with TELLER/NEVNER-diffs. ([issue #42](https://github.com/helseprofil/qualcontrol/issues/42)) 
 12. Updated internal data (georecode, popinfo)
-
-X. Code cleaning
+13. Code cleaning
     - Removed all use of get/mget
     - Implemented the env-argument in data.table for cleaner syntax
 
