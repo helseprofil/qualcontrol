@@ -1,13 +1,29 @@
 #' @keywords internal
 #' @noRd
 ConnectKHelsa <- function(){
-  RODBC::odbcConnectAccess2007("O:/Prosjekt/FHP/PRODUKSJON/STYRING/KHELSA.mdb")
+  path <- file.path(getOption("qualcontrol.root"), getOption("qualcontrol.db"))
+  if(!file.exists(path)) stop("Finner ikke databasefilen ", path)
+
+  RODBC::odbcDriverConnect(
+    paste0(
+      "Driver={Microsoft Access Driver (*.mdb, *.accdb)};",
+      "DBQ=", path, ";"
+    )
+  )
 }
 
 #' @keywords internal
 #' @noRd
 ConnectGeokoder <- function(){
-  RODBC::odbcConnectAccess2007("O:/Prosjekt/FHP/PRODUKSJON/STYRING/raw-khelse/geo-koder.accdb")
+  path <- file.path(getOption("qualcontrol.root"), getOption("qualcontrol.dbgeo"))
+  if(!file.exists(path)) stop("Finner ikke databasefilen ", path)
+
+  RODBC::odbcDriverConnect(
+    paste0(
+      "Driver={Microsoft Access Driver (*.mdb, *.accdb)};",
+      "DBQ=", path, ";"
+    )
+  )
 }
 
 #' @keywords internal
