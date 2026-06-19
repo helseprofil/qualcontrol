@@ -17,29 +17,73 @@ readfiles <- function(cube.new = NULL,
                       recode.old = FALSE,
                       comparecube = TRUE,
                       outliers = TRUE,
-                      dumps = getOption("qualcontrol.dumps")){
+                      dumps = getOption("qualcontrol.dumps"),
+                      useduck = TRUE){
   clean_environment()
-  newcube <- oldcube <- NULL
   readfiles_checkargs(cube.new, cube.old, recode.new, recode.old, comparecube, outliers)
 
-  path.new <- find_cube(cube.new)
-  newcube <- read_cube(path.new, type = "New")
-  newcube <- recode_geo(newcube, recode.new)
-  newcube <- add_geoparams(newcube)
-  collect_censor_information(dt = newcube)
+  cubename <- gsub("^QC_|_\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}|\\.csv$|.parquet$", "", cube.new)
+  generate_qcfolders(cubename, year = getOption("qualcontrol.year"))
+  if(useduck){
+    main_db <- find_duckdb_main(cubename)
+    init_duckdb_local()
+    con <- connect_duckdb_local()
+    invisible(DBI::dbExecute(con, sprintf("ATTACH '%s' AS net", main_db)))
+    on.exit(DBI::dbExecute(con, "DETACH net"), add = TRUE)
+    on.exit(DBI::dbDisconnect(con, shutdown = FALSE), add = TRUE)
 
-  if(!is.null(cube.old)){
-    path.old <- find_cube(cube.old)
-    oldcube <- read_cube(path.old, type = "Old")
-    oldcube <- recode_geo(oldcube, recode.old)
-    oldcube <- add_geoparams(oldcube)
-    collect_censor_information(dt = oldcube)
+    # NEWCUBE
+    exist_newcube <- check_if_table_exist_main(con = con, table = cube.new)
+    if(exist_newcube){
+      cat("\n- Henter newcube fra database")
+      copy_table_from_main_to_local(con = con, table = cube.new, newname = "newcube")
+    } else {
+      cat("\n- Leser newcube fra scratch og skriver til database")
+      load_cubefile_to_duck(con = con, cubefile = cube.new, georecode = recode.new, newname = "newcube")
+    }
+
+    # OLDCUBE
+    if(!is.null(cube.old)){
+      exist_oldcube <- check_if_table_exist_main(con = con, table = cube.old)
+      if(exist_oldcube){
+        cat("\n- Henter oldcube fra database")
+        copy_table_from_main_to_local(con = con, table = cube.old, newname = "oldcube")
+      } else {
+        cat("\n- Leser oldcube fra scratch og skriver til database")
+        load_cubefile_to_duck(con = con, cubefile = cube.old, georecode = recode.old, newname = "oldcube")
+      }
+    }
+  } else {
+    newcube <- oldcube <- NULL
+
+    path <- find_cube(cube.new)
+    newcube <- read_cube(path)
+    newcube <- recode_geo(newcube, recode.new)
+    collect_censor_information(dt = newcube)
+    newcube <- add_geoparams(newcube)
+    assign("newcube", newcube, envir = .GlobalEnv)
+
+    if(!is.null(cube.old)){
+      path <- find_cube(cube.old)
+      oldcube <- read_cube(path)
+      oldcube <- recode_geo(oldcube, recode.old)
+      collect_censor_information(dt = oldcube)
+      oldcube <- add_geoparams(oldcube)
+      assign("oldcube", oldcube, envir = .GlobalEnv)
+    }
   }
 
-  newcube <<- newcube
-  oldcube <<- oldcube
-
   if(comparecube) make_comparecube(cube.new = newcube, cube.old = oldcube, outliers = outliers, dumps = dumps)
+}
+
+load_cubefile_to_duck <- function(con, cubefile, georecode, newname){
+  path <- find_cube(cubefile)
+  cube <- read_cube(path)
+  cube <- recode_geo(cube, georecode)
+  collect_censor_information(dt = cube)
+  cube <- add_geoparams(cube)
+  write_data_to_main(con = con, table = cubefile, data = cube)
+  copy_table_from_main_to_local(con = con, table = cubefile, newname = newname)
 }
 
 #' @keywords internal
@@ -92,8 +136,7 @@ find_cube <- function(cubename){
 
 #' @keywords internal
 #' @noRd
-read_cube <- function(filepath, type = c("New", "Old")){
-  type <- match.arg(type)
+read_cube <- function(filepath){
   charcols <- getOption("qualcontrol.alldimensions")[!getOption("qualcontrol.alldimensions") %in% c("GEO", "KJONN", "UTDANN", "INNVKAT", "LANDBAK")]
   filetype <- ifelse(grepl(".parquet$", filepath), "PARQUET", "CSV")
   dt <- switch(filetype,
@@ -101,11 +144,7 @@ read_cube <- function(filepath, type = c("New", "Old")){
                PARQUET = do_read_parquet(filepath, charcols))
 
   # dt <- data.table::fread(filepath, encoding = "UTF-8")
-  data.table::setattr(dt, "Filename", basename(filepath))
-  data.table::setattr(dt, "Filetype", data.table::fcase(grepl("/QC/", filepath), "QC",
-                                                        grepl("/DATERT/csv/", filepath), "ALLVIS",
-                                                        default = "Other"))
-  data.table::setattr(dt, "Cubeversion", type)
+  # data.table::setattr(dt, "Filename", basename(filepath))
 
   .orgnames <- names(data.table::copy(dt))
   data.table::setnames(dt,
@@ -115,12 +154,16 @@ read_cube <- function(filepath, type = c("New", "Old")){
   .newnames <- names(dt)
 
   .diff <- ifelse(any(.orgnames != .newnames), "yes", "no")
-  data.table::setattr(dt, "colnameinfo", list(orgnames = .orgnames, newnames = .newnames, diff = .diff))
-  cat(paste0("\n", type, " cube loaded: ", sub("(.*PRODUKTER/)", "", filepath), "\n"))
+  # data.table::setattr(dt, "colnameinfo", list(orgnames = .orgnames, newnames = .newnames, diff = .diff))
+  cat(paste0("\ncube loaded: ", sub("(.*PRODUKTER/)", "", filepath), "\n"))
   if(.diff == "yes"){list_renamecols(.orgnames, .newnames, type)}
-  if(type == "New" && grepl("ikkegeoprikket_", attributes(dt)$Filename)){is_valid_outcols(dt)}
+  if(grepl("ikkegeoprikket_", filepath)){is_valid_outcols(dt)}
 
   return(dt)
+}
+
+set_cubeattributes <- function(dt, type = c("New", "Old"), filename = NULL){
+  data.table::setattr(dt, "Filename", filename)
 }
 
 do_read_parquet <- function(filepath, charcols){
@@ -147,10 +190,10 @@ do_read_csv <- function(filepath, charcols){
 
 #' @keywords internal
 #' @noRd
-list_renamecols <- function(org, new, type){
+list_renamecols <- function(org, new){
     namechange <- data.table::data.table(org, new)[org != new]
     namechange <- namechange[, let(change = paste(org, "==>", new))][, change]
-    cat("\n", type, "cube columns renamed:", paste("\n *", namechange))
+    cat("\nColumns renamed:", paste("\n *", namechange))
 }
 
 #' @keywords internal
@@ -159,7 +202,7 @@ is_valid_outcols <- function(dt){
 
   outcols <- names(dt)[names(dt) %in% c("TELLER", "NEVNER", "sumTELLER", "sumNEVNER")]
   if(length(outcols) > 0){
-    cat("\n\nNB! New file contains ", paste(outcols, collapse = ", "), ". Is this ok for ALLVIS?", sep = "")
+    cat("\n\nNB! Filen inneholder ", paste(outcols, collapse = ", "), ". Er dette ok for ALLVIS?", sep = "")
   }
 }
 
@@ -169,11 +212,10 @@ recode_geo <- function(dt, recode){
   if(!recode) return(dt)
 
   geoyear <- attributes(.georecode)$year
-  cubeversion <- attributes(dt)$Cubeversion
   recodings <- .georecode[old %in% dt$GEO][order(old)]
   if(nrow(recodings) == 0) return(dt)
 
-  cat(paste0("\nIn ", cubeversion, " cube: Recoding ", nrow(recodings), " geographical codes to ", geoyear, "-codes"))
+  cat(paste0("\nRecoding ", nrow(recodings), " geographical codes to ", geoyear, "-codes"))
   dt[, let(origgeo = GEO)]
   dt[recodings, on = setNames("old", "GEO"), GEO := i.current]
 
@@ -215,11 +257,11 @@ add_geoparams <- function(dt){
 #' @keywords internal
 #' @noRd
 collect_censor_information <- function(dt){
-  for(col in c("pvern", "serieprikket", "orgprikket", "dekningprikket")){
+  for(col in getOption("qualcontrol.prikkeinfo")){
     if(col %in% names(dt)){
-      dt[, (col) := as.integer(x), env = list(x = col)]
+      data.table::set(dt, j = col, value = as.integer(dt[[col]]))
     } else {
-      dt[, (col) := NA_integer_]
+      data.table::set(dt, j = col, value = NA_integer_)
     }
   }
 
@@ -252,8 +294,20 @@ add_csv <- function(string){
 #' @keywords internal
 #' @noRd
 clean_environment <- function(){
+  dbfile <- file.path(fs::path_home(), "helseprofil/duck/qcduck.duckdb")
+  if(file.exists(dbfile)){
+    try({
+      con_tmp <- DBI::dbConnect(duckdb::duckdb(), dbdir = dbfile)
+      DBI::dbDisconnect(con_tmp, shutdown = TRUE)
+    }, silent = TRUE)
+    gc()
+    files <- c(dbfile,paste0(dbfile, ".wal"),paste0(dbfile, ".tmp"))
+    fs::file_delete(files[fs::file_exists(files)])
+  }
+
   allobjects <- ls(envir = globalenv())
-  rmobjects <- grep("newcube|oldcube|newcube_flag|oldcube_flag|comparecube", allobjects)
+  rmobjects <- grep("newcube|oldcube|newcube_flag|oldcube_flag|comparecube|qcduck", allobjects)
+  if(length(rmobjects) > 0)
   rm(list = allobjects[rmobjects], pos = globalenv())
 }
 

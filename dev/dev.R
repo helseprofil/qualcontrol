@@ -1,14 +1,16 @@
 # DEV
 
 # Read test files
-
-readfiles(cube.new = "ALKOHOL_UNGDATA_2026-01-06-16-43",
-          cube.old = "ALKOHOL_UNGDATA_2025-04-22-10-12",
+system.time({
+readfiles(cube.new = "BEFOLK_GK_2026-06-16-13-23",
+          cube.old = "BEFOLK_GK_2025-10-21-10-34",
           recode.old = T,
-          comparecube = T,
+          recode.new = F,
+          comparecube = F,
           outliers = T,
-          dumps = NULL)
-
+          dumps = NULL,
+          useduck = T)
+})
 
 # dt <- data.table::copy(comparecube)
 

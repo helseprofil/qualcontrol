@@ -1,3 +1,7 @@
+# qualcontrol (development version)
+
+- identify_coltypes use options to define misccols and censorparams
+
 # qualcontrol 1.4.1 (2026-05-29)
 1. Adapt to new database file format and move database paths to config file
 
