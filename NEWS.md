@@ -1,6 +1,10 @@
 # qualcontrol (development version)
 
 - identify_coltypes use options to define misccols and censorparams
+- Implement duckdb to move data out of memory
+
+# qualcontrol 1.4.2 (2026-06-22)
+1. Update internal data to get latest manual fixes in LKS-geocodes. 
 
 # qualcontrol 1.4.1 (2026-05-29)
 1. Adapt to new database file format and move database paths to config file
