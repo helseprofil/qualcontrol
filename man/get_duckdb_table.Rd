@@ -7,15 +7,11 @@
 get_duckdb_table(tablename)
 }
 \arguments{
-\item{tablename}{navn på tabellen du vil hente}
+\item{tablename}{name of table to read}
+}
+\value{
+data.table
 }
 \description{
-Henter en tabell fra den lokale duckdb-databasen inn i minnet
-Nyttig dersom du trenger å se en tabell, eller kode om en variabel
-(f.eks. for å matche oldcube mot newcube), før overskriving med \code{overwrite_duckdb_table}
+Fetches table from the local database into memory
 }
-\seealso{
-Other duck:
-\code{\link[=overwrite_duckdb_table]{overwrite_duckdb_table()}}
-}
-\concept{duck}

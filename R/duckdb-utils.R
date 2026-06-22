@@ -1,10 +1,8 @@
 #' @title get_duckdb_table
 #' @description
-#' Henter en tabell fra den lokale duckdb-databasen inn i minnet
-#' Nyttig dersom du trenger å se en tabell, eller kode om en variabel
-#' (f.eks. for å matche oldcube mot newcube), før overskriving med `overwrite_duckdb_table`
-#' @param tablename navn på tabellen du vil hente
-#' @family duck
+#' Fetches table from the local database into memory
+#' @param tablename name of table to read
+#' @returns data.table
 #' @export
 get_duckdb_table <- function(tablename){
   con <- connect_duckdb_local()
@@ -17,10 +15,9 @@ get_duckdb_table <- function(tablename){
 
 #' @title overwrite_duckdb_table
 #' @description
-#' Overskriver en tabell i den lokale duckdb-databasen.
-#' Nyttig om du har omkodet en variabel for å matche oldcube mot newcube.
-#' @param tablename navn på tabellen du vil hente
-#' @family duck
+#' Overwrites a table in the local duckdb. e.g. To be used if you have recoded av variable
+#' @param d data
+#' @param tablename table name
 #' @export
 overwrite_duckdb_table <- function(d, tablename){
   con <- connect_duckdb_local()

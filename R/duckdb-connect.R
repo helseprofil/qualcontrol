@@ -1,4 +1,9 @@
-find_duckdb_main <- function(cubename){
+#' @title find_duckdb_disc
+#' @description Finner (eller setter opp) duckdb i QC-mappen for hver fil på nettverksdisk, for innlasting av originalfiler. Brukes i readfiles.
+#' @family duck
+#' @keywords internal
+#' @noRd
+find_duckdb_disc <- function(cubename){
   dbdir <- file.path(getOption("qualcontrol.root"),
                      getOption("qualcontrol.output"),
                      getOption("qualcontrol.year"),
@@ -11,37 +16,23 @@ find_duckdb_main <- function(cubename){
     con_tmp <- DBI::dbConnect(duckdb::duckdb(), dbdir = dbpath)
     DBI::dbDisconnect(con_tmp, shutdown = TRUE)
   }
-
   dbpath
 }
 
-check_if_table_exist_main <- function(con, table){
-  exist <- suppressMessages(DBI::dbExistsTable(DBI::Id(schema = "net", table = table), conn = con))
-  return(exist)
-}
-
-write_data_to_main <- function(con, table, data){
-  invisible(
-    DBI::dbWriteTable(con,
-                    name = DBI::Id(schema = "net", table = table),
-                    value = data,
-                    overwrite = TRUE)
-  )
-}
-
-copy_table_from_main_to_local <- function(con, table, newname){
-  invisible(
-    DBI::dbExecute(con, sprintf("CREATE OR REPLACE TABLE %s AS SELECT * FROM net.%s",
-                                DBI::dbQuoteIdentifier(con, newname),
-                                DBI::dbQuoteIdentifier(con, table)))
-  )
-}
-
+#' @title qc_local_db
+#' @family duck
+#' @keywords internal
+#' @noRd
 qc_local_db <- function() {
   list(dir = file.path(fs::path_home(), "helseprofil/duck"),
        db = file.path(fs::path_home(), "helseprofil/duck/QCduck.duckdb"))
 }
 
+#' @title init_duckdb_local
+#' @family duck
+#' @description Setter opp fersk lokal duckdb for kvalitetskontroll
+#' @keywords internal
+#' @noRd
 init_duckdb_local <- function(){
   db <- qc_local_db()
   fs::dir_create(db$dir)
@@ -59,6 +50,11 @@ init_duckdb_local <- function(){
   invisible(db$db)
 }
 
+#' @title connect_duckdb_local
+#' @family duck
+#' @description connects to helseprofil/duck/QCduck.duckdb, used in all QC-functions to get data
+#' @keywords internal
+#' @noRd
 connect_duckdb_local <- function(){
   invisible(DBI::dbConnect(duckdb::duckdb(), dbdir = qc_local_db()$db))
 }

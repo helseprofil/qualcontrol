@@ -25,18 +25,18 @@ readfiles <- function(cube.new = NULL,
   cubename <- gsub("^QC_|_\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}|\\.csv$|.parquet$", "", cube.new)
   generate_qcfolders(cubename, year = getOption("qualcontrol.year"))
   if(useduck){
-    main_db <- find_duckdb_main(cubename)
+    disc_db <- find_duckdb_disc(cubename)
     init_duckdb_local()
     con <- connect_duckdb_local()
-    invisible(DBI::dbExecute(con, sprintf("ATTACH '%s' AS net", main_db)))
+    invisible(DBI::dbExecute(con, sprintf("ATTACH '%s' AS net", disc_db)))
     on.exit(DBI::dbExecute(con, "DETACH net"), add = TRUE)
     on.exit(DBI::dbDisconnect(con, shutdown = FALSE), add = TRUE)
 
     # NEWCUBE
-    exist_newcube <- check_if_table_exist_main(con = con, table = cube.new)
+    exist_newcube <- check_if_table_exist_duck_disc(con = con, table = cube.new)
     if(exist_newcube){
       cat("\n- Henter newcube fra database")
-      copy_table_from_main_to_local(con = con, table = cube.new, newname = "newcube")
+      copy_table_from_duck_disc_to_local(con = con, table = cube.new, newname = "newcube")
     } else {
       cat("\n- Leser newcube fra scratch og skriver til database")
       load_cubefile_to_duck(con = con, cubefile = cube.new, georecode = recode.new, newname = "newcube")
@@ -44,10 +44,10 @@ readfiles <- function(cube.new = NULL,
 
     # OLDCUBE
     if(!is.null(cube.old)){
-      exist_oldcube <- check_if_table_exist_main(con = con, table = cube.old)
+      exist_oldcube <- check_if_table_exist_duck_disc(con = con, table = cube.old)
       if(exist_oldcube){
         cat("\n- Henter oldcube fra database")
-        copy_table_from_main_to_local(con = con, table = cube.old, newname = "oldcube")
+        copy_table_from_duck_disc_to_local(con = con, table = cube.old, newname = "oldcube")
       } else {
         cat("\n- Leser oldcube fra scratch og skriver til database")
         load_cubefile_to_duck(con = con, cubefile = cube.old, georecode = recode.old, newname = "oldcube")
@@ -76,14 +76,39 @@ readfiles <- function(cube.new = NULL,
   if(comparecube) make_comparecube(cube.new = newcube, cube.old = oldcube, outliers = outliers, dumps = dumps)
 }
 
+#' @family duck
+check_if_table_exist_duck_disc <- function(con, table){
+  exist <- suppressMessages(DBI::dbExistsTable(DBI::Id(schema = "net", table = table), conn = con))
+  return(exist)
+}
+
+#' @family duck
+copy_table_from_duck_disc_to_local <- function(con, table, newname){
+  invisible(
+    DBI::dbExecute(con, sprintf("CREATE OR REPLACE TABLE %s AS SELECT * FROM net.%s",
+                                DBI::dbQuoteIdentifier(con, newname),
+                                DBI::dbQuoteIdentifier(con, table)))
+  )
+}
+
+#' @family duck
+write_data_to_duck_disc <- function(con, table, data){
+  invisible(
+    DBI::dbWriteTable(con,
+                      name = DBI::Id(schema = "net", table = table),
+                      value = data,
+                      overwrite = TRUE)
+  )
+}
+
 load_cubefile_to_duck <- function(con, cubefile, georecode, newname){
   path <- find_cube(cubefile)
   cube <- read_cube(path)
   cube <- recode_geo(cube, georecode)
   collect_censor_information(dt = cube)
   cube <- add_geoparams(cube)
-  write_data_to_main(con = con, table = cubefile, data = cube)
-  copy_table_from_main_to_local(con = con, table = cubefile, newname = newname)
+  write_data_to_duck_disc(con = con, table = cubefile, data = cube)
+  copy_table_from_duck_disc_to_local(con = con, table = cubefile, newname = newname)
 }
 
 #' @keywords internal

@@ -7,14 +7,10 @@
 overwrite_duckdb_table(d, tablename)
 }
 \arguments{
-\item{tablename}{navn på tabellen du vil hente}
+\item{d}{data}
+
+\item{tablename}{table name}
 }
 \description{
-Overskriver en tabell i den lokale duckdb-databasen.
-Nyttig om du har omkodet en variabel for å matche oldcube mot newcube.
+Overwrites a table in the local duckdb. e.g. To be used if you have recoded av variable
 }
-\seealso{
-Other duck:
-\code{\link[=get_duckdb_table]{get_duckdb_table()}}
-}
-\concept{duck}
