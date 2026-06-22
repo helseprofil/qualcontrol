@@ -11,7 +11,8 @@ readfiles(
   recode.old = FALSE,
   comparecube = TRUE,
   outliers = TRUE,
-  dumps = getOption("qualcontrol.dumps")
+  dumps = getOption("qualcontrol.dumps"),
+  useduck = TRUE
 )
 }
 \arguments{
