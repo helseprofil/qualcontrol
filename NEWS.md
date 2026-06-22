@@ -1,3 +1,6 @@
+# qualcontrol 1.4.2
+1. Update internal data to get latest manual fixes in LKS-geocodes. 
+
 # qualcontrol 1.4.1 (2026-05-29)
 1. Adapt to new database file format and move database paths to config file
 
